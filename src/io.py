@@ -11,7 +11,7 @@ def open_rmf(session, path):
 
     structures = []
 
-    r = RMF.open_file_read_only(path)
+    r = RMF.open_rmf_file_read_only(path)
     # todo, actually read the file
 
     status = "Opened RMF file"
