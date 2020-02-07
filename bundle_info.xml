@@ -1,0 +1,44 @@
+<!--
+ChimeraX bundle names must start with "ChimeraX-"
+to avoid clashes with package names in pypi.python.org.
+When uploaded to the ChimeraX toolshed, the bundle
+will be displayed without the ChimeraX- prefix.
+-->
+
+<BundleInfo name="ChimeraX-RMF"
+	    version="0.1" package="chimerax.rmf"
+  	    minSessionVersion="1" maxSessionVersion="1">
+
+  <!-- Additional information about bundle source -->
+  <Author>Ben Webb, Sali Lab, University of California San Francisco</Author>
+  <Email>ben@salilab.org</Email>
+  <URL>https://salilab.org/</URL>
+
+  <!-- Synopsis is a one-line description
+       Description is a full multi-line description -->
+  <Synopsis>Support for the RMF file format</Synopsis>
+  <Description>Reads files in the Rich Molecular Format (RMF), which are
+used by the Integrative Modeling Platform (IMP) software.
+  </Description>
+
+  <!-- Categories is a list where this bundle should appear -->
+  <Categories>
+    <Category name="General"/>
+  </Categories>
+
+  <!-- Dependencies on other ChimeraX/Python packages -->
+  <Dependencies>
+    <Dependency name="ChimeraX-Core" version=">=0.1"/>
+  </Dependencies>
+
+  <Classifiers>
+    <!-- Development Status should be compatible with bundle version number -->
+    <PythonClassifier>Development Status :: 3 - Alpha</PythonClassifier>
+    <PythonClassifier>License :: MIT</PythonClassifier>
+    <!-- ChimeraX classifiers describe supplied functionality -->
+    <!-- Register XYZ format as one of the supported input file formats -->
+    <ChimeraXClassifier>ChimeraX :: DataFormat :: RMF :: :: Molecular structure :: .rmf :: :: https://integrativemodeling.org/rmf/ :: :: :: RMF format :: binary</ChimeraXClassifier>
+    <ChimeraXClassifier>ChimeraX :: Open :: RMF :: RMF ::</ChimeraXClassifier>
+  </Classifiers>
+
+</BundleInfo>
