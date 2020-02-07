@@ -31,6 +31,12 @@ used by the Integrative Modeling Platform (IMP) software.
     <Dependency name="ChimeraX-Core" version=">=0.1"/>
   </Dependencies>
 
+  <!-- Non-Python files that are part of package -->
+  <DataFiles>
+    <DataFile>_RMF.so</DataFile>
+    <DataFile>_RMF_HDF5.so</DataFile>
+  </DataFiles>
+
   <Classifiers>
     <!-- Development Status should be compatible with bundle version number -->
     <PythonClassifier>Development Status :: 3 - Alpha</PythonClassifier>

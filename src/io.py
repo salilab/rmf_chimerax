@@ -7,7 +7,7 @@ def open_rmf(session, path):
     Returns the 2-tuple return value appropriate for the
     ``chimerax.core.toolshed.BundleAPI.open_file`` method.
     """
-    import RMF
+    from . import RMF
 
     structures = []
 
