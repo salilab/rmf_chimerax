@@ -28,6 +28,8 @@ class _RMFLoader(object):
         self.particlef = RMF.ParticleConstFactory(r)
         self.coloredf = RMF.ColoredConstFactory(r)
         self.chainf = RMF.ChainConstFactory(r)
+        self.fragmentf = RMF.FragmentConstFactory(r)
+        self.residuef = RMF.ResidueConstFactory(r)
 
         # todo, actually read the file
         r.set_current_frame(RMF.FrameID(0))
@@ -38,13 +40,12 @@ class _RMFLoader(object):
         self._handle_node(r.get_root_node(), s)
         return r, [s]
 
-    def _add_atom(self, s, atom):
-        if self._current_residue is None:
-            if self._current_chain is None:
-                chain_id = 'X'
-            else:
-                chain_id = self._current_chain.get_chain_id()
-            self._current_residue = s.new_residue('ALA', 'A', 1)
+    def _add_atom(self, s, atom, rnum, rtype):
+        if self._current_chain is None:
+            chain_id = 'X'
+        else:
+            chain_id = self._current_chain.get_chain_id()
+        self._current_residue = s.new_residue(rtype, chain_id, rnum)
         self._current_residue.add_atom(atom)
 
     def _handle_node(self, node, s):
@@ -61,6 +62,17 @@ class _RMFLoader(object):
                 c = self.coloredf.get(node)
                 # RMF colors are 0-1 and has no alpha; ChimeraX uses 0-255
                 atom.color = [x * 255. for x in c.get_rgb_color()] + [255]
-            self._add_atom(s, atom)
+            rtype = 'ALA'
+            if self.fragmentf.get_is(node):
+                f = self.fragmentf.get(node)
+                resinds = f.get_residue_indexes()
+                rnum = resinds[len(resinds) // 2]
+            elif self.residuef.get_is(node):
+                r = self.residuef.get(node)
+                rnum = r.get_residue_index()
+                rtype = r.get_residue_type()
+            else:
+                rnum = 1  # Make up a residue number if we don't have one
+            self._add_atom(s, atom, rnum, rtype)
         for child in node.get_children():
             self._handle_node(child, s)
