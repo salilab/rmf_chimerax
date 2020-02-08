@@ -27,16 +27,29 @@ class _RMFLoader(object):
         r = RMF.open_rmf_file_read_only(path)
         self.particlef = RMF.ParticleConstFactory(r)
         self.coloredf = RMF.ColoredConstFactory(r)
+        self.chainf = RMF.ChainConstFactory(r)
 
         # todo, actually read the file
         r.set_current_frame(RMF.FrameID(0))
 
         s = Structure(session)
-        res = s.new_residue('ALA', 'A', 1)
-        self._handle_node(r.get_root_node(), s, res)
+        self._current_chain = None
+        self._current_residue = None
+        self._handle_node(r.get_root_node(), s)
         return r, [s]
 
-    def _handle_node(self, node, s, res):
+    def _add_atom(self, s, atom):
+        if self._current_residue is None:
+            if self._current_chain is None:
+                chain_id = 'X'
+            else:
+                chain_id = self._current_chain.get_chain_id()
+            self._current_residue = s.new_residue('ALA', 'A', 1)
+        self._current_residue.add_atom(atom)
+
+    def _handle_node(self, node, s):
+        if self.chainf.get_is(node):
+            self._current_chain = self.chainf.get(node)
         if self.particlef.get_is(node):
             p = self.particlef.get(node)
             atom = s.new_atom('C', 'C')
@@ -48,6 +61,6 @@ class _RMFLoader(object):
                 c = self.coloredf.get(node)
                 # RMF colors are 0-1 and has no alpha; ChimeraX uses 0-255
                 atom.color = [x * 255. for x in c.get_rgb_color()] + [255]
-            res.add_atom(atom)
+            self._add_atom(s, atom)
         for child in node.get_children():
-            self._handle_node(child, s, res)
+            self._handle_node(child, s)
