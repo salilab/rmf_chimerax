@@ -43,7 +43,7 @@ used by the Integrative Modeling Platform (IMP) software.
     <PythonClassifier>License :: MIT</PythonClassifier>
     <!-- ChimeraX classifiers describe supplied functionality -->
     <!-- Register XYZ format as one of the supported input file formats -->
-    <ChimeraXClassifier>ChimeraX :: DataFormat :: RMF :: :: Molecular structure :: .rmf :: :: https://integrativemodeling.org/rmf/ :: :: :: RMF format :: binary</ChimeraXClassifier>
+    <ChimeraXClassifier>ChimeraX :: DataFormat :: RMF :: :: Molecular structure :: .rmf,.rmf3 :: :: https://integrativemodeling.org/rmf/ :: :: :: RMF format :: binary</ChimeraXClassifier>
     <ChimeraXClassifier>ChimeraX :: Open :: RMF :: RMF ::</ChimeraXClassifier>
   </Classifiers>
 
