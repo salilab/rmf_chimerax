@@ -1,5 +1,7 @@
 # vim: set expandtab shiftwidth=4 softtabstop=4:
 
+import numpy
+
 
 def open_rmf(session, path):
     """Read an RMF file from a named file.
@@ -30,6 +32,7 @@ class _RMFLoader(object):
         self.chainf = RMF.ChainConstFactory(r)
         self.fragmentf = RMF.FragmentConstFactory(r)
         self.residuef = RMF.ResidueConstFactory(r)
+        self.refframef = RMF.ReferenceFrameConstFactory(r)
 
         # todo, actually read the file
         r.set_current_frame(RMF.FrameID(0))
@@ -37,6 +40,7 @@ class _RMFLoader(object):
         s = Structure(session)
         self._current_chain = None
         self._current_residue = None
+        self._current_refframe = None
         self._handle_node(r.get_root_node(), s)
         return r, [s]
 
@@ -48,13 +52,23 @@ class _RMFLoader(object):
         self._current_residue = s.new_residue(rtype, chain_id, rnum)
         self._current_residue.add_atom(atom)
 
+    def _set_reference_frame(self, rf):
+        from scipy.spatial.transform import Rotation
+        rot = Rotation.from_quat(rf.get_rotation())
+        self._current_refframe = (rot, numpy.array(rf.get_translation()))
+
     def _handle_node(self, node, s):
+        if self.refframef.get_is(node):
+            self._set_reference_frame(self.refframef.get(node))
         if self.chainf.get_is(node):
             self._current_chain = self.chainf.get(node)
         if self.particlef.get_is(node):
             p = self.particlef.get(node)
             atom = s.new_atom('C', 'C')
             atom.coord = p.get_coordinates()
+            if self._current_refframe:
+                rot, trans = self._current_refframe
+                atom.coord = rot.apply(atom.coord) + trans
             atom.mass = p.get_mass()
             atom.radius = p.get_radius()
             atom.draw_mode = atom.SPHERE_STYLE
