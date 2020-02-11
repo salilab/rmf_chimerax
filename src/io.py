@@ -17,13 +17,26 @@ def open_rmf(session, path):
     return structures, status
 
 
+from chimerax.core.models import Model
+from chimerax.atomic import Structure
+class _RMFModel(Model):
+    def __init__(self, session):
+        name = 'RMF model'
+        self._session = session
+        super().__init__(name, session)
+
+    def _add_state(self, rmf_node):
+        s = Structure(self._session, name=rmf_node.get_name())
+        self.add([s])
+        return s
+
+
 class _RMFLoader(object):
     def __init__(self):
         pass
 
     def load(self, path, session):
         from . import RMF
-        from chimerax.atomic import Structure
 
         structures = []
         r = RMF.open_rmf_file_read_only(path)
@@ -33,14 +46,16 @@ class _RMFLoader(object):
         self.fragmentf = RMF.FragmentConstFactory(r)
         self.residuef = RMF.ResidueConstFactory(r)
         self.refframef = RMF.ReferenceFrameConstFactory(r)
+        self.statef = RMF.StateConstFactory(r)
 
         # todo, actually read the file
         r.set_current_frame(RMF.FrameID(0))
 
-        s = Structure(session)
+        s = _RMFModel(session)
         self._current_chain = None
         self._current_residue = None
         self._current_refframe = None
+        self._current_state = None
         self._handle_node(r.get_root_node(), s)
         return r, [s]
 
@@ -58,13 +73,15 @@ class _RMFLoader(object):
         self._current_refframe = (rot, numpy.array(rf.get_translation()))
 
     def _handle_node(self, node, s):
+        if self.statef.get_is(node):
+            self._current_state = s._add_state(node)
         if self.refframef.get_is(node):
             self._set_reference_frame(self.refframef.get(node))
         if self.chainf.get_is(node):
             self._current_chain = self.chainf.get(node)
         if self.particlef.get_is(node):
             p = self.particlef.get(node)
-            atom = s.new_atom('C', 'C')
+            atom = self._current_state.new_atom('C', 'C')
             atom.coord = p.get_coordinates()
             if self._current_refframe:
                 rot, trans = self._current_refframe
@@ -87,6 +104,6 @@ class _RMFLoader(object):
                 rtype = r.get_residue_type()
             else:
                 rnum = 1  # Make up a residue number if we don't have one
-            self._add_atom(s, atom, rnum, rtype)
+            self._add_atom(self._current_state, atom, rnum, rtype)
         for child in node.get_children():
             self._handle_node(child, s)
