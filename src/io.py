@@ -142,6 +142,9 @@ class _RMFLoader(object):
     def load(self, path, session):
         from . import RMF
 
+        self.GAUSSIAN_PARTICLE = RMF.GAUSSIAN_PARTICLE
+        self.PARTICLE = RMF.PARTICLE
+
         structures = []
         r = RMF.open_rmf_file_read_only(path)
         self.particlef = RMF.ParticleConstFactory(r)
@@ -153,6 +156,7 @@ class _RMFLoader(object):
         self.statef = RMF.StateConstFactory(r)
         self.bondf = RMF.BondConstFactory(r)
         self.represf = RMF.RepresentationConstFactory(r)
+        self.altf = RMF.AlternativesConstFactory(r)
         self.rmf_index_to_atom = {}
 
         r.set_current_frame(RMF.FrameID(0))
@@ -162,9 +166,9 @@ class _RMFLoader(object):
         self._handle_node(r.get_root_node(), rhi)
         return r, [top_level]
 
-    def _handle_node(self, node, rhi):
+    def _handle_node(self, node, parent_rhi):
         # Get hierarchy-related info from this node (e.g. chain, state)
-        rhi = rhi.handle_node(node, self)
+        rhi = parent_rhi.handle_node(node, self)
         if self.particlef.get_is(node):
             p = self.particlef.get(node)
             atom = rhi.new_atom(p)
@@ -191,6 +195,16 @@ class _RMFLoader(object):
             self._add_feature(self.represf.get(node), rhi)
         for child in node.get_children():
             self._handle_node(child, rhi)
+        # Handle any alternatives (usually different resolutions)
+        # Alternatives replace the current node - they are not children of
+        # it - so use parent_rhi, not rhi.
+        if self.altf.get_is(node):
+            alt = self.altf.get(node)
+            for gauss in alt.get_alternatives(self.GAUSSIAN_PARTICLE):
+                self._handle_node(gauss, parent_rhi)
+            # The node itself should be the first alternative, so ignore that
+            for p in alt.get_alternatives(self.PARTICLE)[1:]:
+                self._handle_node(p, parent_rhi)
 
     def _add_bond(self, bond, rhi):
         rmfatom0 = bond.get_bonded_0()
