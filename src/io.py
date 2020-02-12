@@ -1,6 +1,7 @@
 # vim: set expandtab shiftwidth=4 softtabstop=4:
 
 import numpy
+import os.path
 
 
 def open_rmf(session, path):
@@ -20,8 +21,8 @@ def open_rmf(session, path):
 from chimerax.core.models import Model
 from chimerax.atomic import Structure
 class _RMFModel(Model):
-    def __init__(self, session):
-        name = 'RMF model'
+    def __init__(self, session, filename):
+        name = os.path.splitext(filename)[0]
         self._session = session
         super().__init__(name, session)
 
@@ -51,7 +52,7 @@ class _RMFLoader(object):
         # todo, actually read the file
         r.set_current_frame(RMF.FrameID(0))
 
-        s = _RMFModel(session)
+        s = _RMFModel(session, path)
         self._current_chain = None
         self._current_residue = None
         self._current_refframe = None
