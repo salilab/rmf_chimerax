@@ -38,13 +38,12 @@ class _RMFModel(Model):
     """Representation of the top level of an RMF model"""
     def __init__(self, session, filename):
         name = os.path.splitext(filename)[0]
-        self._session = session
         self._unnamed_state = None
         super().__init__(name, session)
 
     def _add_state(self, name):
         """Create and return a new _RMFState"""
-        s = _RMFState(self._session, name=name)
+        s = _RMFState(self.session, name=name)
         self.add([s])
         return s
 
