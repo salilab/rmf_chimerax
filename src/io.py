@@ -20,19 +20,106 @@ def open_rmf(session, path):
 
 from chimerax.core.models import Model
 from chimerax.atomic import Structure
+
+class _RMFState(Structure):
+    """Representation of structure corresponding to a single RMF state"""
+    pass
+
+
 class _RMFModel(Model):
+    """Representation of the top level of an RMF model"""
     def __init__(self, session, filename):
         name = os.path.splitext(filename)[0]
         self._session = session
+        self._unnamed_state = None
         super().__init__(name, session)
 
-    def _add_state(self, rmf_node):
-        s = Structure(self._session, name=rmf_node.get_name())
+    def _add_state(self, name):
+        """Create and return a new _RMFState"""
+        s = _RMFState(self._session, name=name)
         self.add([s])
         return s
 
+    def get_unnamed_state(self):
+        """Get the 'unnamed' state, used for structure that isn't the
+           child of an RMF State node."""
+        if self._unnamed_state is None:
+            self._unnamed_state = self._add_state('Unnamed state')
+        return self._unnamed_state
+
+
+class _RMFHierarchyInfo(object):
+    """Track structural information encountered through the RMF hierarchy"""
+    def __init__(self, top_level):
+        self.top_level = top_level
+        self._refframe = self._state = self._chain = None
+
+    def _set_reference_frame(self, rf):
+        """Set the current reference frame from an RMF ReferenceFrame node"""
+        # todo: handle nested reference frames
+        from scipy.spatial.transform import Rotation
+        rot = Rotation.from_quat(rf.get_rotation())
+        self._refframe = (rot, numpy.array(rf.get_translation()))
+
+    def handle_node(self, node, loader):
+        """Extract structural information from the given RMF node.
+           Return the _RMFHierarchyInfo object containing this information.
+           This may be the current object, or a new one."""
+        def copy_if_needed(x):
+            # Make a copy if we need to so we don't mess with the information
+            # used by parent nodes
+            if x is self:
+                return x
+            else:
+                return copy.copy(x)
+        rhi = self
+        if loader.statef.get_is(node):
+            rhi = copy_if_needed(rhi)
+            rhi._state = self.top_level._add_state(node.get_name())
+        if loader.refframef.get_is(node):
+            rhi = copy_if_needed(rhi)
+            rhi._set_reference_frame(loader.refframef.get(node))
+        if loader.chainf.get_is(node):
+            rhi = copy_if_needed(rhi)
+            rhi._chain = loader.chainf.get(node)
+        return rhi
+
+    def get_state(self):
+        """Get the current state"""
+        if self._state:
+            return self._state
+        else:
+            # If we're not under a State node, use the unnamed state
+            return self.top_level.get_unnamed_state()
+
+    def new_atom(self, p):
+        """Create and return a new ChimeraX Atom for the given Particle node.
+           Call add_atom() to complete adding the atom to the model."""
+        state = self.get_state()
+        atom = state.new_atom('C', 'C')
+        atom.coord = p.get_coordinates()
+        if self._refframe:
+            rot, trans = self._refframe
+            atom.coord = rot.apply(atom.coord) + trans
+        atom.mass = p.get_mass()
+        atom.radius = p.get_radius()
+        atom.draw_mode = atom.SPHERE_STYLE
+        return atom
+
+    def add_atom(self, atom, rnum, rtype):
+        state = self.get_state()
+        if self._chain is None:
+            chain_id = 'X'
+        else:
+            chain_id = self._chain.get_chain_id()
+        # todo: handle atomic (multiple atoms in same residue)
+        self._residue = state.new_residue(rtype, chain_id, rnum)
+        self._residue.add_atom(atom)
+
 
 class _RMFLoader(object):
+    """Load information from an RMF file"""
+
     def __init__(self):
         pass
 
@@ -49,47 +136,19 @@ class _RMFLoader(object):
         self.refframef = RMF.ReferenceFrameConstFactory(r)
         self.statef = RMF.StateConstFactory(r)
 
-        # todo, actually read the file
         r.set_current_frame(RMF.FrameID(0))
 
-        s = _RMFModel(session, path)
-        self._current_chain = None
-        self._current_residue = None
-        self._current_refframe = None
-        self._current_state = None
-        self._handle_node(r.get_root_node(), s)
-        return r, [s]
+        top_level = _RMFModel(session, path)
+        rhi = _RMFHierarchyInfo(top_level)
+        self._handle_node(r.get_root_node(), rhi)
+        return r, [top_level]
 
-    def _add_atom(self, s, atom, rnum, rtype):
-        if self._current_chain is None:
-            chain_id = 'X'
-        else:
-            chain_id = self._current_chain.get_chain_id()
-        self._current_residue = s.new_residue(rtype, chain_id, rnum)
-        self._current_residue.add_atom(atom)
-
-    def _set_reference_frame(self, rf):
-        from scipy.spatial.transform import Rotation
-        rot = Rotation.from_quat(rf.get_rotation())
-        self._current_refframe = (rot, numpy.array(rf.get_translation()))
-
-    def _handle_node(self, node, s):
-        if self.statef.get_is(node):
-            self._current_state = s._add_state(node)
-        if self.refframef.get_is(node):
-            self._set_reference_frame(self.refframef.get(node))
-        if self.chainf.get_is(node):
-            self._current_chain = self.chainf.get(node)
+    def _handle_node(self, node, rhi):
+        # Get hierarchy-related info from this node (e.g. chain, state)
+        rhi = rhi.handle_node(node, self)
         if self.particlef.get_is(node):
             p = self.particlef.get(node)
-            atom = self._current_state.new_atom('C', 'C')
-            atom.coord = p.get_coordinates()
-            if self._current_refframe:
-                rot, trans = self._current_refframe
-                atom.coord = rot.apply(atom.coord) + trans
-            atom.mass = p.get_mass()
-            atom.radius = p.get_radius()
-            atom.draw_mode = atom.SPHERE_STYLE
+            atom = rhi.new_atom(p)
             if self.coloredf.get_is(node):
                 c = self.coloredf.get(node)
                 # RMF colors are 0-1 and has no alpha; ChimeraX uses 0-255
@@ -105,6 +164,6 @@ class _RMFLoader(object):
                 rtype = r.get_residue_type()
             else:
                 rnum = 1  # Make up a residue number if we don't have one
-            self._add_atom(self._current_state, atom, rnum, rtype)
+            rhi.add_atom(atom, rnum, rtype)
         for child in node.get_children():
-            self._handle_node(child, s)
+            self._handle_node(child, rhi)
