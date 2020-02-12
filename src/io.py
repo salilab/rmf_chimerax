@@ -23,7 +23,15 @@ from chimerax.atomic import Structure
 
 class _RMFState(Structure):
     """Representation of structure corresponding to a single RMF state"""
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._features = None
+
+    def _add_pseudobond(self, atoms):
+        if self._features is None:
+            self._features = self.pseudobond_group("Features")
+        b = self._features.new_pseudobond(*atoms)
+        b.halfbond = False
 
 
 class _RMFModel(Model):
@@ -110,6 +118,11 @@ class _RMFHierarchyInfo(object):
         state = self.get_state()
         return state.new_bond(a1, a2)
 
+    def new_feature(self, atoms):
+        if len(atoms) == 2:
+            state = atoms[0].structure
+            state._add_pseudobond(atoms)
+
     def add_atom(self, atom, rnum, rtype):
         state = self.get_state()
         if self._chain is None:
@@ -140,6 +153,7 @@ class _RMFLoader(object):
         self.refframef = RMF.ReferenceFrameConstFactory(r)
         self.statef = RMF.StateConstFactory(r)
         self.bondf = RMF.BondConstFactory(r)
+        self.represf = RMF.RepresentationConstFactory(r)
         self.rmf_index_to_atom = {}
 
         r.set_current_frame(RMF.FrameID(0))
@@ -174,6 +188,8 @@ class _RMFLoader(object):
             rhi.add_atom(atom, rnum, rtype)
         if self.bondf.get_is(node):
             self._add_bond(self.bondf.get(node), rhi)
+        if self.represf.get_is(node):
+            self._add_feature(self.represf.get(node), rhi)
         for child in node.get_children():
             self._handle_node(child, rhi)
 
@@ -183,3 +199,7 @@ class _RMFLoader(object):
         atom0 = self.rmf_index_to_atom[rmfatom0.get_index()]
         atom1 = self.rmf_index_to_atom[rmfatom1.get_index()]
         rhi.new_bond(atom0, atom1)
+
+    def _add_feature(self, feature, rhi):
+        rhi.new_feature([self.rmf_index_to_atom[x.get_index()]
+                         for x in feature.get_representation()])
