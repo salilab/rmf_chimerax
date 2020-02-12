@@ -106,6 +106,10 @@ class _RMFHierarchyInfo(object):
         atom.draw_mode = atom.SPHERE_STYLE
         return atom
 
+    def new_bond(self, a1, a2):
+        state = self.get_state()
+        return state.new_bond(a1, a2)
+
     def add_atom(self, atom, rnum, rtype):
         state = self.get_state()
         if self._chain is None:
@@ -135,6 +139,8 @@ class _RMFLoader(object):
         self.residuef = RMF.ResidueConstFactory(r)
         self.refframef = RMF.ReferenceFrameConstFactory(r)
         self.statef = RMF.StateConstFactory(r)
+        self.bondf = RMF.BondConstFactory(r)
+        self.rmf_index_to_atom = {}
 
         r.set_current_frame(RMF.FrameID(0))
 
@@ -149,6 +155,7 @@ class _RMFLoader(object):
         if self.particlef.get_is(node):
             p = self.particlef.get(node)
             atom = rhi.new_atom(p)
+            self.rmf_index_to_atom[node.get_index()] = atom
             if self.coloredf.get_is(node):
                 c = self.coloredf.get(node)
                 # RMF colors are 0-1 and has no alpha; ChimeraX uses 0-255
@@ -165,5 +172,14 @@ class _RMFLoader(object):
             else:
                 rnum = 1  # Make up a residue number if we don't have one
             rhi.add_atom(atom, rnum, rtype)
+        if self.bondf.get_is(node):
+            self._add_bond(self.bondf.get(node), rhi)
         for child in node.get_children():
             self._handle_node(child, rhi)
+
+    def _add_bond(self, bond, rhi):
+        rmfatom0 = bond.get_bonded_0()
+        rmfatom1 = bond.get_bonded_1()
+        atom0 = self.rmf_index_to_atom[rmfatom0.get_index()]
+        atom1 = self.rmf_index_to_atom[rmfatom1.get_index()]
+        rhi.new_bond(atom0, atom1)
