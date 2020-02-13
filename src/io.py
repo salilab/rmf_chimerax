@@ -143,6 +143,8 @@ class _RMFLoader(object):
     def load(self, path, session):
         if sys.platform == 'darwin':
             from .mac import RMF
+        elif sys.platform == 'linux':
+            from .linux import RMF
 
         self.GAUSSIAN_PARTICLE = RMF.GAUSSIAN_PARTICLE
         self.PARTICLE = RMF.PARTICLE
