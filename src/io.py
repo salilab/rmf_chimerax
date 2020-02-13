@@ -2,6 +2,7 @@
 
 import numpy
 import os.path
+import sys
 
 
 def open_rmf(session, path):
@@ -140,7 +141,8 @@ class _RMFLoader(object):
         pass
 
     def load(self, path, session):
-        from . import RMF
+        if sys.platform == 'darwin':
+            from .mac import RMF
 
         self.GAUSSIAN_PARTICLE = RMF.GAUSSIAN_PARTICLE
         self.PARTICLE = RMF.PARTICLE

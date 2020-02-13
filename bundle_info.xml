@@ -35,10 +35,9 @@ used by the Integrative Modeling Platform (IMP) software.
 
   <!-- Non-Python files that are part of package -->
   <DataFiles>
-    <DataFile platform="mac">_RMF.so</DataFile>
-    <DataFile platform="mac">_RMF_HDF5.so</DataFile>
-    <DataFile platform="linux">_RMF.so</DataFile>
-    <DataFile platform="linux">_RMF_HDF5.so</DataFile>
+    <DataFile platform="mac">mac/RMF*.py</DataFile>
+    <DataFile platform="mac">mac/*.so</DataFile>
+    <DataFile platform="mac">mac/*.dylib</DataFile>
   </DataFiles>
 
   <Classifiers>
