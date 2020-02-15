@@ -2,12 +2,12 @@ sudo: false
 language: python
 dist: xenial
 python:
-  - 3.8
+  - 3.7
 cache:
   pip: true
 install:
-  - pip install coverage
+  - pip install coverage scipy
 script:
-  - nosetests --with-coverage --cover-branches
+  - nosetests --with-coverage --cover-branches test
 after_success:
   - bash <(curl -s https://codecov.io/bash)
