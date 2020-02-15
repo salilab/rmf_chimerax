@@ -1,0 +1,15 @@
+environment:
+  matrix:
+    - PYTHON: "C:\\Python37"
+
+install:
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "python.exe -m pip install codecov coverage nose scipy"
+
+build: off
+
+test_script:
+  - "nosetests --with-coverage --cover-branches test"
+
+on_success:
+  - "codecov"
