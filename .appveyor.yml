@@ -2,6 +2,8 @@ environment:
   matrix:
     - PYTHON: "C:\\Python37"
 
+platform: x64
+
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "python.exe -m pip install codecov coverage nose scipy"
