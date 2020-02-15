@@ -1,0 +1,2 @@
+class BundleAPI(object):
+    pass
