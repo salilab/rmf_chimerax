@@ -1,2 +1,5 @@
 ignore:
   - test
+  - src/linux
+  - src/mac
+  - src/windows
