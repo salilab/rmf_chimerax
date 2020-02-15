@@ -40,6 +40,9 @@ used by the Integrative Modeling Platform (IMP) software.
     <DataFile platform="mac">mac/*.dylib</DataFile>
     <DataFile platform="linux">linux/RMF*.py</DataFile>
     <DataFile platform="linux">linux/*.so*</DataFile>
+    <DataFile platform="windows">windows/RMF*.py</DataFile>
+    <DataFile platform="windows">windows/*.pyd</DataFile>
+    <DataFile platform="windows">windows/*.dll</DataFile>
   </DataFiles>
 
   <Classifiers>

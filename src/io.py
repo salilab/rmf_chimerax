@@ -145,6 +145,8 @@ class _RMFLoader(object):
             from .mac import RMF
         elif sys.platform == 'linux':
             from .linux import RMF
+        else:
+            from .windows import RMF
 
         self.GAUSSIAN_PARTICLE = RMF.GAUSSIAN_PARTICLE
         self.PARTICLE = RMF.PARTICLE
