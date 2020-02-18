@@ -13,13 +13,17 @@ will be displayed without the ChimeraX- prefix.
   <!-- Additional information about bundle source -->
   <Author>Ben Webb, Sali Lab, University of California San Francisco</Author>
   <Email>ben@salilab.org</Email>
-  <URL>https://salilab.org/</URL>
+  <URL>https://integrativemodeling.org/rmf/</URL>
 
   <!-- Synopsis is a one-line description
        Description is a full multi-line description -->
   <Synopsis>Support for the RMF file format</Synopsis>
   <Description>Reads files in the Rich Molecular Format (RMF), which are
 used by the Integrative Modeling Platform (IMP) software.
+Currently it will only read and display the first frame from an RMF file and any
+2-particle restraints (such as cross-links) although the longer-term goal
+is to offer the same functionality as the RMF viewer in legacy Chimera plus
+support for newer RMF features, such as provenance.
   </Description>
 
   <!-- Categories is a list where this bundle should appear -->

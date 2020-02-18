@@ -3,3 +3,7 @@
 [![codecov](https://codecov.io/gh/salilab/rmf_chimerax/branch/master/graph/badge.svg)](https://codecov.io/gh/salilab/rmf_chimerax)
 
 This is an experimental ChimeraX plugin to read and visualize RMF files.
+Currently it will only read and display the first frame from an RMF file and any
+2-particle restraints (such as cross-links) although the longer-term goal
+is to offer the same functionality as the RMF viewer in legacy Chimera plus
+support for newer RMF features, such as provenance.
