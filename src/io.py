@@ -60,7 +60,8 @@ class _RMFHierarchyInfo(object):
     """Track structural information encountered through the RMF hierarchy"""
     def __init__(self, top_level):
         self.top_level = top_level
-        self._refframe = self._state = self._chain = None
+        self._refframe = self._state = self._chain = self._copy = None
+        self._resolution = None
 
     def _set_reference_frame(self, rf):
         """Set the current reference frame from an RMF ReferenceFrame node"""
@@ -89,7 +90,14 @@ class _RMFHierarchyInfo(object):
             rhi._set_reference_frame(loader.refframef.get(node))
         if loader.chainf.get_is(node):
             rhi = copy_if_needed(rhi)
-            rhi._chain = loader.chainf.get(node)
+            rhi._chain = (node, loader.chainf.get(node))
+        if loader.copyf.get_is(node):
+            rhi = copy_if_needed(rhi)
+            rhi._copy = loader.copyf.get(node).get_copy_index()
+        if loader.resolutionf.get_is(node):
+            rhi = copy_if_needed(rhi)
+            n = loader.resolutionf.get(node)
+            rhi._resolution = n.get_explicit_resolution()
         return rhi
 
     def get_state(self):
@@ -128,9 +136,15 @@ class _RMFHierarchyInfo(object):
         if self._chain is None:
             chain_id = 'X'
         else:
-            chain_id = self._chain.get_chain_id()
+            chain_id = self._chain[1].get_chain_id()
         # todo: handle atomic (multiple atoms in same residue)
         self._residue = state.new_residue(rtype, chain_id, rnum)
+        if self._chain:
+            self._residue.rmf_name = self._chain[0].get_name()
+        if self._copy is not None:
+            self._residue.copy = self._copy
+        if self._resolution is not None:
+            self._residue.resolution = self._resolution
         self._residue.add_atom(atom)
 
 
@@ -163,6 +177,8 @@ class _RMFLoader(object):
         self.bondf = RMF.BondConstFactory(r)
         self.represf = RMF.RepresentationConstFactory(r)
         self.altf = RMF.AlternativesConstFactory(r)
+        self.copyf = RMF.CopyConstFactory(r)
+        self.resolutionf = RMF.ExplicitResolutionConstFactory(r)
         self.rmf_index_to_atom = {}
 
         r.set_current_frame(RMF.FrameID(0))
