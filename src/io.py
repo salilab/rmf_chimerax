@@ -35,6 +35,14 @@ class _RMFState(Structure):
         b.halfbond = False
 
 
+class _RMFDrawing(Structure):
+    """Representation of RMF geometry"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._drawing = AtomicShapeDrawing('geometry')
+        self.add_drawing(self._drawing)
+
+
 class _RMFModel(Model):
     """Representation of the top level of an RMF model"""
     def __init__(self, session, filename):
@@ -45,8 +53,8 @@ class _RMFModel(Model):
 
     def get_drawing(self):
         if self._drawing is None:
-            self._drawing = AtomicShapeDrawing('geometry')
-            self.add_drawing(self._drawing)
+            self._drawing = _RMFDrawing(self.session, name="Geometry")
+            self.add([self._drawing])
         return self._drawing
 
     def _add_state(self, name):
@@ -64,9 +72,9 @@ class _RMFModel(Model):
 
     def add_shape(self, vertices, normals, triangles, name):
         drawing = self.get_drawing()
-        drawing.add_shape(vertices, normals, triangles,
-                          numpy.array([255,255,255,255]),
-                          description=name)
+        drawing._drawing.add_shape(vertices, normals, triangles,
+                                   numpy.array([255,255,255,255]),
+                                   description=name)
 
 
 class _RMFHierarchyInfo(object):
