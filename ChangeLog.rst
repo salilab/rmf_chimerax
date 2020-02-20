@@ -1,6 +1,7 @@
 HEAD
 ====
  - Improved support for RMF files containing atomic information.
+ - Add basic visualization of RMF geometry, such as bounding boxes.
 
 0.1 - 2020-02-19
 ================

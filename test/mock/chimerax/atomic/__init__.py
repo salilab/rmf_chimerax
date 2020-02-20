@@ -45,3 +45,8 @@ class Structure(object):
         if self._pbg is None:
             self._pbg = PseudobondGroup()
         return self._pbg
+
+
+class AtomicShapeDrawing(object):
+    def add_shape(vertices, normals, triangles, color, description=None):
+        pass

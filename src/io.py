@@ -20,7 +20,7 @@ def open_rmf(session, path):
 
 
 from chimerax.core.models import Model
-from chimerax.atomic import Structure
+from chimerax.atomic import Structure, AtomicShapeDrawing
 
 class _RMFState(Structure):
     """Representation of structure corresponding to a single RMF state"""
@@ -40,7 +40,14 @@ class _RMFModel(Model):
     def __init__(self, session, filename):
         name = os.path.splitext(filename)[0]
         self._unnamed_state = None
+        self._drawing = None
         super().__init__(name, session)
+
+    def get_drawing(self):
+        if self._drawing is None:
+            self._drawing = AtomicShapeDrawing('geometry')
+            self.add_drawing(self._drawing)
+        return self._drawing
 
     def _add_state(self, name):
         """Create and return a new _RMFState"""
@@ -54,6 +61,12 @@ class _RMFModel(Model):
         if self._unnamed_state is None:
             self._unnamed_state = self._add_state('Unnamed state')
         return self._unnamed_state
+
+    def add_shape(self, vertices, normals, triangles, name):
+        drawing = self.get_drawing()
+        drawing.add_shape(vertices, normals, triangles,
+                          numpy.array([255,255,255,255]),
+                          description=name)
 
 
 class _RMFHierarchyInfo(object):
@@ -168,6 +181,15 @@ class _RMFHierarchyInfo(object):
             state = atoms[0].structure
             state._add_pseudobond(atoms)
 
+    def new_segment(self, coords, name):
+        # todo: don't rely on chimerax.bild (not public API)
+        from chimerax.bild.bild import get_cylinder
+        if len(coords) != 2:
+            return
+        vertices, normals, triangles = get_cylinder(
+            1.0, numpy.array(coords[0]), numpy.array(coords[1]))
+        self.top_level.add_shape(vertices, normals, triangles, name)
+
     def add_atom(self, atom):
         residue = self.get_residue()
         residue.add_atom(atom)
@@ -206,6 +228,7 @@ class _RMFLoader(object):
         self.copyf = RMF.CopyConstFactory(r)
         self.resolutionf = RMF.ExplicitResolutionConstFactory(r)
         self.atomf = RMF.AtomConstFactory(r)
+        self.segmentf = RMF.SegmentConstFactory(r)
         self.rmf_index_to_atom = {}
 
         r.set_current_frame(RMF.FrameID(0))
@@ -242,6 +265,8 @@ class _RMFLoader(object):
             self._add_bond(self.bondf.get(node), rhi)
         if self.represf.get_is(node):
             self._add_feature(self.represf.get(node), rhi)
+        if self.segmentf.get_is(node):
+            self._add_segment(self.segmentf.get(node), node.get_name(), rhi)
         for child in node.get_children():
             self._handle_node(child, rhi)
         # Handle any alternatives (usually different resolutions)
@@ -265,3 +290,6 @@ class _RMFLoader(object):
     def _add_feature(self, feature, rhi):
         rhi.new_feature([self.rmf_index_to_atom[x.get_index()]
                          for x in feature.get_representation()])
+
+    def _add_segment(self, segment, name, rhi):
+        rhi.new_segment(segment.get_coordinates_list(), name)
