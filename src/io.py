@@ -144,7 +144,7 @@ class _RMFHierarchyInfo(object):
                 self._residue.resolution = self._resolution
         return self._residue
 
-    def new_atom(self, p, name='C', element='C'):
+    def new_atom(self, p, mass, name='C', element='C'):
         """Create and return a new ChimeraX Atom for the given Particle
            (and Atom, if applicable) node.
            Call add_atom() to complete adding the atom to the model."""
@@ -154,7 +154,7 @@ class _RMFHierarchyInfo(object):
         if self._refframe:
             rot, trans = self._refframe
             atom.coord = rot.apply(atom.coord) + trans
-        atom.mass = p.get_mass()
+        atom.mass = mass
         atom.radius = p.get_radius()
         atom.draw_mode = atom.SPHERE_STYLE
         return atom
@@ -193,6 +193,7 @@ class _RMFLoader(object):
         structures = []
         r = RMF.open_rmf_file_read_only(path)
         self.particlef = RMF.ParticleConstFactory(r)
+        self.ballf = RMF.BallConstFactory(r)
         self.coloredf = RMF.ColoredConstFactory(r)
         self.chainf = RMF.ChainConstFactory(r)
         self.fragmentf = RMF.FragmentConstFactory(r)
@@ -214,23 +215,29 @@ class _RMFLoader(object):
         self._handle_node(r.get_root_node(), rhi)
         return r, [top_level]
 
+    def _add_atom(self, node, p, mass, rhi):
+        if self.atomf.get_is(node):
+            ap = self.atomf.get(node)
+            atom = rhi.new_atom(p, mass, name=node.get_name(),
+                                element=ap.get_element())
+        else:
+            atom = rhi.new_atom(p, mass)
+        self.rmf_index_to_atom[node.get_index()] = atom
+        if self.coloredf.get_is(node):
+            c = self.coloredf.get(node)
+            # RMF colors are 0-1 and has no alpha; ChimeraX uses 0-255
+            atom.color = [x * 255. for x in c.get_rgb_color()] + [255]
+        rhi.add_atom(atom)
+
     def _handle_node(self, node, parent_rhi):
         # Get hierarchy-related info from this node (e.g. chain, state)
         rhi = parent_rhi.handle_node(node, self)
         if self.particlef.get_is(node):
             p = self.particlef.get(node)
-            if self.atomf.get_is(node):
-                ap = self.atomf.get(node)
-                atom = rhi.new_atom(p, name=node.get_name(),
-                                    element=ap.get_element())
-            else:
-                atom = rhi.new_atom(p)
-            self.rmf_index_to_atom[node.get_index()] = atom
-            if self.coloredf.get_is(node):
-                c = self.coloredf.get(node)
-                # RMF colors are 0-1 and has no alpha; ChimeraX uses 0-255
-                atom.color = [x * 255. for x in c.get_rgb_color()] + [255]
-            rhi.add_atom(atom)
+            self._add_atom(node, p, p.get_mass(), rhi)
+        elif self.ballf.get_is(node):
+            # balls have no mass
+            self._add_atom(node, self.ballf.get(node), 0., rhi)
         if self.bondf.get_is(node):
             self._add_bond(self.bondf.get(node), rhi)
         if self.represf.get_is(node):
