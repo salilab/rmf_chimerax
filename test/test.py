@@ -18,8 +18,14 @@ class MockSession(object):
 
 class Tests(unittest.TestCase):
     def test_open_rmf(self):
-        """Test open_rmf with a simple RMF file"""
+        """Test open_rmf with a simple coarse-grained RMF file"""
         path = os.path.join(INDIR, 'simple.rmf3')
+        mock_session = MockSession()
+        structures, status = src.io.open_rmf(mock_session, path)
+
+    def test_open_rmf_atomic(self):
+        """Test open_rmf with a simple atomic RMF file"""
+        path = os.path.join(INDIR, 'simple_atomic.rmf3')
         mock_session = MockSession()
         structures, status = src.io.open_rmf(mock_session, path)
 

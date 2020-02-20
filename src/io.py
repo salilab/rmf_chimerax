@@ -61,7 +61,8 @@ class _RMFHierarchyInfo(object):
     def __init__(self, top_level):
         self.top_level = top_level
         self._refframe = self._state = self._chain = self._copy = None
-        self._resolution = None
+        self._resolution = self._resnum = self._restype = None
+        self._residue = None
 
     def _set_reference_frame(self, rf):
         """Set the current reference frame from an RMF ReferenceFrame node"""
@@ -98,6 +99,19 @@ class _RMFHierarchyInfo(object):
             rhi = copy_if_needed(rhi)
             n = loader.resolutionf.get(node)
             rhi._resolution = n.get_explicit_resolution()
+        if loader.fragmentf.get_is(node):
+            rhi = copy_if_needed(rhi)
+            f = loader.fragmentf.get(node)
+            resinds = f.get_residue_indexes()
+            rhi._residue = None  # clear residue cache
+            rhi._resnum = resinds[len(resinds) // 2]
+            rhi._restype = 'ALA'  # Guess type
+        if loader.residuef.get_is(node):
+            rhi = copy_if_needed(rhi)
+            r = loader.residuef.get(node)
+            rhi._residue = None  # clear residue cache
+            rhi._resnum = r.get_residue_index()
+            rhi._restype = r.get_residue_type()
         return rhi
 
     def get_state(self):
@@ -108,11 +122,34 @@ class _RMFHierarchyInfo(object):
             # If we're not under a State node, use the unnamed state
             return self.top_level.get_unnamed_state()
 
-    def new_atom(self, p):
-        """Create and return a new ChimeraX Atom for the given Particle node.
+    def get_residue(self):
+        """Get the current residue"""
+        if self._residue is None:  # Use cached residue if available
+            state = self.get_state()
+            if self._chain is None:
+                chain_id = 'X'
+            else:
+                chain_id = self._chain[1].get_chain_id()
+            if self._resnum is None:
+                # If RMF provides no residue info, make it up
+                self._residue = state.new_residue('ALA', chain_id, 1)
+            else:
+                self._residue = state.new_residue(self._restype, chain_id,
+                                                  self._resnum)
+            if self._chain:
+                self._residue.rmf_name = self._chain[0].get_name()
+            if self._copy is not None:
+                self._residue.copy = self._copy
+            if self._resolution is not None:
+                self._residue.resolution = self._resolution
+        return self._residue
+
+    def new_atom(self, p, name='C', element='C'):
+        """Create and return a new ChimeraX Atom for the given Particle
+           (and Atom, if applicable) node.
            Call add_atom() to complete adding the atom to the model."""
         state = self.get_state()
-        atom = state.new_atom('C', 'C')
+        atom = state.new_atom(name, element)
         atom.coord = p.get_coordinates()
         if self._refframe:
             rot, trans = self._refframe
@@ -131,21 +168,9 @@ class _RMFHierarchyInfo(object):
             state = atoms[0].structure
             state._add_pseudobond(atoms)
 
-    def add_atom(self, atom, rnum, rtype):
-        state = self.get_state()
-        if self._chain is None:
-            chain_id = 'X'
-        else:
-            chain_id = self._chain[1].get_chain_id()
-        # todo: handle atomic (multiple atoms in same residue)
-        self._residue = state.new_residue(rtype, chain_id, rnum)
-        if self._chain:
-            self._residue.rmf_name = self._chain[0].get_name()
-        if self._copy is not None:
-            self._residue.copy = self._copy
-        if self._resolution is not None:
-            self._residue.resolution = self._resolution
-        self._residue.add_atom(atom)
+    def add_atom(self, atom):
+        residue = self.get_residue()
+        residue.add_atom(atom)
 
 
 class _RMFLoader(object):
@@ -179,6 +204,7 @@ class _RMFLoader(object):
         self.altf = RMF.AlternativesConstFactory(r)
         self.copyf = RMF.CopyConstFactory(r)
         self.resolutionf = RMF.ExplicitResolutionConstFactory(r)
+        self.atomf = RMF.AtomConstFactory(r)
         self.rmf_index_to_atom = {}
 
         r.set_current_frame(RMF.FrameID(0))
@@ -193,24 +219,18 @@ class _RMFLoader(object):
         rhi = parent_rhi.handle_node(node, self)
         if self.particlef.get_is(node):
             p = self.particlef.get(node)
-            atom = rhi.new_atom(p)
+            if self.atomf.get_is(node):
+                ap = self.atomf.get(node)
+                atom = rhi.new_atom(p, name=node.get_name(),
+                                    element=ap.get_element())
+            else:
+                atom = rhi.new_atom(p)
             self.rmf_index_to_atom[node.get_index()] = atom
             if self.coloredf.get_is(node):
                 c = self.coloredf.get(node)
                 # RMF colors are 0-1 and has no alpha; ChimeraX uses 0-255
                 atom.color = [x * 255. for x in c.get_rgb_color()] + [255]
-            rtype = 'ALA'
-            if self.fragmentf.get_is(node):
-                f = self.fragmentf.get(node)
-                resinds = f.get_residue_indexes()
-                rnum = resinds[len(resinds) // 2]
-            elif self.residuef.get_is(node):
-                r = self.residuef.get(node)
-                rnum = r.get_residue_index()
-                rtype = r.get_residue_type()
-            else:
-                rnum = 1  # Make up a residue number if we don't have one
-            rhi.add_atom(atom, rnum, rtype)
+            rhi.add_atom(atom)
         if self.bondf.get_is(node):
             self._add_bond(self.bondf.get(node), rhi)
         if self.represf.get_is(node):
