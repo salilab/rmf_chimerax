@@ -29,6 +29,13 @@ class Tests(unittest.TestCase):
         mock_session = MockSession()
         structures, status = src.io.open_rmf(mock_session, path)
 
+    def test_bundle_api_open(self):
+        """Test open file via BundleAPI"""
+        bundle_api = src.bundle_api
+        path = os.path.join(INDIR, 'simple.rmf3')
+        mock_session = MockSession()
+        structures, status = bundle_api.open_file(mock_session, path, 'RMF')
+
 
 if __name__ == '__main__':
     unittest.main()
