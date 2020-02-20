@@ -46,7 +46,7 @@ class _RMFDrawing(Structure):
 class _RMFModel(Model):
     """Representation of the top level of an RMF model"""
     def __init__(self, session, filename):
-        name = os.path.splitext(filename)[0]
+        name = os.path.splitext(os.path.basename(filename))[0]
         self._unnamed_state = None
         self._drawing = None
         super().__init__(name, session)
