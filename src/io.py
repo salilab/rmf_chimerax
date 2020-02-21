@@ -249,8 +249,12 @@ class _RMFLoader(object):
     def _add_atom(self, node, p, mass, rhi):
         if self.atomf.get_is(node):
             ap = self.atomf.get(node)
-            atom = rhi.new_atom(p, mass, name=node.get_name(),
-                                element=ap.get_element())
+            name = node.get_name()
+            # ChimeraX names must not exceed 4 characters, so strip RMF/IMP
+            # HET: prefix if present
+            if name.startswith('HET:'):
+                name = name[4:].strip()
+            atom = rhi.new_atom(p, mass, name=name, element=ap.get_element())
         else:
             atom = rhi.new_atom(p, mass)
         self.rmf_index_to_atom[node.get_index()] = atom

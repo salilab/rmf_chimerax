@@ -135,7 +135,7 @@ class Tests(unittest.TestCase):
             self.assertEqual(len(state.atoms), 2)
 
             a1, a2 = state.atoms
-            self.assertEqual(a1.name, 'HET: N  ')
+            self.assertEqual(a1.name, 'N')
             self.assertEqual(a2.name, 'C')
 
 
