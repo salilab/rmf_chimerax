@@ -14,8 +14,9 @@ def open_rmf(session, path):
     rl = _RMFLoader()
     r, structures = rl.load(path, session)
 
-    status = ("Opened RMF file produced with %s, with %d frames"
-              % (r.get_producer(), r.get_number_of_frames()))
+    numframes = r.get_number_of_frames()
+    status = ("Opened RMF file produced with %s, with %d frame%s"
+              % (r.get_producer(), numframes, "" if numframes == 1 else "s"))
     return structures, status
 
 
