@@ -49,6 +49,10 @@ class Tests(unittest.TestCase):
             s = sf.get(rn.add_child("test segment", RMF.GEOMETRY))
             s.set_coordinates_list([RMF.Vector3(0, 0, 0), RMF.Vector3(5, 5, 5)])
 
+            # Lines with zero length are ignored
+            s = sf.get(rn.add_child("null segment", RMF.GEOMETRY))
+            s.set_coordinates_list([RMF.Vector3(0, 0, 0), RMF.Vector3(0, 0, 0)])
+
         with utils.temporary_file(suffix='.rmf') as fname:
             make_rmf_file(fname)
             mock_session = MockSession()

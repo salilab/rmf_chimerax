@@ -194,8 +194,12 @@ class _RMFHierarchyInfo(object):
         from chimerax.bild.bild import get_cylinder
         if len(coords) != 2:
             return
-        vertices, normals, triangles = get_cylinder(
-            1.0, numpy.array(coords[0]), numpy.array(coords[1]))
+        a = numpy.array(coords[0])
+        b = numpy.array(coords[1])
+        # Skip zero-length lines
+        if numpy.linalg.norm(a-b) < 1e-6:
+            return
+        vertices, normals, triangles = get_cylinder(1.0, a, b)
         self.top_level.add_shape(vertices, normals, triangles, name)
 
     def add_atom(self, atom):
