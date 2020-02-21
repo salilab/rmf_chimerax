@@ -20,6 +20,7 @@ class Atom(object):
 
     def __init__(self, name, element, structure):
         self.structure = weakref.proxy(structure)
+        self.name = name
         self.element = element
 
 

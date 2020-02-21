@@ -96,6 +96,48 @@ class Tests(unittest.TestCase):
             self.assertEqual([int(c) for c in a1.coord], [1,2,3])
             self.assertEqual([int(c) for c in a2.coord], [4,5,6])
 
+    def test_read_atoms_het(self):
+        """Test open_rmf handling of RMF atoms with HET prefix"""
+        def make_rmf_file(fname):
+            r = RMF.create_rmf_file(fname)
+            r.add_frame("root", RMF.FRAME)
+            rn = r.get_root_node()
+            atomf = RMF.AtomFactory(r)
+            particlef = RMF.ParticleFactory(r)
+            chainf = RMF.ChainFactory(r)
+            residuef = RMF.ResidueFactory(r)
+            n = rn.add_child("H", RMF.REPRESENTATION)
+            c = chainf.get(n)
+            c.set_chain_id('H')
+
+            def add_residue(n, atom_name, resnum, res_name):
+                n = n.add_child("%d" % resnum, RMF.REPRESENTATION)
+                r = residuef.get(n)
+                r.set_residue_index(resnum)
+                r.set_residue_type(res_name)
+                n = n.add_child(atom_name, RMF.REPRESENTATION)
+                a = atomf.get(n)
+                a.set_element(12)
+                p = particlef.get(n)
+                p.set_mass(12.)
+                p.set_radius(1.)
+                p.set_coordinates(RMF.Vector3(1,2,3))
+            add_residue(n, 'HET: N  ', 1, 'PCA')
+            add_residue(n, 'C', 2, 'GLY')
+
+        with utils.temporary_file(suffix='.rmf') as fname:
+            make_rmf_file(fname)
+            mock_session = MockSession()
+            structures, status = src.io.open_rmf(mock_session, fname)
+            # Two atoms in two residues should have been added
+            state, = structures[0].child_models()
+            self.assertEqual(len(state.residues), 2)
+            self.assertEqual(len(state.atoms), 2)
+
+            a1, a2 = state.atoms
+            self.assertEqual(a1.name, 'HET: N  ')
+            self.assertEqual(a2.name, 'C')
+
 
 if __name__ == '__main__':
     unittest.main()
