@@ -1,3 +1,6 @@
+import weakref
+
+
 class Pseudobond(object):
     pass
 
@@ -16,7 +19,8 @@ class Atom(object):
     SPHERE_STYLE = 1
 
     def __init__(self, name, element, structure):
-        self.structure = structure
+        self.structure = weakref.proxy(structure)
+        self.element = element
 
 
 class Residue(object):
@@ -24,20 +28,24 @@ class Residue(object):
         pass
 
     def add_atom(self, atom):
-        pass
+        atom.structure.atoms.append(atom)
 
 
 class Structure(object):
     def __init__(self, session, *, name='structure'):
         self._pbg = None
         self._drawings = []
+        self.atoms = []
+        self.residues = []
 
     def new_atom(self, atom_name, element):
         return Atom(atom_name, element, self)
 
     def new_residue(self, residue_name, chain_id, pos, insert=None,
                     *, precedes=None):
-        return Residue(residue_name, chain_id)
+        r = Residue(residue_name, chain_id)
+        self.residues.append(r)
+        return r
 
     def new_bond(self, atom1, atom2):
         return Bond(atom1, atom2)
