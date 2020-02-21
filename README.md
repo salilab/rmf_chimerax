@@ -27,3 +27,16 @@ For example, all of the non-primary copies could be selected with
 `select ::copy>0` or only the bead-per-residue representation of the primary
 copy of Tub0 could be selected with
 `select ::rmf_name="Tub0" & ::copy=0 & ::resolution=1`.
+
+## Installation
+
+Stable releases can be installed directly from ChimeraX using the
+[ChimeraX Toolshed](https://cxtoolshed.rbvi.ucsf.edu/). (From the Tools menu,
+select "More Tools" and then select the RMF plugin.)
+
+The most recent code on GitHub can be used by cloning it, then running
+`make install` to install the plugin in ChimeraX. This needs to know where
+your copy of ChimeraX is installed, which you can do by setting the
+`CHIMERAX_APP` environment variable to the directory containing ChimeraX (on
+Windows or Mac) or `CHIMERAX_EXE` to the full path to the `chimerax` binary
+(on Linux).
