@@ -30,6 +30,7 @@ class Residue(object):
 class Structure(object):
     def __init__(self, session, *, name='structure'):
         self._pbg = None
+        self._drawings = []
 
     def new_atom(self, atom_name, element):
         return Atom(atom_name, element, self)
@@ -46,7 +47,14 @@ class Structure(object):
             self._pbg = PseudobondGroup()
         return self._pbg
 
+    def add_drawing(self, drawing):
+        self._drawings.append(drawing)
+
 
 class AtomicShapeDrawing(object):
-    def add_shape(vertices, normals, triangles, color, description=None):
-        pass
+    def __init__(self, name):
+        self.name = name
+        self._shapes = []
+
+    def add_shape(self, vertices, normals, triangles, color, description=None):
+        self._shapes.append((vertices, normals, triangles, color, description))
