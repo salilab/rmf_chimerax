@@ -52,6 +52,7 @@ class _RMFModel(Model):
         name = os.path.splitext(os.path.basename(filename))[0]
         self._unnamed_state = None
         self._drawing = None
+        self._rmf_chains = []
         super().__init__(name, session)
 
     def get_drawing(self):
@@ -65,6 +66,9 @@ class _RMFModel(Model):
         s = _RMFState(self.session, name=name)
         self.add([s])
         return s
+
+    def _add_rmf_chain(self, chain, hierarchy):
+        self._rmf_chains.append((chain.get_chain_id(), hierarchy))
 
     def get_unnamed_state(self):
         """Get the 'unnamed' state, used for structure that isn't the
@@ -105,7 +109,7 @@ class _RMFHierarchyInfo(object):
         rot = Rotation.from_quat(rf.get_rotation())
         self._refframe = (rot, numpy.array(rf.get_translation()))
 
-    def handle_node(self, node, loader):
+    def handle_node(self, node, hierarchy, loader):
         """Extract structural information from the given RMF node.
            Return the _RMFHierarchyInfo object containing this information.
            This may be the current object, or a new one."""
@@ -126,6 +130,7 @@ class _RMFHierarchyInfo(object):
         if loader.chainf.get_is(node):
             rhi = copy_if_needed(rhi)
             rhi._chain = (node, loader.chainf.get(node))
+            self.top_level._add_rmf_chain(rhi._chain[1], hierarchy)
         if loader.copyf.get_is(node):
             rhi = copy_if_needed(rhi)
             rhi._copy = loader.copyf.get(node).get_copy_index()
@@ -285,7 +290,7 @@ class _RMFLoader(object):
     def _handle_node(self, node, parent_rhi):
         rmf_nodes = [_RMFHierarchyNode(node)]
         # Get hierarchy-related info from this node (e.g. chain, state)
-        rhi = parent_rhi.handle_node(node, self)
+        rhi = parent_rhi.handle_node(node, rmf_nodes[0], self)
         if self.gparticlef.get_is(node):
             # todo: do something with Gaussians
             pass

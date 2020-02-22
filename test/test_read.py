@@ -40,6 +40,11 @@ class Tests(unittest.TestCase):
              'Frag_1-20: Res 10', '1-10_bead', '11-20_bead', 'sampling',
              'script', 'software', 'software', 'bonds', 'bond',
              '|Chen|0.1|Rpb1|1|Rpb1|18|0|PSI|'])
+        # Check chains
+        chains = structures[0]._rmf_chains
+        self.assertEqual(len(chains), 1)
+        self.assertEqual(chains[0][0], 'A')
+        self.assertEqual(chains[0][1].name, 'Rpb1')
 
     def test_open_rmf_atomic(self):
         """Test open_rmf with a simple atomic RMF file"""
