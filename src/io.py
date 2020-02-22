@@ -240,6 +240,7 @@ class _RMFLoader(object):
         structures = []
         r = RMF.open_rmf_file_read_only(path)
         self.particlef = RMF.ParticleConstFactory(r)
+        self.gparticlef = RMF.GaussianParticleConstFactory(r)
         self.ballf = RMF.BallConstFactory(r)
         self.coloredf = RMF.ColoredConstFactory(r)
         self.chainf = RMF.ChainConstFactory(r)
@@ -285,7 +286,10 @@ class _RMFLoader(object):
         rmf_nodes = [_RMFHierarchyNode(node)]
         # Get hierarchy-related info from this node (e.g. chain, state)
         rhi = parent_rhi.handle_node(node, self)
-        if self.particlef.get_is(node):
+        if self.gparticlef.get_is(node):
+            # todo: do something with Gaussians
+            pass
+        elif self.particlef.get_is(node):
             p = self.particlef.get(node)
             self._add_atom(node, p, p.get_mass(), rhi)
         elif self.ballf.get_is(node):
@@ -304,11 +308,11 @@ class _RMFLoader(object):
         # it - so use parent_rhi, not rhi.
         if self.altf.get_is(node):
             alt = self.altf.get(node)
-            for gauss in alt.get_alternatives(self.GAUSSIAN_PARTICLE):
-                rmf_nodes.append(self._handle_node(gauss, parent_rhi))
             # The node itself should be the first alternative, so ignore that
             for p in alt.get_alternatives(self.PARTICLE)[1:]:
-                rmf_nodes.append(self._handle_node(p, parent_rhi))
+                rmf_nodes.extend(self._handle_node(p, parent_rhi))
+            for gauss in alt.get_alternatives(self.GAUSSIAN_PARTICLE):
+                rmf_nodes.extend(self._handle_node(gauss, parent_rhi))
         return rmf_nodes
 
     def _add_bond(self, bond, rhi):

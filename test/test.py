@@ -158,6 +158,48 @@ class Tests(unittest.TestCase):
             self.assertEqual(a1.name, 'N')
             self.assertEqual(a2.name, 'C')
 
+    def test_alternatives(self):
+        """Test open_rmf handling of RMF alternatives"""
+        def make_rmf_file(fname):
+            r = RMF.create_rmf_file(fname)
+            r.add_frame("root", RMF.FRAME)
+            rn = r.get_root_node()
+
+            af = RMF.AlternativesFactory(r)
+            pf = RMF.ParticleFactory(r)
+            gf = RMF.GaussianParticleFactory(r)
+
+            n = rn.add_child("topp1", RMF.REPRESENTATION)
+            p = n.add_child("p1", RMF.REPRESENTATION)
+            b = pf.get(p)
+            b.set_radius(4)
+            b.set_coordinates(RMF.Vector3(4.,5.,6.))
+            a = af.get(n)
+
+            root = r.add_node("topp2", RMF.REPRESENTATION)
+            p = root.add_child("p2", RMF.REPRESENTATION)
+            b = pf.get(p)
+            b.set_radius(4)
+            b.set_coordinates(RMF.Vector3(4.,5.,6.))
+            a.add_alternative(root, RMF.PARTICLE)
+
+            root = r.add_node("topg1", RMF.REPRESENTATION)
+            g = root.add_child("g1", RMF.REPRESENTATION)
+            b = gf.get(g)
+            b.set_variances(RMF.Vector3(1.,1.,1.))
+            b.set_mass(1.)
+            a.add_alternative(root, RMF.GAUSSIAN_PARTICLE)
+
+        with utils.temporary_file(suffix='.rmf') as fname:
+            make_rmf_file(fname)
+            mock_session = MockSession()
+            structures, status = src.io.open_rmf(mock_session, fname)
+            root = structures[0].rmf_hierarchy
+            self.assertEqual(root.name, 'root')
+            # All alternatives should be children of the root
+            self.assertEqual([c.name for c in root.children],
+                             ['topp1', 'topp2', 'topg1'])
+
 
 if __name__ == '__main__':
     unittest.main()
