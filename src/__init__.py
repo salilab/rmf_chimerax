@@ -10,6 +10,19 @@ class _MyAPI(BundleAPI):
 
     api_version = 1
 
+    @staticmethod
+    def register_command(bi, ci, logger):
+        from . import cmd
+        if ci.name == "rmf hierarchy":
+            func = cmd.hierarchy
+            desc = cmd.hierarchy_desc
+        else:
+            raise ValueError("trying to register unknown command: %s" % ci.name)
+        if desc.synopsis is None:
+            desc.synopsis = ci.synopsis
+        from chimerax.core.commands import register
+        register(ci.name, desc, func)
+
     # Override method for opening file
     @staticmethod
     def open_file(session, path, format_name):

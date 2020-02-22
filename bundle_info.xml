@@ -39,6 +39,7 @@ support for newer RMF features, such as provenance.
 
   <!-- Non-Python files that are part of package -->
   <DataFiles>
+    <DataFile>docs/user/commands/rmf.html</DataFile>
     <DataFile platform="mac">mac/RMF*.py</DataFile>
     <DataFile platform="mac">mac/*.so</DataFile>
     <DataFile platform="mac">mac/*.dylib</DataFile>
@@ -57,6 +58,8 @@ support for newer RMF features, such as provenance.
     <!-- Register XYZ format as one of the supported input file formats -->
     <ChimeraXClassifier>ChimeraX :: DataFormat :: RMF :: :: Molecular structure :: .rmf,.rmf3 :: :: https://integrativemodeling.org/rmf/ :: :: :: RMF format :: binary</ChimeraXClassifier>
     <ChimeraXClassifier>ChimeraX :: Open :: RMF :: RMF ::</ChimeraXClassifier>
+    <ChimeraXClassifier>ChimeraX :: Command :: rmf hierarchy :: General ::
+      Given a model read from an RMF file, print its hierarchy</ChimeraXClassifier>
   </Classifiers>
 
 </BundleInfo>
