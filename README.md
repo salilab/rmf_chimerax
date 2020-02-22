@@ -28,8 +28,9 @@ For example, all of the non-primary copies could be selected with
 copy of Tub0 could be selected with
 `select ::rmf_name="Tub0" & ::copy=0 & ::resolution=1`.
 
-An `rmf hierarchy` command is also added to ChimeraX, which if run will show
-the RMF hierarchy in the log. Use `help rmf` from ChimeraX for more information.
+An `rmf` command is also added to ChimeraX, which if run will show
+the RMF hierarchy or chain names in the log. Use `help rmf` from ChimeraX
+for more information.
 
 ## Installation
 

@@ -21,15 +21,43 @@ class MockSession(object):
     def __init__(self):
         self.logger = MockLogger()
 
+class MockModel:
+    id_string = '1'
+
+class MockRMFNode:
+    def __init__(self, name, index):
+        self.name, self.index = name, index
+    def get_name(self): return self.name
+    def get_index(self): return self.index
+
+def make_node(name, index):
+    n = MockRMFNode(name, index)
+    return src.io._RMFHierarchyNode(n)
+
+def make_test_rmf_hierarchy():
+    root = make_node("root", 0)
+    child1 = make_node("child1", 1)
+    child2 = make_node("child2", 2)
+    grandchild1 = make_node("grandchild1", 3)
+    grandchild2 = make_node("grandchild2", 4)
+    root.children.extend((child1, child2))
+    child1.children.extend((grandchild1, grandchild2))
+    test_model = MockModel()
+    test_model.rmf_hierarchy = root
+    return test_model
+
 
 class Tests(unittest.TestCase):
-    def test_hierarchy_register(self):
-        """Test register of rmf hierarchy command"""
+    def test_register(self):
+        """Test register of rmf commands"""
         class MockCommandInfo:
             def __init__(self, name, synopsis):
                 self.name, self.synopsis = name, synopsis
         bundle_api = src.bundle_api
         ci = MockCommandInfo("rmf hierarchy", "test synopsis")
+        bundle_api.register_command(None, ci, None)
+
+        ci = MockCommandInfo("rmf chains", "test synopsis")
         bundle_api.register_command(None, ci, None)
 
         ci = MockCommandInfo("bad command", "test synopsis")
@@ -44,26 +72,7 @@ class Tests(unittest.TestCase):
 
     def test_hierarchy(self):
         """Test hierarchy command"""
-        class MockModel:
-            pass
-        class MockRMFNode:
-            def __init__(self, name, index):
-                self.name, self.index = name, index
-            def get_name(self): return self.name
-            def get_index(self): return self.index
-        def make_node(name, index):
-            n = MockRMFNode(name, index)
-            return src.io._RMFHierarchyNode(n)
-
-        root = make_node("root", 0)
-        child1 = make_node("child1", 1)
-        child2 = make_node("child2", 2)
-        grandchild1 = make_node("grandchild1", 3)
-        grandchild2 = make_node("grandchild2", 4)
-        root.children.extend((child1, child2))
-        child1.children.extend((grandchild1, grandchild2))
-        test_model = MockModel()
-        test_model.rmf_hierarchy = root
+        test_model = make_test_rmf_hierarchy()
         mock_session = MockSession()
         src.cmd.hierarchy(mock_session, test_model)
         (log, is_html), = mock_session.logger.info_log
@@ -79,6 +88,23 @@ class Tests(unittest.TestCase):
         src.cmd.hierarchy(mock_session, test_model, depth=1)
         log, is_html = mock_session.logger.info_log[-1]
         self.assertEqual(get_li_lines(log), ['root', 'child1', 'child2'])
+
+    def test_chains_not_rmf(self):
+        """Test chains command on a model that is not an RMF"""
+        mock_session = MockSession()
+        src.cmd.chains(mock_session, 'garbage model')
+        self.assertEqual(mock_session.logger.info_log, [])
+
+    def test_chains(self):
+        """Test chains command"""
+        test_model = make_test_rmf_hierarchy()
+        test_model._rmf_chains = [('A', test_model.rmf_hierarchy.children[0])]
+        mock_session = MockSession()
+        src.cmd.chains(mock_session, test_model)
+        (log, is_html), = mock_session.logger.info_log
+        self.assertIn('<td>child1</td>', log)
+        self.assertIn('<td><a title="Select chain" '
+                      'href="cxcmd:select #1/A">A</a></td>', log)
 
 
 if __name__ == '__main__':

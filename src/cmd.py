@@ -32,3 +32,43 @@ def hierarchy(session, model, depth=-1):
 
 hierarchy_desc = CmdDesc(required=[("model", ModelArg)],
                          optional=[("depth", IntArg)])
+
+
+def _chains_html(model):
+    from chimerax.core.logger import html_table_params
+    def link_chain_id(cid):
+        return('<a title="Select chain" href="cxcmd:select #%s/%s">%s</a>'
+               % (model.id_string, cid, cid))
+    body_template = """
+    <tr>
+      <td>%s</td>
+      <td>%s</td>
+    </tr>
+"""
+    body = "\n".join(body_template % (c[1].name, link_chain_id(c[0]))
+                     for c in model._rmf_chains)
+    return """
+<table %s>
+  <thead>
+    <tr>
+      <th colspan="2">Chains for %s</th>
+    </tr>
+    <tr>
+      <th>RMF name</th>
+      <th>Chain ID</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    %s
+  </tbody>
+</table>
+""" % (html_table_params, model, body)
+
+def chains(session, model):
+    if not hasattr(model, '_rmf_chains'):
+        print("%s does not look like an RMF model" % model)
+    else:
+        session.logger.info(_chains_html(model), is_html=True)
+
+chains_desc = CmdDesc(required=[("model", ModelArg)])
