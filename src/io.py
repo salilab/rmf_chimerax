@@ -15,8 +15,10 @@ def open_rmf(session, path):
     r, structures = rl.load(path, session)
 
     numframes = r.get_number_of_frames()
-    status = ("Opened RMF file produced with %s, with %d frame%s"
-              % (r.get_producer(), numframes, "" if numframes == 1 else "s"))
+    producer = r.get_producer()
+    status = ("Opened RMF file%s with %d frame%s"
+              % (" produced with %s," % producer if producer else "",
+                 numframes, "" if numframes == 1 else "s"))
     return structures, status
 
 
