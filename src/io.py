@@ -80,6 +80,16 @@ class _RMFModel(Model):
                                    description=name)
 
 
+class _RMFHierarchyNode(object):
+    """Represent a single RMF node"""
+    __slots__ = ['name', 'rmf_index', 'children']
+
+    def __init__(self, rmf_node):
+        self.name = rmf_node.get_name()
+        self.rmf_index = rmf_node.get_index()
+        self.children = []
+
+
 class _RMFHierarchyInfo(object):
     """Track structural information encountered through the RMF hierarchy"""
     def __init__(self, top_level):
@@ -250,7 +260,7 @@ class _RMFLoader(object):
 
         top_level = _RMFModel(session, path)
         rhi = _RMFHierarchyInfo(top_level)
-        self._handle_node(r.get_root_node(), rhi)
+        top_level.rmf_hierarchy, = self._handle_node(r.get_root_node(), rhi)
         return r, [top_level]
 
     def _add_atom(self, node, p, mass, rhi):
@@ -272,6 +282,7 @@ class _RMFLoader(object):
         rhi.add_atom(atom)
 
     def _handle_node(self, node, parent_rhi):
+        rmf_nodes = [_RMFHierarchyNode(node)]
         # Get hierarchy-related info from this node (e.g. chain, state)
         rhi = parent_rhi.handle_node(node, self)
         if self.particlef.get_is(node):
@@ -287,17 +298,18 @@ class _RMFLoader(object):
         if self.segmentf.get_is(node):
             self._add_segment(self.segmentf.get(node), node.get_name(), rhi)
         for child in node.get_children():
-            self._handle_node(child, rhi)
+            rmf_nodes[0].children.extend(self._handle_node(child, rhi))
         # Handle any alternatives (usually different resolutions)
         # Alternatives replace the current node - they are not children of
         # it - so use parent_rhi, not rhi.
         if self.altf.get_is(node):
             alt = self.altf.get(node)
             for gauss in alt.get_alternatives(self.GAUSSIAN_PARTICLE):
-                self._handle_node(gauss, parent_rhi)
+                rmf_nodes.append(self._handle_node(gauss, parent_rhi))
             # The node itself should be the first alternative, so ignore that
             for p in alt.get_alternatives(self.PARTICLE)[1:]:
-                self._handle_node(p, parent_rhi)
+                rmf_nodes.append(self._handle_node(p, parent_rhi))
+        return rmf_nodes
 
     def _add_bond(self, bond, rhi):
         rmfatom0 = bond.get_bonded_0()

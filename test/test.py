@@ -17,6 +17,15 @@ RMF = utils.import_rmf_module()
 class MockSession(object):
     pass
 
+def get_all_nodes(structure):
+    """Yield all RMF nodes in a given structure, by flattening the hierarchy"""
+    def get_node(node):
+        yield node
+        for child in node.children:
+            for node in get_node(child):
+                yield node
+    return get_node(structure.rmf_hierarchy)
+
 
 class Tests(unittest.TestCase):
     def test_open_rmf(self):
@@ -24,6 +33,13 @@ class Tests(unittest.TestCase):
         path = os.path.join(INDIR, 'simple.rmf3')
         mock_session = MockSession()
         structures, status = src.io.open_rmf(mock_session, path)
+        # Check hierarchy
+        nodes = list(get_all_nodes(structures[0]))
+        self.assertEqual([n.name for n in nodes],
+            ['root', 'System', 'State_0', 'Rpb1', 'Frag_1-20',
+             'Frag_1-20: Res 10', '1-10_bead', '11-20_bead', 'sampling',
+             'script', 'software', 'software', 'bonds', 'bond',
+             '|Chen|0.1|Rpb1|1|Rpb1|18|0|PSI|'])
 
     def test_open_rmf_atomic(self):
         """Test open_rmf with a simple atomic RMF file"""
