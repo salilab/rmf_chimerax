@@ -3,6 +3,7 @@
 import numpy
 import os.path
 import sys
+import weakref
 
 
 def open_rmf(session, path):
@@ -86,12 +87,19 @@ class _RMFModel(Model):
 
 class _RMFHierarchyNode(object):
     """Represent a single RMF node"""
-    __slots__ = ['name', 'rmf_index', 'children']
+    __slots__ = ['name', 'rmf_index', 'children', 'parent', "__weakref__"]
 
     def __init__(self, rmf_node):
         self.name = rmf_node.get_name()
         self.rmf_index = rmf_node.get_index()
         self.children = []
+        self.parent = None
+
+    def add_children(self, children):
+        for child in children:
+            self.children.append(child)
+            # avoid circular reference
+            child.parent = weakref.ref(self)
 
 
 class _RMFHierarchyInfo(object):
@@ -307,7 +315,7 @@ class _RMFLoader(object):
         if self.segmentf.get_is(node):
             self._add_segment(self.segmentf.get(node), node.get_name(), rhi)
         for child in node.get_children():
-            rmf_nodes[0].children.extend(self._handle_node(child, rhi))
+            rmf_nodes[0].add_children(self._handle_node(child, rhi))
         # Handle any alternatives (usually different resolutions)
         # Alternatives replace the current node - they are not children of
         # it - so use parent_rhi, not rhi.

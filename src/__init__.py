@@ -26,6 +26,15 @@ class _MyAPI(BundleAPI):
         from chimerax.core.commands import register
         register(ci.name, desc, func)
 
+    @staticmethod
+    def start_tool(session, bi, ti):
+        # bi is an instance of chimerax.core.toolshed.BundleInfo
+        # ti is an instance of chimerax.core.toolshed.ToolInfo
+        if ti.name == "RMF Viewer":
+            from . import tool
+            return tool.RMFViewer(session, ti.name)
+        raise ValueError("trying to start unknown tool: %s" % ti.name)
+
     # Override method for opening file
     @staticmethod
     def open_file(session, path, format_name):
