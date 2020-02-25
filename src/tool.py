@@ -16,8 +16,10 @@ class _RMFHierarchyModel(QAbstractItemModel):
 
     def rowCount(self, parent):
         if not parent.isValid():
-            # the hidden top level has one child (the top of the RMF hierarchy)
-            return 1
+            # the hidden top level has either one child
+            # (the top of the RMF hierarchy) or no children (if the RMF
+            # hierarchy is None)
+            return 0 if self.rmf_hierarchy is None else 1
         else:
             parent_item = parent.internalPointer()
             return len(parent_item.children)
@@ -28,7 +30,10 @@ class _RMFHierarchyModel(QAbstractItemModel):
         if not parent.isValid():
             # top level only has one child (the top of the RMF hierarchy)
             # so return that
-            return self.createIndex(row, column, self.rmf_hierarchy)
+            if self.rmf_hierarchy is None:
+                return QModelIndex()
+            else:
+                return self.createIndex(row, column, self.rmf_hierarchy)
         else:
             parent_item = parent.internalPointer()
             return self.createIndex(row, column, parent_item.children[row])
@@ -77,12 +82,23 @@ class RMFViewer(ToolInstance):
         self.tool_window = MainToolWindow(self)
 
         self._build_ui()
+        from chimerax.core.models import ADD_MODELS, REMOVE_MODELS
+        session.triggers.add_handler(ADD_MODELS, self._fill_ui)
+        session.triggers.add_handler(REMOVE_MODELS, self._fill_ui)
+        self._fill_ui()
 
     def _get_rmf_hierarchy(self):
         # todo: handle multiple RMF models, not just the first
         for m in self.session.models.list():
             if hasattr(m, 'rmf_hierarchy'):
                 return m.rmf_hierarchy
+
+    def _fill_ui(self, *args):
+        self.tree.blockSignals(True)
+        r = self._get_rmf_hierarchy()
+        self.model = _RMFHierarchyModel(r)
+        self.tree.setModel(self.model)
+        self.tree.blockSignals(False)
 
     def _build_ui(self):
         from PyQt5 import QtWidgets
@@ -93,11 +109,7 @@ class RMFViewer(ToolInstance):
         label = QtWidgets.QLabel("Hierarchy")
         layout.addWidget(label)
 
-        r = self._get_rmf_hierarchy()
-
-        self.model = _RMFHierarchyModel(r)
         self.tree = QtWidgets.QTreeView()
-        self.tree.setModel(self.model)
         self.tree.setAnimated(False)
         self.tree.setIndentation(20)
         self.tree.setSortingEnabled(False)
