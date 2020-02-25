@@ -11,6 +11,26 @@ import src
 import src.tool
 import src.io
 
+class TriggerSet:
+    def add_handler(self, name, func):
+        pass
+
+class Models:
+    def __init__(self):
+        self._models = []
+    def extend(self, models):
+        self._models.extend(models)
+    def list(self):
+        return self._models
+
+class MockSession(object):
+    def __init__(self):
+        self.triggers = TriggerSet()
+        self.models = Models()
+
+class MockModel:
+    pass
+
 
 class MockRMFNode:
     def __init__(self, name, index):
@@ -60,6 +80,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(m.index(0,0,QModelIndex()).internalPointer().name,
                          'root')
         # Top level doesn't have a parent
+        self.assertFalse(m.parent(ind).isValid())
         self.assertFalse(m.parent(QModelIndex()).isValid())
         childind = m.createIndex(0,0,child1)
         self.assertEqual(m.parent(childind).internalPointer().name, 'root')
@@ -67,6 +88,17 @@ class Tests(unittest.TestCase):
         parentind = m.parent(grandchildind)
         self.assertEqual(parentind.internalPointer().name, 'child2')
         self.assertEqual(parentind.row(), 1)
+        self.assertEqual(m.data(childind, Qt.DisplayRole), "child1")
+        self.assertIsNone(m.data(childind, Qt.SizeHintRole))
+
+    def test_rmf_viewer(self):
+        """Test creation of RMFViewer tool"""
+        mock_session = MockSession()
+        m1 = MockModel()
+        m1.rmf_hierarchy = None
+        m2 = MockModel()
+        mock_session.models.extend((m1, m2))
+        r = src.tool.RMFViewer(mock_session, "RMF Viewer")
 
 
 if __name__ == '__main__':

@@ -8,3 +8,6 @@ class Model(object):
 
     def child_models(self):
         return self._child_models
+
+ADD_MODELS = 0
+REMOVE_MODELS = 1
