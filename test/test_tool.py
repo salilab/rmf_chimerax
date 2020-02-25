@@ -124,6 +124,23 @@ class Tests(unittest.TestCase):
         self.assertRaises(ValueError, bundle_api.start_tool,
                           mock_session, bi, ti)
 
+    def test_button_clicks(self):
+        """Test clicking on select/show/hide buttons"""
+        root = make_node("root", 0)
+        child1 = make_node("child1", 1)
+        child2 = make_node("child2", 2)
+        grandchild = make_node("grandchild", 3)
+        child2.add_children([grandchild])
+        root.add_children((child1, child2))
+
+        mock_session = MockSession()
+        mock_session.models.extend((root,))
+        r = src.tool.RMFViewer(mock_session, "RMF Viewer")
+        r._select_button_clicked()
+        r.tree.selectAll()
+        r._show_button_clicked()
+        r._hide_button_clicked()
+
 
 if __name__ == '__main__':
     unittest.main()

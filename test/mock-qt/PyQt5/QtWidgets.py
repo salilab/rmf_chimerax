@@ -52,3 +52,9 @@ class QTreeView:
 
     def setSelectionMode(self, mode):
         pass
+
+    def selectAll(self):
+        pass
+
+    def selectedIndexes(self):
+        return []
