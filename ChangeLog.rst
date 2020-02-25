@@ -4,6 +4,7 @@ HEAD
  - Add basic visualization of RMF geometry, such as bounding boxes.
  - Add an `rmf hierarchy` command to show the RMF hierarchy in the log.
  - Add an `rmf chains` command to show the RMF name for each chain.
+ - Add an RMF Viewer tool to allow the RMF hierarchy to be explored.
 
 0.1 - 2020-02-19
 ================

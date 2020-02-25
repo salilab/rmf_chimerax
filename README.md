@@ -32,6 +32,9 @@ An `rmf` command is also added to ChimeraX, which if run will show
 the RMF hierarchy or chain names in the log. Use `help rmf` from ChimeraX
 for more information.
 
+An RMF Viewer tool is also added to ChimeraX, which allows the RMF hierarchy
+to be explored.
+
 ## Installation
 
 Stable releases can be installed directly from ChimeraX using the
