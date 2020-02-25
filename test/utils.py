@@ -8,10 +8,15 @@ import os
 def set_search_paths(topdir):
     """Set search paths so that we can import Python modules and use mocks"""
     mockdir = os.path.join(topdir, 'test', 'mock')
-    os.environ['PYTHONPATH'] = topdir + os.pathsep + mockdir + os.pathsep \
-                               + os.environ.get('PYTHONPATH', '')
-    sys.path.insert(0, mockdir)
-    sys.path.insert(0, topdir)
+    paths = [topdir, mockdir]
+    # AppVeyor tests on Windows use real PyQt5; otherwise use mocks to speed
+    # things up and remove the need for a display
+    if sys.platform != 'win32':
+        paths.append(os.path.join(topdir, 'test', 'mock-qt'))
+    os.environ['PYTHONPATH'] = os.pathsep.join(paths
+                                         + [os.environ.get('PYTHONPATH', '')])
+    for p in reversed(paths):
+        sys.path.insert(0, p)
 
 
 @contextlib.contextmanager
