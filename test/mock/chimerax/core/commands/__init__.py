@@ -13,3 +13,7 @@ class ModelArg:
 
 def register(name, cmd_desc=(), function=None, *, logger=None, registry=None):
     pass
+
+
+def run(session, text, *, log=True, downgrade_errors=False):
+    pass

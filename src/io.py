@@ -20,6 +20,8 @@ def open_rmf(session, path):
     status = ("Opened RMF file%s with %d frame%s"
               % (" produced with %s," % producer if producer else "",
                  numframes, "" if numframes == 1 else "s"))
+    from chimerax.core.commands import run
+    run(session, 'toolshed show "RMF Viewer"', log=False)
     return structures, status
 
 
