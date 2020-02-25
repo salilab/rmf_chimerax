@@ -10,6 +10,8 @@ from PyQt5.QtCore import QModelIndex, Qt
 import src
 import src.tool
 import src.io
+from utils import make_session
+from chimerax.core.models import Model
 
 
 class MockBundleInfo:
@@ -19,27 +21,6 @@ class MockBundleInfo:
 class MockToolInfo:
     def __init__(self, name):
         self.name = name
-
-
-class TriggerSet:
-    def add_handler(self, name, func):
-        pass
-
-class Models:
-    def __init__(self):
-        self._models = []
-    def extend(self, models):
-        self._models.extend(models)
-    def list(self):
-        return self._models
-
-class MockSession(object):
-    def __init__(self):
-        self.triggers = TriggerSet()
-        self.models = Models()
-
-class MockModel:
-    pass
 
 
 class MockRMFNode:
@@ -101,21 +82,23 @@ class Tests(unittest.TestCase):
         self.assertEqual(m.data(childind, Qt.DisplayRole), "child1")
         self.assertIsNone(m.data(childind, Qt.SizeHintRole))
 
+    @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
     def test_rmf_viewer(self):
         """Test creation of RMFViewer tool"""
-        mock_session = MockSession()
-        m1 = MockModel()
+        mock_session = make_session()
+        m1 = Model(mock_session, 'test')
         m1.rmf_hierarchy = None
-        m2 = MockModel()
-        mock_session.models.extend((m1, m2))
+        m2 = Model(mock_session, 'test')
+        mock_session.models.add((m1, m2))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
 
+    @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
     def test_bundle_api_make_tool(self):
         """Test open of tool via BundleAPI"""
         bundle_api = src.bundle_api
-        mock_session = MockSession()
-        m1 = MockModel()
-        mock_session.models.extend((m1,))
+        mock_session = make_session()
+        m1 = Model(mock_session, 'test')
+        mock_session.models.add((m1,))
         bi = MockBundleInfo()
         ti = MockToolInfo("RMF Viewer")
         bundle_api.start_tool(mock_session, bi, ti)
@@ -124,6 +107,7 @@ class Tests(unittest.TestCase):
         self.assertRaises(ValueError, bundle_api.start_tool,
                           mock_session, bi, ti)
 
+    @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
     def test_button_clicks(self):
         """Test clicking on select/show/hide buttons"""
         root = make_node("root", 0)
@@ -133,8 +117,10 @@ class Tests(unittest.TestCase):
         child2.add_children([grandchild])
         root.add_children((child1, child2))
 
-        mock_session = MockSession()
-        mock_session.models.extend((root,))
+        mock_session = make_session()
+        m1 = Model(mock_session, 'test')
+        m1.rmf_hierarchy = root
+        mock_session.models.add((m1,))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
         r._select_button_clicked()
         r.tree.selectAll()

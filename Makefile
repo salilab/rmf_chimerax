@@ -1,7 +1,8 @@
 # The "make" targets are:
 #    wheel: build a Python wheel in "dist" directory
 #    install: build wheel and install
-#    test: run ChimeraX with test commands
+#    test: run all unit tests (in a mock environment)
+#    test-chimerax: run all unit tests within ChimeraX itself
 #    debug: run ChimeraX with debugging flag set
 #    clean: remove files used in building wheel
 
@@ -56,10 +57,11 @@ install:	bundle_info.xml $(SRCS) generated_files
 wheel:	bundle_info.xml $(SRCS) generated_files
 	$(RUN) "devel build . exit true"
 
-test:
-	for t in $(wildcard test*.cxc) $(wildcard test*.py);\
-		do $(CHIMERAX_EXE) --exit --nogui $$t;\
-	done
+test::
+	python3 -m nose test
+
+test-chimerax::
+	$(CHIMERAX_EXE) --exit --nogui test/run-with-chimerax.py test/test_*.py
 
 debug:
 	$(CHIMERAX_EXE) --debug

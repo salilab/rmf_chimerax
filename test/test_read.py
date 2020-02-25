@@ -7,15 +7,12 @@ utils.set_search_paths(TOPDIR)
 
 import src
 import src.io
-
+from utils import make_session
 
 INDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'input'))
 
 RMF = utils.import_rmf_module()
 
-
-class MockSession(object):
-    pass
 
 def get_all_nodes(structure):
     """Yield all RMF nodes in a given structure, by flattening the hierarchy"""
@@ -31,7 +28,7 @@ class Tests(unittest.TestCase):
     def test_open_rmf(self):
         """Test open_rmf with a simple coarse-grained RMF file"""
         path = os.path.join(INDIR, 'simple.rmf3')
-        mock_session = MockSession()
+        mock_session = make_session()
         structures, status = src.io.open_rmf(mock_session, path)
         # Check hierarchy
         nodes = list(get_all_nodes(structures[0]))
@@ -49,14 +46,14 @@ class Tests(unittest.TestCase):
     def test_open_rmf_atomic(self):
         """Test open_rmf with a simple atomic RMF file"""
         path = os.path.join(INDIR, 'simple_atomic.rmf3')
-        mock_session = MockSession()
+        mock_session = make_session()
         structures, status = src.io.open_rmf(mock_session, path)
 
     def test_bundle_api_open(self):
         """Test open file via BundleAPI"""
         bundle_api = src.bundle_api
         path = os.path.join(INDIR, 'simple.rmf3')
-        mock_session = MockSession()
+        mock_session = make_session()
         structures, status = bundle_api.open_file(mock_session, path, 'RMF')
 
     def test_read_geometry(self):
@@ -76,7 +73,7 @@ class Tests(unittest.TestCase):
 
         with utils.temporary_file(suffix='.rmf') as fname:
             make_rmf_file(fname)
-            mock_session = MockSession()
+            mock_session = make_session()
             structures, status = src.io.open_rmf(mock_session, fname)
             # One shape should have been added
             shapes = structures[0]._drawing._drawing._shapes
@@ -106,7 +103,7 @@ class Tests(unittest.TestCase):
 
         with utils.temporary_file(suffix='.rmf') as fname:
             make_rmf_file(fname)
-            mock_session = MockSession()
+            mock_session = make_session()
             structures, status = src.io.open_rmf(mock_session, fname)
             # Two atoms (in a single residue in the unnamed state)
             # should have been added
@@ -116,8 +113,8 @@ class Tests(unittest.TestCase):
 
             a1, a2 = state.atoms
             # Default element
-            self.assertEqual(a1.element, 'C')
-            self.assertEqual(a2.element, 'C')
+            self.assertEqual(a1.element.name, 'C')
+            self.assertEqual(a2.element.name, 'C')
             self.assertEqual([int(c) for c in a1.coord], [1,2,3])
             self.assertEqual([int(c) for c in a2.coord], [4,5,6])
 
@@ -152,7 +149,7 @@ class Tests(unittest.TestCase):
 
         with utils.temporary_file(suffix='.rmf') as fname:
             make_rmf_file(fname)
-            mock_session = MockSession()
+            mock_session = make_session()
             structures, status = src.io.open_rmf(mock_session, fname)
             # Two atoms in two residues should have been added
             state, = structures[0].child_models()
@@ -197,7 +194,7 @@ class Tests(unittest.TestCase):
 
         with utils.temporary_file(suffix='.rmf') as fname:
             make_rmf_file(fname)
-            mock_session = MockSession()
+            mock_session = make_session()
             structures, status = src.io.open_rmf(mock_session, fname)
             root = structures[0].rmf_hierarchy
             self.assertEqual(root.name, 'root')

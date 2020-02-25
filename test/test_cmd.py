@@ -17,8 +17,10 @@ class MockLogger(object):
         self.info_log.append((msg, is_html))
 
 
-class MockSession(object):
-    def __init__(self):
+from chimerax.core.session import Session
+class MockSession(Session):
+    def __init__(self, app_name):
+        super().__init__(app_name)
         self.logger = MockLogger()
 
 class MockModel:
@@ -66,14 +68,14 @@ class Tests(unittest.TestCase):
 
     def test_hierarchy_not_rmf(self):
         """Test hierarchy command on a model that is not an RMF"""
-        mock_session = MockSession()
+        mock_session = MockSession('test')
         src.cmd.hierarchy(mock_session, 'garbage model')
         self.assertEqual(mock_session.logger.info_log, [])
 
     def test_hierarchy(self):
         """Test hierarchy command"""
         test_model = make_test_rmf_hierarchy()
-        mock_session = MockSession()
+        mock_session = MockSession('test')
         src.cmd.hierarchy(mock_session, test_model)
         (log, is_html), = mock_session.logger.info_log
         def get_li_lines(l):
@@ -91,7 +93,7 @@ class Tests(unittest.TestCase):
 
     def test_chains_not_rmf(self):
         """Test chains command on a model that is not an RMF"""
-        mock_session = MockSession()
+        mock_session = MockSession('test')
         src.cmd.chains(mock_session, 'garbage model')
         self.assertEqual(mock_session.logger.info_log, [])
 
@@ -99,7 +101,7 @@ class Tests(unittest.TestCase):
         """Test chains command"""
         test_model = make_test_rmf_hierarchy()
         test_model._rmf_chains = [('A', test_model.rmf_hierarchy.children[0])]
-        mock_session = MockSession()
+        mock_session = MockSession('test')
         src.cmd.chains(mock_session, test_model)
         (log, is_html), = mock_session.logger.info_log
         self.assertIn('<td>child1</td>', log)

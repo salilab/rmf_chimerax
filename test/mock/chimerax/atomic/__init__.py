@@ -15,13 +15,18 @@ class Bond(object):
         pass
 
 
+class _Element:
+    def __init__(self, name):
+        self.name = name
+
+
 class Atom(object):
     SPHERE_STYLE = 1
 
     def __init__(self, name, element, structure):
         self.structure = weakref.proxy(structure)
         self.name = name
-        self.element = element
+        self.element = _Element(element)
 
 
 class Residue(object):

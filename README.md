@@ -44,3 +44,17 @@ your copy of ChimeraX is installed, which you can do by setting the
 `CHIMERAX_APP` environment variable to the directory containing ChimeraX (on
 Windows or Mac) or `CHIMERAX_EXE` to the full path to the `chimerax` binary
 (on Linux).
+
+## Testing
+
+This plugin has a full test suite which is designed to run in one of two
+environments:
+
+ - mock environment; this exercises all of the code with the major dependencies
+   (PyQt5, ChimeraX itself) mocked out. This is faster, does not require a
+   display, and does not require PyQt5 or ChimeraX to be available, but can
+   potentially miss problems if the mock and ChimeraX APIs diverge. It can
+   be run with `make test`.
+ - ChimeraX; this runs the tests instead ChimeraX itself, so requires ChimeraX
+   to be installed. Currently this does not test any GUI components such as
+   the RMF Viewer tool. It can be run with `make test-chimerax`.
