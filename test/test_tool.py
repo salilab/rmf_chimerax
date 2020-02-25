@@ -126,6 +126,7 @@ class Tests(unittest.TestCase):
         r.tree.selectAll()
         r._show_button_clicked()
         r._hide_button_clicked()
+        r._view_button_clicked()
 
 
 if __name__ == '__main__':

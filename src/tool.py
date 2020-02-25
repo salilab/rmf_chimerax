@@ -130,6 +130,9 @@ class RMFViewer(ToolInstance):
         show_button = QtWidgets.QPushButton("Show")
         show_button.clicked.connect(self._show_button_clicked)
         buttons.addWidget(show_button)
+        view_button = QtWidgets.QPushButton("View")
+        view_button.clicked.connect(self._view_button_clicked)
+        buttons.addWidget(view_button)
         tree_and_buttons.addLayout(buttons)
 
         layout.addLayout(tree_and_buttons)
@@ -158,3 +161,7 @@ class RMFViewer(ToolInstance):
     def _hide_button_clicked(self):
         from chimerax.std_commands.hide import hide
         hide(self.session, self._get_selected_chimera_objects())
+
+    def _view_button_clicked(self):
+        from chimerax.std_commands.view import view
+        view(self.session, self._get_selected_chimera_objects())
