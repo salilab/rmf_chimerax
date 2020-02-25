@@ -1,3 +1,6 @@
+HEAD
+====
+
 0.2 - 2020-02-25
 ================
  - Improved support for RMF files containing atomic information.
