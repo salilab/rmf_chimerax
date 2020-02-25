@@ -14,7 +14,7 @@ matrix:
 cache:
   pip: true
 install:
-  - pip3 install coverage scipy PyQt5
+  - pip3 install coverage scipy PyQt5==5.14.0
 script:
   - python3 -m nose --with-coverage --cover-branches test
 after_success:
