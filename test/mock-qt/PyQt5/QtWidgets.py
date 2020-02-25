@@ -23,9 +23,13 @@ class QLabel:
     def __init__(self, txt):
         pass
 
+class _Signal:
+    def connect(self, func):
+        pass
+
 class QPushButton:
     def __init__(self, txt):
-        pass
+        self.clicked = _Signal()
 
 class QTreeView:
     def setAnimated(self, flag):

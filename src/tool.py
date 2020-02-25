@@ -1,6 +1,8 @@
 # vim: set expandtab shiftwidth=4 softtabstop=4:
 
 from chimerax.core.tools import ToolInstance
+from chimerax.core.objects import Objects
+from chimerax.atomic import Atoms
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 
@@ -119,11 +121,39 @@ class RMFViewer(ToolInstance):
 
         buttons = QtWidgets.QVBoxLayout()
         select_button = QtWidgets.QPushButton("Select")
+        select_button.clicked.connect(self._select_button_clicked)
         buttons.addWidget(select_button)
         show_button = QtWidgets.QPushButton("Show")
+        show_button.clicked.connect(self._show_button_clicked)
         buttons.addWidget(show_button)
         hide_button = QtWidgets.QPushButton("Hide")
+        hide_button.clicked.connect(self._hide_button_clicked)
         buttons.addWidget(hide_button)
         tree_and_buttons.addLayout(buttons)
 
         layout.addLayout(tree_and_buttons)
+
+    def _get_selected_chimera_objects(self):
+        def _get_node_objects(node, atoms):
+            if node.chimera_obj:
+                atoms.append(node.chimera_obj)
+            for child in node.children:
+                _get_node_objects(child, atoms)
+        atoms = []
+        for ind in self.tree.selectedIndexes():
+            _get_node_objects(ind.internalPointer(), atoms)
+        objects = Objects()
+        objects.add_atoms(Atoms(atoms))
+        return objects
+
+    def _select_button_clicked(self):
+        from chimerax.std_commands.select import select
+        select(self.session, self._get_selected_chimera_objects())
+
+    def _show_button_clicked(self):
+        from chimerax.std_commands.show import show
+        show(self.session, self._get_selected_chimera_objects())
+
+    def _hide_button_clicked(self):
+        from chimerax.std_commands.hide import hide
+        hide(self.session, self._get_selected_chimera_objects())

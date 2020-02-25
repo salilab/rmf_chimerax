@@ -89,12 +89,14 @@ class _RMFModel(Model):
 
 class _RMFHierarchyNode(object):
     """Represent a single RMF node"""
-    __slots__ = ['name', 'rmf_index', 'children', 'parent', "__weakref__"]
+    __slots__ = ['name', 'rmf_index', 'children', 'parent', "__weakref__",
+                 'chimera_obj']
 
     def __init__(self, rmf_node):
         self.name = rmf_node.get_name()
         self.rmf_index = rmf_node.get_index()
         self.children = []
+        self.chimera_obj = None
         self.parent = None
 
     def add_children(self, children):
@@ -296,6 +298,7 @@ class _RMFLoader(object):
             # RMF colors are 0-1 and has no alpha; ChimeraX uses 0-255
             atom.color = [x * 255. for x in c.get_rgb_color()] + [255]
         rhi.add_atom(atom)
+        return atom
 
     def _handle_node(self, node, parent_rhi):
         rmf_nodes = [_RMFHierarchyNode(node)]
@@ -306,10 +309,12 @@ class _RMFLoader(object):
             pass
         elif self.particlef.get_is(node):
             p = self.particlef.get(node)
-            self._add_atom(node, p, p.get_mass(), rhi)
+            atom = self._add_atom(node, p, p.get_mass(), rhi)
+            rmf_nodes[0].chimera_obj = atom
         elif self.ballf.get_is(node):
             # balls have no mass
-            self._add_atom(node, self.ballf.get(node), 0., rhi)
+            atom = self._add_atom(node, self.ballf.get(node), 0., rhi)
+            rmf_nodes[0].chimera_obj = atom
         if self.bondf.get_is(node):
             self._add_bond(self.bondf.get(node), rhi)
         if self.represf.get_is(node):

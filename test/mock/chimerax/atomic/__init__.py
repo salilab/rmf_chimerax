@@ -67,3 +67,7 @@ class AtomicShapeDrawing(object):
 
     def add_shape(self, vertices, normals, triangles, color, description=None):
         self._shapes.append((vertices, normals, triangles, color, description))
+
+class Atoms:
+    def __init__(self, atom_pointers=None):
+        pass
