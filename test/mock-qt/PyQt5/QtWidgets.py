@@ -32,6 +32,9 @@ class QPushButton:
         self.clicked = _Signal()
 
 class QTreeView:
+    SingleSelection = 0
+    ExtendedSelection = 1
+
     def setAnimated(self, flag):
         pass
 
@@ -45,4 +48,7 @@ class QTreeView:
         pass
 
     def setModel(self, model):
+        pass
+
+    def setSelectionMode(self, mode):
         pass

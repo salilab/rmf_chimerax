@@ -114,6 +114,7 @@ class RMFViewer(ToolInstance):
         self.tree = QtWidgets.QTreeView()
         self.tree.setAnimated(False)
         self.tree.setIndentation(20)
+        self.tree.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
         self.tree.setSortingEnabled(False)
 
         tree_and_buttons = QtWidgets.QHBoxLayout()
