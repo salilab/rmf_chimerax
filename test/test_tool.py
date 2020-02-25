@@ -11,6 +11,16 @@ import src
 import src.tool
 import src.io
 
+
+class MockBundleInfo:
+    pass
+
+
+class MockToolInfo:
+    def __init__(self, name):
+        self.name = name
+
+
 class TriggerSet:
     def add_handler(self, name, func):
         pass
@@ -99,6 +109,20 @@ class Tests(unittest.TestCase):
         m2 = MockModel()
         mock_session.models.extend((m1, m2))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
+
+    def test_bundle_api_make_tool(self):
+        """Test open of tool via BundleAPI"""
+        bundle_api = src.bundle_api
+        mock_session = MockSession()
+        m1 = MockModel()
+        mock_session.models.extend((m1,))
+        bi = MockBundleInfo()
+        ti = MockToolInfo("RMF Viewer")
+        bundle_api.start_tool(mock_session, bi, ti)
+
+        ti = MockToolInfo("Bad tool")
+        self.assertRaises(ValueError, bundle_api.start_tool,
+                          mock_session, bi, ti)
 
 
 if __name__ == '__main__':
