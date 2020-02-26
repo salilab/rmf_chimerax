@@ -1,5 +1,7 @@
 class Model(object):
     def __init__(self, name, session):
+        self.name = name
+        self.id_string = '1'
         self.session = session
         self._child_models = []
 

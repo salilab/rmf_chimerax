@@ -4,6 +4,7 @@ from chimerax.core.tools import ToolInstance
 from chimerax.core.objects import Objects
 from chimerax.atomic import Atoms, Bonds, Atom, Bond
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
+from PyQt5 import QtWidgets
 
 
 class _RMFHierarchyModel(QAbstractItemModel):
@@ -89,80 +90,114 @@ class RMFViewer(ToolInstance):
         session.triggers.add_handler(REMOVE_MODELS, self._fill_ui)
         self._fill_ui()
 
-    def _get_rmf_hierarchy(self):
-        # todo: handle multiple RMF models, not just the first
-        for m in self.session.models.list():
-            if hasattr(m, 'rmf_hierarchy'):
-                return m.rmf_hierarchy
-
     def _fill_ui(self, *args):
-        self.tree.blockSignals(True)
-        r = self._get_rmf_hierarchy()
-        self.model = _RMFHierarchyModel(r)
-        self.tree.setModel(self.model)
-        self.tree.blockSignals(False)
+        self.rmf_models = [m for m in self.session.models.list()
+                           if hasattr(m, 'rmf_hierarchy')]
+
+        self.model_list.clear()
+        self.model_list.addItems("%s; %s" % (m.name, m.id_string)
+                                 for m in self.rmf_models)
+
+        self._fill_model_stack()
+
+    def model_list_change(self, i):
+        self.model_stack.setCurrentIndex(i)
 
     def _build_ui(self):
-        from PyQt5 import QtWidgets
         layout = QtWidgets.QVBoxLayout()
         self.tool_window.ui_area.setLayout(layout)
         self.tool_window.manage('side')
 
+        combo_and_label = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel("RMF model")
+        combo_and_label.addWidget(label)
+        self.model_list = QtWidgets.QComboBox()
+        self.model_list.currentIndexChanged.connect(self.model_list_change)
+        combo_and_label.addWidget(self.model_list, stretch=4)
+        layout.addLayout(combo_and_label)
+
+        self.model_stack = QtWidgets.QStackedWidget()
+        layout.addWidget(self.model_stack)
+
+    def _fill_model_stack(self):
+        self.model_stack.blockSignals(True)
+        for i in range(self.model_stack.count()):
+            self.model_stack.removeWidget(self.model_stack.widget(0))
+        for m in self.rmf_models:
+            self.model_stack.addWidget(self._build_ui_rmf_model(m))
+        self.model_stack.blockSignals(False)
+
+    def _build_ui_rmf_model(self, m):
+        top = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout()
+        top.setLayout(layout)
+
         label = QtWidgets.QLabel("Hierarchy")
         layout.addWidget(label)
 
-        self.tree = QtWidgets.QTreeView()
-        self.tree.setAnimated(False)
-        self.tree.setIndentation(20)
-        self.tree.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
-        self.tree.setSortingEnabled(False)
+        tree = QtWidgets.QTreeView()
+        tree.setAnimated(False)
+        tree.setIndentation(20)
+        tree.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
+        tree.setSortingEnabled(False)
 
         tree_and_buttons = QtWidgets.QHBoxLayout()
-        tree_and_buttons.addWidget(self.tree)
+        tree_and_buttons.setContentsMargins(0,0,0,0)
+        tree_and_buttons.setSpacing(0)
+
+        tree_and_buttons.addWidget(tree, stretch=1)
 
         buttons = QtWidgets.QVBoxLayout()
+        buttons.setContentsMargins(0,0,0,0)
+        buttons.setSpacing(0)
         select_button = QtWidgets.QPushButton("Select")
-        select_button.clicked.connect(self._select_button_clicked)
+        select_button.clicked.connect(lambda chk, tree=tree:
+                                      self._select_button_clicked(tree))
         buttons.addWidget(select_button)
         hide_button = QtWidgets.QPushButton("Hide")
-        hide_button.clicked.connect(self._hide_button_clicked)
+        hide_button.clicked.connect(lambda chk, tree=tree:
+                                    self._hide_button_clicked(tree))
         buttons.addWidget(hide_button)
         show_button = QtWidgets.QPushButton("Show")
-        show_button.clicked.connect(self._show_button_clicked)
+        show_button.clicked.connect(lambda chk, tree=tree:
+                                    self._show_button_clicked(tree))
         buttons.addWidget(show_button)
         view_button = QtWidgets.QPushButton("View")
-        view_button.clicked.connect(self._view_button_clicked)
+        view_button.clicked.connect(lambda chk, tree=tree:
+                                    self._view_button_clicked(tree))
         buttons.addWidget(view_button)
         tree_and_buttons.addLayout(buttons)
+        layout.addLayout(tree_and_buttons, stretch=1)
 
-        layout.addLayout(tree_and_buttons)
+        tree.setModel(_RMFHierarchyModel(m.rmf_hierarchy))
+        return top
 
-    def _get_selected_chimera_objects(self):
+    def _get_selected_chimera_objects(self, tree):
         def _get_node_objects(node, objs):
             if node.chimera_obj:
                 objs.append(node.chimera_obj)
             for child in node.children:
                 _get_node_objects(child, objs)
         objs = []
-        for ind in self.tree.selectedIndexes():
+        for ind in tree.selectedIndexes():
             _get_node_objects(ind.internalPointer(), objs)
         objects = Objects()
         objects.add_atoms(Atoms(x for x in objs if isinstance(x, Atom)))
         objects.add_bonds(Bonds(x for x in objs if isinstance(x, Bond)))
         return objects
 
-    def _select_button_clicked(self):
+    def _select_button_clicked(self, tree):
         from chimerax.std_commands.select import select
-        select(self.session, self._get_selected_chimera_objects())
+        select(self.session, self._get_selected_chimera_objects(tree))
 
-    def _show_button_clicked(self):
+    def _show_button_clicked(self, tree):
         from chimerax.std_commands.show import show
-        show(self.session, self._get_selected_chimera_objects())
+        show(self.session, self._get_selected_chimera_objects(tree))
 
-    def _hide_button_clicked(self):
+    def _hide_button_clicked(self, tree):
         from chimerax.std_commands.hide import hide
-        hide(self.session, self._get_selected_chimera_objects())
+        hide(self.session, self._get_selected_chimera_objects(tree))
 
-    def _view_button_clicked(self):
+    def _view_button_clicked(self, tree):
         from chimerax.std_commands.view import view
-        view(self.session, self._get_selected_chimera_objects())
+        view(self.session, self._get_selected_chimera_objects(tree))

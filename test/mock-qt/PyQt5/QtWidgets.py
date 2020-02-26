@@ -3,21 +3,44 @@ class QApplication:
         pass
 
 class QWidget:
+    def __init__(self):
+        self._layout = None
     def setLayout(self, layout):
-        pass
+        self._layout = layout
+    def layout(self):
+        return self._layout
+    def children(self):
+        return self._layout.children()
 
 
-class QVBoxLayout:
-    def addWidget(self, w):
+class BoxLayout:
+    def __init__(self):
+        self._widgets = []
+        self._layouts = []
+    def children(self):
+        for c in self._layouts + self._widgets:
+            yield c
+            if hasattr(c, 'children'):
+                for child in c.children():
+                    yield child
+    def addWidget(self, w, stretch=0):
+        self._widgets.append(w)
+    def widget(self, i):
+        return self._widgets[i]
+    def layout(self, i):
+        return self._layouts[i]
+    def addLayout(self, l, stretch=0):
+        self._layouts.append(l)
+    def setContentsMargins(self, a,b,c,d):
         pass
-    def addLayout(self, l):
+    def setSpacing(self, spacing):
         pass
 
-class QHBoxLayout:
-    def addWidget(self, w):
-        pass
-    def addLayout(self, l):
-        pass
+class QHBoxLayout(BoxLayout):
+    pass
+
+class QVBoxLayout(BoxLayout):
+    pass
 
 class QLabel:
     def __init__(self, txt):
@@ -30,6 +53,26 @@ class _Signal:
 class QPushButton:
     def __init__(self, txt):
         self.clicked = _Signal()
+
+class QComboBox:
+    def __init__(self):
+        self.currentIndexChanged = _Signal()
+    def clear(self):
+        pass
+    def addItems(self, items):
+        pass
+
+class QStackedWidget:
+    def __init__(self):
+        self._widgets = []
+    def blockSignals(self, block):
+        pass
+    def count(self):
+        return len(self._widgets)
+    def addWidget(self, w):
+        self._widgets.append(w)
+    def widget(self, i):
+        return self._widgets[i]
 
 class QTreeView:
     SingleSelection = 0
