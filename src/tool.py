@@ -69,6 +69,39 @@ class _RMFHierarchyModel(QAbstractItemModel):
         return item.name
 
 
+class _RMFFeaturesModel(QAbstractItemModel):
+    """Map a list of RMF features into a QTreeView"""
+    def __init__(self, rmf_features):
+        super().__init__()
+        self.rmf_features = rmf_features
+
+    def columnCount(self, parent):
+        # We always have just a single column (the node's name)
+        return 1
+
+    def rowCount(self, parent):
+        if not parent.isValid():
+            # the hidden top level owns all features
+            return len(self.rmf_features)
+        else:
+            return 0
+
+    def index(self, row, column, parent):
+        if not self.hasIndex(row, column, parent):
+            return QModelIndex()
+        return self.createIndex(row, column, self.rmf_features[row])
+
+    def parent(self, index):
+        # Only one level so always return the hidden top level
+        return QModelIndex()
+
+    def data(self, index, role):
+        if not index.isValid() or role != Qt.DisplayRole:
+            return None
+        item = index.internalPointer()
+        return item.name
+
+
 class RMFViewer(ToolInstance):
     SESSION_ENDURING = False    # Does this instance persist when session closes
     SESSION_SAVE = False        # We do save/restore in sessions
@@ -129,6 +162,18 @@ class RMFViewer(ToolInstance):
         top.setLayout(layout)
         layout.setContentsMargins(0,0,0,0)
         layout.setSpacing(0)
+
+        label = QtWidgets.QLabel("Features")
+        layout.addWidget(label)
+
+        tree = QtWidgets.QTreeView()
+        tree.setAnimated(False)
+        tree.setIndentation(20)
+        tree.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
+        tree.setSortingEnabled(False)
+        tree.setHeaderHidden(True)
+        tree.setModel(_RMFFeaturesModel(m.rmf_features))
+        layout.addWidget(tree)
 
         label = QtWidgets.QLabel("Hierarchy")
         layout.addWidget(label)

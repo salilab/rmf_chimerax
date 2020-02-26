@@ -43,6 +43,7 @@ class _RMFState(AtomicStructure):
             self._features = self.pseudobond_group("Features")
         b = self._features.new_pseudobond(*atoms)
         b.halfbond = False
+        return b
 
     def apply_auto_styling(self, *args, **kwargs):
         # Only apply auto styling for truly atomic structures
@@ -97,7 +98,9 @@ class _RMFModel(Model):
 
 
 class _RMFHierarchyNode(object):
-    """Represent a single RMF node"""
+    """Represent a single RMF node.
+       Note that features (restraints) are stored outside of this hierarchy,
+       as _RMFFeature objects."""
     __slots__ = ['name', 'rmf_index', 'children', 'parent', "__weakref__",
                  'chimera_obj']
 
@@ -113,6 +116,16 @@ class _RMFHierarchyNode(object):
             self.children.append(child)
             # avoid circular reference
             child.parent = weakref.ref(self)
+
+
+class _RMFFeature(object):
+    """Represent a single feature in an RMF file."""
+    __slots__ = ['name', 'rmf_index', 'chimera_obj']
+
+    def __init__(self, rmf_node):
+        self.name = rmf_node.get_name()
+        self.rmf_index = rmf_node.get_index()
+        self.chimera_obj = None
 
 
 class _RMFHierarchyInfo(object):
@@ -229,7 +242,7 @@ class _RMFHierarchyInfo(object):
     def new_feature(self, atoms):
         if len(atoms) == 2:
             state = atoms[0].structure
-            state._add_pseudobond(atoms)
+            return state._add_pseudobond(atoms)
 
     def new_segment(self, coords, name):
         # todo: don't rely on chimerax.bild (not public API)
@@ -290,7 +303,9 @@ class _RMFLoader(object):
 
         top_level = _RMFModel(session, path)
         rhi = _RMFHierarchyInfo(top_level)
-        top_level.rmf_hierarchy, = self._handle_node(r.get_root_node(), rhi)
+        top_level.rmf_features = []
+        top_level.rmf_hierarchy, = self._handle_node(r.get_root_node(), rhi,
+                                                     top_level.rmf_features)
         return r, [top_level]
 
     def _add_atom(self, node, p, mass, rhi):
@@ -312,7 +327,15 @@ class _RMFLoader(object):
         rhi.add_atom(atom)
         return atom
 
-    def _handle_node(self, node, parent_rhi):
+    def _handle_node(self, node, parent_rhi, features):
+        # Features are handled outside of the regular hierarchy
+        if self.represf.get_is(node):
+            feature = _RMFFeature(node)
+            feature.chimera_obj = self._add_feature(
+                                    self.represf.get(node), parent_rhi)
+            features.append(feature)
+            return []
+
         rmf_nodes = [_RMFHierarchyNode(node)]
         # Get hierarchy-related info from this node (e.g. chain, state)
         rhi = parent_rhi.handle_node(node, rmf_nodes[0], self)
@@ -330,12 +353,10 @@ class _RMFLoader(object):
         if self.bondf.get_is(node):
             bond = self._add_bond(self.bondf.get(node), rhi)
             rmf_nodes[0].chimera_obj = bond
-        if self.represf.get_is(node):
-            self._add_feature(self.represf.get(node), rhi)
         if self.segmentf.get_is(node):
             self._add_segment(self.segmentf.get(node), node.get_name(), rhi)
         for child in node.get_children():
-            rmf_nodes[0].add_children(self._handle_node(child, rhi))
+            rmf_nodes[0].add_children(self._handle_node(child, rhi, features))
         # Handle any alternatives (usually different resolutions)
         # Alternatives replace the current node - they are not children of
         # it - so use parent_rhi, not rhi.
@@ -343,9 +364,9 @@ class _RMFLoader(object):
             alt = self.altf.get(node)
             # The node itself should be the first alternative, so ignore that
             for p in alt.get_alternatives(self.PARTICLE)[1:]:
-                rmf_nodes.extend(self._handle_node(p, parent_rhi))
+                rmf_nodes.extend(self._handle_node(p, parent_rhi, features))
             for gauss in alt.get_alternatives(self.GAUSSIAN_PARTICLE):
-                rmf_nodes.extend(self._handle_node(gauss, parent_rhi))
+                rmf_nodes.extend(self._handle_node(gauss, parent_rhi, features))
         return rmf_nodes
 
     def _add_bond(self, bond, rhi):
@@ -356,8 +377,8 @@ class _RMFLoader(object):
         return rhi.new_bond(atom0, atom1)
 
     def _add_feature(self, feature, rhi):
-        rhi.new_feature([self.rmf_index_to_atom[x.get_index()]
-                         for x in feature.get_representation()])
+        f = rhi.new_feature([self.rmf_index_to_atom[x.get_index()]
+                             for x in feature.get_representation()])
 
     def _add_segment(self, segment, name, rhi):
         rhi.new_segment(segment.get_coordinates_list(), name)

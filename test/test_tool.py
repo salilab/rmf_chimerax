@@ -34,6 +34,10 @@ def make_node(name, index):
     n = MockRMFNode(name, index)
     return src.io._RMFHierarchyNode(n)
 
+def make_feature(name, index):
+    n = MockRMFNode(name, index)
+    return src.io._RMFFeature(n)
+
 
 class Tests(unittest.TestCase):
     def test_rmf_hierarchy_model_none(self):
@@ -81,12 +85,33 @@ class Tests(unittest.TestCase):
         self.assertEqual(m.data(childind, Qt.DisplayRole), "child1")
         self.assertIsNone(m.data(childind, Qt.SizeHintRole))
 
+    def test_rmf_features_model(self):
+        """Test RMFFeaturesModel class"""
+        features = [make_feature("f1", 1), make_feature("f2", 2)]
+
+        m = src.tool._RMFFeaturesModel(features)
+        top = QModelIndex()
+        self.assertEqual(m.columnCount(None), 1)
+        self.assertEqual(m.rowCount(top), 2)
+
+        # Test indices
+        self.assertEqual(m.index(0,0,top).internalPointer().name, 'f1')
+        self.assertEqual(m.index(1,0,top).internalPointer().name, 'f2')
+        self.assertFalse(m.index(2,0,top).isValid())
+        # No parents
+        self.assertFalse(m.parent(top).isValid())
+        childind = m.createIndex(0,0,features[0])
+        self.assertFalse(m.parent(childind).isValid())
+        self.assertEqual(m.data(childind, Qt.DisplayRole), "f1")
+        self.assertIsNone(m.data(childind, Qt.SizeHintRole))
+
     @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
     def test_rmf_viewer(self):
         """Test creation of RMFViewer tool"""
         mock_session = make_session()
         m1 = Model(mock_session, 'test')
         m1.rmf_hierarchy = None
+        m1.rmf_features = []
         m2 = Model(mock_session, 'test')
         mock_session.models.add((m1, m2))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
@@ -124,6 +149,8 @@ class Tests(unittest.TestCase):
         mock_session = make_session()
         m1 = Model(mock_session, 'test')
         m1.rmf_hierarchy = root
+
+        m1.rmf_features = [make_node("f1", 4), make_node("f2", 5)]
         mock_session.models.add((m1,))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
         tree1 = get_first_tree(r.model_stack.widget(0))

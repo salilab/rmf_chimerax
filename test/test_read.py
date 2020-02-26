@@ -35,8 +35,10 @@ class Tests(unittest.TestCase):
         self.assertEqual([n.name for n in nodes],
             ['root', 'System', 'State_0', 'Rpb1', 'Frag_1-20',
              'Frag_1-20: Res 10', '1-10_bead', '11-20_bead', 'sampling',
-             'script', 'software', 'software', 'bonds', 'bond',
-             '|Chen|0.1|Rpb1|1|Rpb1|18|0|PSI|'])
+             'script', 'software', 'software', 'bonds', 'bond'])
+        # Check features
+        self.assertEqual([n.name for n in structures[0].rmf_features],
+                         ['|Chen|0.1|Rpb1|1|Rpb1|18|0|PSI|'])
         # Check chains
         chains = structures[0]._rmf_chains
         self.assertEqual(len(chains), 1)
