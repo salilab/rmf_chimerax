@@ -27,19 +27,27 @@ def open_rmf(session, path):
 
 
 from chimerax.core.models import Model
-from chimerax.atomic import Structure, AtomicShapeDrawing
+from chimerax.atomic import Structure, AtomicStructure, AtomicShapeDrawing
 
-class _RMFState(Structure):
+class _RMFState(AtomicStructure):
     """Representation of structure corresponding to a single RMF state"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._features = None
+        # Assume the structure is atomic until we encounter coordinates without
+        # atomic information
+        self._atomic = True
 
     def _add_pseudobond(self, atoms):
         if self._features is None:
             self._features = self.pseudobond_group("Features")
         b = self._features.new_pseudobond(*atoms)
         b.halfbond = False
+
+    def apply_auto_styling(self, *args, **kwargs):
+        # Only apply auto styling for truly atomic structures
+        if self._atomic:
+            super().apply_auto_styling(*args, **kwargs)
 
 
 class _RMFDrawing(Structure):
@@ -196,11 +204,14 @@ class _RMFHierarchyInfo(object):
                 self._residue.resolution = self._resolution
         return self._residue
 
-    def new_atom(self, p, mass, name='C', element='C'):
+    def new_atom(self, p, mass, name=None, element='C'):
         """Create and return a new ChimeraX Atom for the given Particle
            (and Atom, if applicable) node.
            Call add_atom() to complete adding the atom to the model."""
         state = self.get_state()
+        if name is None:
+            name = 'C'
+            state._atomic = False
         atom = state.new_atom(name, element)
         atom.coord = p.get_coordinates()
         if self._refframe:

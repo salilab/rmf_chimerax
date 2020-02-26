@@ -64,6 +64,9 @@ class Structure(object):
     def add_drawing(self, drawing):
         self._drawings.append(drawing)
 
+class AtomicStructure(Structure):
+    pass
+
 
 class AtomicShapeDrawing(object):
     def __init__(self, name):
