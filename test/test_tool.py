@@ -115,6 +115,7 @@ class Tests(unittest.TestCase):
             for w in stack.children():
                 if isinstance(w, QTreeView):
                     return w
+            raise ValueError("could not find tree")
         root = make_node("root", 0)
         child1 = make_node("child1", 1)
         child2 = make_node("child2", 2)
