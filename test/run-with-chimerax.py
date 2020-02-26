@@ -23,8 +23,9 @@ class MyTestProgram(unittest.TestProgram):
         # works
         test_dir = os.path.abspath(os.path.dirname(tests[0]))
         sys.path.insert(0, test_dir)
-        # Disable mocks; use ChimeraX directly
-        os.environ['RMF_CHIMERAX_DISABLE_MOCK'] = '1'
+        # Disable mocks; use ChimeraX and Qt directly
+        os.environ['RMF_DISABLE_CHIMERAX_MOCK'] = '1'
+        os.environ['RMF_DISABLE_QT_MOCK'] = '1'
         modobjs = [load_module(m) for m in tests]
         self.test = unittest.TestSuite(
             unittest.defaultTestLoader.loadTestsFromModule(o) for o in modobjs)

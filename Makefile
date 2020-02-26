@@ -2,6 +2,7 @@
 #    wheel: build a Python wheel in "dist" directory
 #    install: build wheel and install
 #    test: run all unit tests (in a mock environment)
+#    test-qt: run all unit tests (with real Qt, needs a display)
 #    test-chimerax: run all unit tests within ChimeraX itself
 #    debug: run ChimeraX with debugging flag set
 #    clean: remove files used in building wheel
@@ -59,6 +60,9 @@ wheel:	bundle_info.xml $(SRCS) generated_files
 
 test::
 	python3 -m nose test
+
+test-qt::
+	env RMF_DISABLE_QT_MOCK=1 python3 -m nose test
 
 test-chimerax::
 	$(CHIMERAX_EXE) --exit --nogui test/run-with-chimerax.py test/test_*.py

@@ -7,18 +7,15 @@ import os
 
 # If we're using the real ChimeraX with --nogui, we can't run GUI tests;
 # if we're using mocks, a mock GUI is available so we can run these tests.
-no_gui = 'RMF_CHIMERAX_DISABLE_MOCK' in os.environ
+no_gui = 'RMF_DISABLE_CHIMERAX_MOCK' in os.environ
 
 def set_search_paths(topdir):
     """Set search paths so that we can import Python modules and use mocks"""
-    mockdir = os.path.join(topdir, 'test', 'mock')
     paths = [topdir]
-    if 'RMF_CHIMERAX_DISABLE_MOCK' not in os.environ:
-        paths.append(mockdir)
-        # AppVeyor tests on Windows use real PyQt5; otherwise use mocks to speed
-        # things up and remove the need for a display
-        if sys.platform != 'win32':
-            paths.append(os.path.join(topdir, 'test', 'mock-qt'))
+    if 'RMF_DISABLE_CHIMERAX_MOCK' not in os.environ:
+        paths.append(os.path.join(topdir, 'test', 'mock'))
+    if 'RMF_DISABLE_QT_MOCK' not in os.environ:
+        paths.append(os.path.join(topdir, 'test', 'mock-qt'))
     os.environ['PYTHONPATH'] = os.pathsep.join(paths
                                          + [os.environ.get('PYTHONPATH', '')])
     for p in reversed(paths):
