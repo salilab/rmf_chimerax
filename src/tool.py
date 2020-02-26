@@ -2,7 +2,7 @@
 
 from chimerax.core.tools import ToolInstance
 from chimerax.core.objects import Objects
-from chimerax.atomic import Atoms
+from chimerax.atomic import Atoms, Bonds, Atom, Bond
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 
@@ -138,16 +138,17 @@ class RMFViewer(ToolInstance):
         layout.addLayout(tree_and_buttons)
 
     def _get_selected_chimera_objects(self):
-        def _get_node_objects(node, atoms):
+        def _get_node_objects(node, objs):
             if node.chimera_obj:
-                atoms.append(node.chimera_obj)
+                objs.append(node.chimera_obj)
             for child in node.children:
-                _get_node_objects(child, atoms)
-        atoms = []
+                _get_node_objects(child, objs)
+        objs = []
         for ind in self.tree.selectedIndexes():
-            _get_node_objects(ind.internalPointer(), atoms)
+            _get_node_objects(ind.internalPointer(), objs)
         objects = Objects()
-        objects.add_atoms(Atoms(atoms))
+        objects.add_atoms(Atoms(x for x in objs if isinstance(x, Atom)))
+        objects.add_bonds(Bonds(x for x in objs if isinstance(x, Bond)))
         return objects
 
     def _select_button_clicked(self):

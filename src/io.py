@@ -317,7 +317,8 @@ class _RMFLoader(object):
             atom = self._add_atom(node, self.ballf.get(node), 0., rhi)
             rmf_nodes[0].chimera_obj = atom
         if self.bondf.get_is(node):
-            self._add_bond(self.bondf.get(node), rhi)
+            bond = self._add_bond(self.bondf.get(node), rhi)
+            rmf_nodes[0].chimera_obj = bond
         if self.represf.get_is(node):
             self._add_feature(self.represf.get(node), rhi)
         if self.segmentf.get_is(node):
@@ -341,7 +342,7 @@ class _RMFLoader(object):
         rmfatom1 = bond.get_bonded_1()
         atom0 = self.rmf_index_to_atom[rmfatom0.get_index()]
         atom1 = self.rmf_index_to_atom[rmfatom1.get_index()]
-        rhi.new_bond(atom0, atom1)
+        return rhi.new_bond(atom0, atom1)
 
     def _add_feature(self, feature, rhi):
         rhi.new_feature([self.rmf_index_to_atom[x.get_index()]

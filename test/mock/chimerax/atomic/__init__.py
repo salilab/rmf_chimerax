@@ -76,3 +76,7 @@ class AtomicShapeDrawing(object):
 class Atoms:
     def __init__(self, atom_pointers=None):
         pass
+
+class Bonds:
+    def __init__(self, bond_pointers=None):
+        pass

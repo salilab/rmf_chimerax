@@ -4,3 +4,6 @@ class Objects:
 
     def add_atoms(self, atoms, bonds=False):
         pass
+
+    def add_bonds(self, bonds):
+        pass
