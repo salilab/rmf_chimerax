@@ -6,7 +6,7 @@ platform: x64
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - "python.exe -m pip install codecov coverage nose scipy PyQt5"
+  - "python.exe -m pip install codecov coverage nose scipy"
 
 build: off
 
