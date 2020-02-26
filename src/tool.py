@@ -62,10 +62,6 @@ class _RMFHierarchyModel(QAbstractItemModel):
                 row = parent_item.parent().children.index(parent_item)
             return self.createIndex(row, 0, parent_item)
 
-    def headerData(self, section, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return "Node name"
-
     def data(self, index, role):
         if not index.isValid() or role != Qt.DisplayRole:
             return None
@@ -131,6 +127,8 @@ class RMFViewer(ToolInstance):
         top = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout()
         top.setLayout(layout)
+        layout.setContentsMargins(0,0,0,0)
+        layout.setSpacing(0)
 
         label = QtWidgets.QLabel("Hierarchy")
         layout.addWidget(label)
@@ -140,6 +138,7 @@ class RMFViewer(ToolInstance):
         tree.setIndentation(20)
         tree.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
         tree.setSortingEnabled(False)
+        tree.setHeaderHidden(True)
 
         tree_and_buttons = QtWidgets.QHBoxLayout()
         tree_and_buttons.setContentsMargins(0,0,0,0)

@@ -81,6 +81,9 @@ class QTreeView:
     def setAnimated(self, flag):
         pass
 
+    def setHeaderHidden(self, hidden):
+        pass
+
     def setIndentation(self, indent):
         pass
 

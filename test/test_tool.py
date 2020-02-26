@@ -44,8 +44,6 @@ class Tests(unittest.TestCase):
         self.assertEqual(m.rowCount(QModelIndex()), 0)
         self.assertFalse(m.index(0,0,QModelIndex()).isValid())
         self.assertFalse(m.parent(QModelIndex()).isValid())
-        self.assertEqual(m.headerData(0, Qt.Horizontal, Qt.DisplayRole),
-                         "Node name")
         self.assertIsNone(m.data(QModelIndex(), Qt.DisplayRole))
 
     def test_rmf_hierarchy_model(self):
