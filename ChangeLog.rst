@@ -1,5 +1,10 @@
 HEAD
 ====
+ - Add support for multiple RMF models to the RMF Viewer tool.
+ - Add a Features view to the RMF Viewer tool which allows RMF
+   features (usually restraints) to be selected in the structure
+   by clicking on them in the list.
+ - Enable ribbon representation for atomic RMF files.
 
 0.2 - 2020-02-25
 ================

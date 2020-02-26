@@ -33,7 +33,7 @@ the RMF hierarchy or chain names in the log. Use `help rmf` from ChimeraX
 for more information.
 
 An RMF Viewer tool is also added to ChimeraX, which allows the RMF hierarchy
-to be explored.
+and features to be explored.
 
 ## Installation
 
