@@ -157,12 +157,14 @@ class RMFViewer(ToolInstance):
         self.model_stack.blockSignals(False)
 
     def _build_ui_rmf_model(self, m):
-        top = QtWidgets.QWidget()
+        top = QtWidgets.QSplitter(Qt.Vertical)
+
+        pane = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout()
-        top.setLayout(layout)
+        pane.setLayout(layout)
+
         layout.setContentsMargins(0,0,0,0)
         layout.setSpacing(0)
-
         label = QtWidgets.QLabel("Features")
         layout.addWidget(label)
 
@@ -174,7 +176,14 @@ class RMFViewer(ToolInstance):
         tree.setHeaderHidden(True)
         tree.setModel(_RMFFeaturesModel(m.rmf_features))
         layout.addWidget(tree)
+        top.addWidget(pane)
 
+        pane = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout()
+        pane.setLayout(layout)
+
+        layout.setContentsMargins(0,0,0,0)
+        layout.setSpacing(0)
         label = QtWidgets.QLabel("Hierarchy")
         layout.addWidget(label)
 
@@ -212,6 +221,7 @@ class RMFViewer(ToolInstance):
         buttons.addWidget(view_button)
         tree_and_buttons.addLayout(buttons)
         layout.addLayout(tree_and_buttons, stretch=1)
+        top.addWidget(pane)
 
         tree.setModel(_RMFHierarchyModel(m.rmf_hierarchy))
         return top

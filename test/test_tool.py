@@ -135,7 +135,7 @@ class Tests(unittest.TestCase):
     def test_button_clicks(self):
         """Test clicking on select/show/hide buttons"""
         def get_first_tree(stack):
-            for w in stack.children():
+            for w in stack.widget(1).children():
                 if isinstance(w, QTreeView):
                     return w
             raise ValueError("could not find tree")

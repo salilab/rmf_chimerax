@@ -18,6 +18,7 @@ class Qt:
     Horizontal = 0
     DisplayRole = 1
     SizeHintRole = 2
+    Vertical = 3
 
 
 class QAbstractItemModel:

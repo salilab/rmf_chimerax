@@ -104,3 +104,11 @@ class QTreeView:
 
     def selectedIndexes(self):
         return []
+
+class QSplitter:
+    def __init__(self, orientation, parent=None):
+        self._widgets = []
+    def addWidget(self, w, stretch=0):
+        self._widgets.append(w)
+    def widget(self, i):
+        return self._widgets[i]
