@@ -83,3 +83,7 @@ class Atoms:
 class Bonds:
     def __init__(self, bond_pointers=None):
         pass
+
+class Pseudobonds:
+    def __init__(self, pseudobond_pointers=None):
+        pass

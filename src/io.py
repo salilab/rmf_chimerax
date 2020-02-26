@@ -377,8 +377,8 @@ class _RMFLoader(object):
         return rhi.new_bond(atom0, atom1)
 
     def _add_feature(self, feature, rhi):
-        f = rhi.new_feature([self.rmf_index_to_atom[x.get_index()]
-                             for x in feature.get_representation()])
+        return rhi.new_feature([self.rmf_index_to_atom[x.get_index()]
+                                for x in feature.get_representation()])
 
     def _add_segment(self, segment, name, rhi):
         rhi.new_segment(segment.get_coordinates_list(), name)

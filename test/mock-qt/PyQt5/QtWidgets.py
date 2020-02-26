@@ -74,9 +74,19 @@ class QStackedWidget:
     def widget(self, i):
         return self._widgets[i]
 
+class _SelectionModel:
+    def __init__(self):
+        self.selectionChanged = _Signal()
+
 class QTreeView:
     SingleSelection = 0
     ExtendedSelection = 1
+
+    def __init__(self):
+        self._selection_model = _SelectionModel()
+
+    def selectionModel(self):
+        return self._selection_model
 
     def setAnimated(self, flag):
         pass

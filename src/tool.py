@@ -2,7 +2,7 @@
 
 from chimerax.core.tools import ToolInstance
 from chimerax.core.objects import Objects
-from chimerax.atomic import Atoms, Bonds, Atom, Bond
+from chimerax.atomic import Atoms, Bonds, Pseudobonds, Atom, Bond
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
 from PyQt5 import QtWidgets
 
@@ -175,6 +175,8 @@ class RMFViewer(ToolInstance):
         tree.setSortingEnabled(False)
         tree.setHeaderHidden(True)
         tree.setModel(_RMFFeaturesModel(m.rmf_features))
+        tree.selectionModel().selectionChanged.connect(
+            lambda sel, desel, tree=tree: self._select_feature(tree))
         layout.addWidget(tree)
         top.addWidget(pane)
 
@@ -240,6 +242,14 @@ class RMFViewer(ToolInstance):
         objects.add_bonds(Bonds(x for x in objs if isinstance(x, Bond)))
         return objects
 
+    def _get_selected_features(self, tree):
+        def get_selection():
+            for f in tree.selectedIndexes():
+                yield f.internalPointer().chimera_obj
+        objs = Objects()
+        objs.add_pseudobonds(Pseudobonds(get_selection()))
+        return objs
+
     def _select_button_clicked(self, tree):
         from chimerax.std_commands.select import select
         select(self.session, self._get_selected_chimera_objects(tree))
@@ -255,3 +265,7 @@ class RMFViewer(ToolInstance):
     def _view_button_clicked(self, tree):
         from chimerax.std_commands.view import view
         view(self.session, self._get_selected_chimera_objects(tree))
+
+    def _select_feature(self, tree):
+        from chimerax.std_commands.select import select
+        select(self.session, self._get_selected_features(tree))
