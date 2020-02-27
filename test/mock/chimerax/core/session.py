@@ -8,13 +8,11 @@ class _TriggerSet:
     def add_handler(self, name, func):
         if name not in self._tm:
             self._tm[name] = []
-        self._tm[name].append(weakref.ref(func))
+        self._tm[name].append(func)
 
     def activate_trigger(self, name, data, absent_okay=False):
-        for funcref in self._tm.get(name, []):
-            func = funcref()
-            if func is not None:
-                func(name, data)
+        for func in self._tm.get(name, []):
+            func(name, data)
 
 class _Models:
     def __init__(self, session):

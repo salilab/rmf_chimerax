@@ -7,3 +7,6 @@ class Objects:
 
     def add_bonds(self, bonds):
         pass
+
+    def add_pseudobonds(self, pseudobonds):
+        pass

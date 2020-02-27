@@ -86,6 +86,7 @@ class QTreeView:
 
     def __init__(self):
         self._selection_model = _SelectionModel()
+        self._model = None
 
     def selectionModel(self):
         return self._selection_model
@@ -106,7 +107,10 @@ class QTreeView:
         pass
 
     def setModel(self, model):
-        pass
+        self._model = model
+
+    def model(self):
+        return self._model
 
     def setSelectionMode(self, mode):
         pass

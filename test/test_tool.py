@@ -1,3 +1,4 @@
+import sys
 import os
 import utils
 import unittest
@@ -142,6 +143,8 @@ class Tests(unittest.TestCase):
         def get_first_tree(stack):
             for w in stack.widget(1).children():
                 if isinstance(w, QTreeView):
+                    self.assertIsInstance(w.model(),
+                            src.tool._RMFHierarchyModel)
                     return w
             raise ValueError("could not find tree")
         root = make_node("root", 0)
@@ -164,6 +167,27 @@ class Tests(unittest.TestCase):
         r._show_button_clicked(tree1)
         r._hide_button_clicked(tree1)
         r._view_button_clicked(tree1)
+
+    @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
+    def test_feature_selected(self):
+        """Test selecting features"""
+        def get_first_tree(stack):
+            for w in stack.widget(0).children():
+                if isinstance(w, QTreeView):
+                    self.assertIsInstance(w.model(),
+                            src.tool._RMFFeaturesModel)
+                    return w
+            raise ValueError("could not find tree")
+        root = make_node("root", 0)
+        mock_session = make_session()
+        m1 = Model(mock_session, 'test')
+        m1.rmf_hierarchy = root
+        m1.rmf_features = [make_node("f1", 4), make_node("f2", 5)]
+        mock_session.models.add((m1,))
+        r = src.tool.RMFViewer(mock_session, "RMF Viewer")
+        tree1 = get_first_tree(r.model_stack.widget(0))
+        r._select_feature(tree1)
+        tree1.selectAll()
 
 
 if __name__ == '__main__':
