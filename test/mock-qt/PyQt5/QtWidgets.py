@@ -1,3 +1,5 @@
+from PyQt5.QtCore import QModelIndex
+
 class QApplication:
     def __init__(self, args):
         pass
@@ -93,6 +95,7 @@ class QTreeView:
 
     def __init__(self):
         self._selection_model = _SelectionModel()
+        self._selinds = []
         self._model = None
 
     def selectionModel(self):
@@ -123,10 +126,18 @@ class QTreeView:
         pass
 
     def selectAll(self):
-        pass
+        def add_selinds(parent):
+            for row in range(self._model.rowCount(parent)):
+                ind = self._model.index(row, 0, parent)
+                self._selinds.append(ind)
+                add_selinds(ind)
+        self._selinds = []
+        if self._model:
+            add_selinds(QModelIndex())
+        self._selection_model.selectionChanged._call(self._selinds, [])
 
     def selectedIndexes(self):
-        return []
+        return self._selinds
 
 class QSplitter:
     def __init__(self, orientation, parent=None):

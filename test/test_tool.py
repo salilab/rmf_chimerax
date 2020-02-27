@@ -153,6 +153,7 @@ class Tests(unittest.TestCase):
                     yield w
         root = make_node("root", 0)
         child1 = make_node("child1", 1)
+        child1.chimera_obj = 'test object'
         child2 = make_node("child2", 2)
         grandchild = make_node("grandchild", 3)
         child2.add_children([grandchild])
@@ -194,6 +195,7 @@ class Tests(unittest.TestCase):
         m1 = Model(mock_session, 'test')
         m1.rmf_hierarchy = root
         m1.rmf_features = [make_node("f1", 4), make_node("f2", 5)]
+        m1.rmf_features[0].chimera_obj = 'test object'
         mock_session.models.add((m1,))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
         tree1 = get_first_tree(r.model_stack.widget(0))

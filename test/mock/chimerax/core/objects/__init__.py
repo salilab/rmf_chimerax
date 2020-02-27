@@ -1,12 +1,14 @@
 class Objects:
     def __init__(self, atoms=None, bonds=None, pseudobonds=None, models=None):
-        pass
+        self._atoms = []
+        self._bonds = []
+        self._pseudobonds = []
 
     def add_atoms(self, atoms, bonds=False):
-        pass
+        self._atoms.append(atoms)
 
     def add_bonds(self, bonds):
-        pass
+        self._bonds.append(bonds)
 
     def add_pseudobonds(self, pseudobonds):
-        pass
+        self._pseudobonds.append(pseudobonds)

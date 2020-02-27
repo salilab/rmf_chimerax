@@ -81,12 +81,12 @@ class AtomicShapeDrawing(object):
 
 class Atoms:
     def __init__(self, atom_pointers=None):
-        pass
+        self._atom_pointers = list(atom_pointers)
 
 class Bonds:
     def __init__(self, bond_pointers=None):
-        pass
+        self._bond_pointers = list(bond_pointers)
 
 class Pseudobonds:
     def __init__(self, pseudobond_pointers=None):
-        pass
+        self._pseudobond_pointers = list(pseudobond_pointers)
