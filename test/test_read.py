@@ -29,6 +29,8 @@ class Tests(unittest.TestCase):
         """Test open_rmf with a simple coarse-grained RMF file"""
         path = os.path.join(INDIR, 'simple.rmf3')
         mock_session = make_session()
+        # Exercise no-gui branch
+        mock_session.ui.is_gui = False
         structures, status = src.io.open_rmf(mock_session, path)
         state, = structures[0].child_models()
         self.assertFalse(state._atomic)
