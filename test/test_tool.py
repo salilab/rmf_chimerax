@@ -115,6 +115,11 @@ class Tests(unittest.TestCase):
         m2 = Model(mock_session, 'test')
         mock_session.models.add((m1, m2))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
+        # Test update on model creation
+        m3 = Model(mock_session, 'test')
+        m3.rmf_hierarchy = None
+        m3.rmf_features = []
+        mock_session.models.add((m3,))
 
     @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
     def test_bundle_api_make_tool(self):

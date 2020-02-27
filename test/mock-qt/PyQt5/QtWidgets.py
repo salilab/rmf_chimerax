@@ -71,6 +71,8 @@ class QStackedWidget:
         return len(self._widgets)
     def addWidget(self, w):
         self._widgets.append(w)
+    def removeWidget(self, w):
+        self._widgets.remove(w)
     def widget(self, i):
         return self._widgets[i]
 
