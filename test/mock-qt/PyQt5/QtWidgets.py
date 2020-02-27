@@ -47,12 +47,19 @@ class QLabel:
         pass
 
 class _Signal:
+    def __init__(self):
+        self._endpoint = None
     def connect(self, func):
-        pass
+        self._endpoint = func
+    def _call(self, *args):
+        if self._endpoint:
+            self._endpoint(*args)
 
 class QPushButton:
     def __init__(self, txt):
         self.clicked = _Signal()
+    def click(self):
+        self.clicked._call(False)
 
 class QComboBox:
     def __init__(self):

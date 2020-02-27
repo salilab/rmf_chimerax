@@ -7,7 +7,7 @@ TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
 from PyQt5.QtCore import QModelIndex, Qt
-from PyQt5.QtWidgets import QTreeView
+from PyQt5.QtWidgets import QTreeView, QPushButton
 
 import src
 import src.tool
@@ -147,6 +147,10 @@ class Tests(unittest.TestCase):
                             src.tool._RMFHierarchyModel)
                     return w
             raise ValueError("could not find tree")
+        def get_buttons(stack):
+            for w in stack.widget(1).children():
+                if isinstance(w, QPushButton):
+                    yield w
         root = make_node("root", 0)
         child1 = make_node("child1", 1)
         child2 = make_node("child2", 2)
@@ -162,11 +166,18 @@ class Tests(unittest.TestCase):
         mock_session.models.add((m1,))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
         tree1 = get_first_tree(r.model_stack.widget(0))
+        buttons = list(get_buttons(r.model_stack.widget(0)))
+        # Show, View, Hide, Select
+        self.assertEqual(len(buttons), 4)
+        # Call "clicked" methods directly
         r._select_button_clicked(tree1)
         tree1.selectAll()
         r._show_button_clicked(tree1)
         r._hide_button_clicked(tree1)
         r._view_button_clicked(tree1)
+        # Call indirectly via clicking each button
+        for b in buttons:
+            b.click()
 
     @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
     def test_feature_selected(self):
