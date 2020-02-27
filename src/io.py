@@ -279,7 +279,6 @@ class _RMFLoader(object):
         self.GAUSSIAN_PARTICLE = RMF.GAUSSIAN_PARTICLE
         self.PARTICLE = RMF.PARTICLE
 
-        structures = []
         r = RMF.open_rmf_file_read_only(path)
         self.particlef = RMF.ParticleConstFactory(r)
         self.gparticlef = RMF.GaussianParticleConstFactory(r)
