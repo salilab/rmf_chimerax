@@ -30,6 +30,9 @@ class Tests(unittest.TestCase):
         path = os.path.join(INDIR, 'simple.rmf3')
         mock_session = make_session()
         structures, status = src.io.open_rmf(mock_session, path)
+        state, = structures[0].child_models()
+        self.assertFalse(state._atomic)
+        state.apply_auto_styling()
         # Check hierarchy
         nodes = list(get_all_nodes(structures[0]))
         self.assertEqual([n.name for n in nodes],
@@ -50,6 +53,9 @@ class Tests(unittest.TestCase):
         path = os.path.join(INDIR, 'simple_atomic.rmf3')
         mock_session = make_session()
         structures, status = src.io.open_rmf(mock_session, path)
+        state, = structures[0].child_models()
+        self.assertTrue(state._atomic)
+        state.apply_auto_styling()
 
     def test_bundle_api_open(self):
         """Test open file via BundleAPI"""

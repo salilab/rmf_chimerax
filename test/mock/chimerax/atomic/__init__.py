@@ -44,6 +44,9 @@ class Structure(object):
         self.atoms = []
         self.residues = []
 
+    def apply_auto_styling(self, set_lighting = False, style=None):
+        pass
+
     def new_atom(self, atom_name, element):
         return Atom(atom_name, element, self)
 
