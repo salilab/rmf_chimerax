@@ -123,6 +123,14 @@ class Tests(unittest.TestCase):
             s = sf.get(rn.add_child("test segment", RMF.GEOMETRY))
             s.set_coordinates_list([RMF.Vector3(0, 0, 0), RMF.Vector3(5, 5, 5)])
 
+            s = sf.get(rn.add_child("test segment2", RMF.GEOMETRY))
+            s.set_coordinates_list([RMF.Vector3(0, 0, 0), RMF.Vector3(5, 5, 5)])
+
+            # Segments are ignored unless they contain two points
+            s = sf.get(rn.add_child("test segment2", RMF.GEOMETRY))
+            s.set_coordinates_list([RMF.Vector3(0, 0, 0), RMF.Vector3(5, 5, 5),
+                                    RMF.Vector3(10, 10, 10)])
+
             # Lines with zero length are ignored
             s = sf.get(rn.add_child("null segment", RMF.GEOMETRY))
             s.set_coordinates_list([RMF.Vector3(0, 0, 0), RMF.Vector3(0, 0, 0)])
@@ -131,9 +139,9 @@ class Tests(unittest.TestCase):
             make_rmf_file(fname)
             mock_session = make_session()
             structures, status = src.io.open_rmf(mock_session, fname)
-            # One shape should have been added
+            # Two shapes should have been added
             shapes = structures[0]._drawing._drawing._shapes
-            self.assertEqual(len(shapes), 1)
+            self.assertEqual(len(shapes), 2)
 
     def test_read_balls(self):
         """Test open_rmf handling of RMF Balls"""
