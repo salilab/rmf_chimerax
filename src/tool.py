@@ -245,7 +245,9 @@ class RMFViewer(ToolInstance):
     def _get_selected_features(self, tree):
         def get_selection():
             for f in tree.selectedIndexes():
-                yield f.internalPointer().chimera_obj
+                obj = f.internalPointer().chimera_obj
+                if obj is not None:
+                    yield obj
         objs = Objects()
         objs.add_pseudobonds(Pseudobonds(get_selection()))
         return objs

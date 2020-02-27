@@ -13,6 +13,7 @@ INDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'input'))
 
 RMF = utils.import_rmf_module()
 
+from chimerax.atomic import Pseudobond
 
 def get_all_nodes(structure):
     """Yield all RMF nodes in a given structure, by flattening the hierarchy"""
@@ -65,6 +66,51 @@ class Tests(unittest.TestCase):
         path = os.path.join(INDIR, 'simple.rmf3')
         mock_session = make_session()
         structures, status = bundle_api.open_file(mock_session, path, 'RMF')
+
+    def test_read_features(self):
+        """Test open_rmf handling of RMF features"""
+        def make_rmf_file(fname):
+            r = RMF.create_rmf_file(fname)
+            r.add_frame("root", RMF.FRAME)
+            rn = r.get_root_node()
+            rf = RMF.RepresentationFactory(r)
+            bf = RMF.BallFactory(r)
+
+            n1 = rn.add_child("ball1", RMF.GEOMETRY)
+            b1 = bf.get(n1)
+            b1.set_radius(6)
+            b1.set_coordinates(RMF.Vector3(1.,2.,3.))
+
+            n2 = rn.add_child("ball2", RMF.GEOMETRY)
+            b2 = bf.get(n2)
+            b2.set_radius(6)
+            b2.set_coordinates(RMF.Vector3(4.,5.,6.))
+
+            n3 = rn.add_child("ball3", RMF.GEOMETRY)
+            b3 = bf.get(n3)
+            b3.set_radius(6)
+            b3.set_coordinates(RMF.Vector3(7.,8.,9.))
+
+            f = rf.get(rn.add_child("feat 1", RMF.FEATURE))
+            f.set_representation([n1.get_id(), n2.get_id()])
+
+            f = rf.get(rn.add_child("feat 2", RMF.FEATURE))
+            f.set_representation([n2.get_id(), n3.get_id()])
+
+            # 3-particle feature (should be ignored)
+            f = rf.get(rn.add_child("feat 2", RMF.FEATURE))
+            f.set_representation([n1.get_id(), n2.get_id(), n3.get_id()])
+
+        with utils.temporary_file(suffix='.rmf') as fname:
+            make_rmf_file(fname)
+            mock_session = make_session()
+            structures, status = src.io.open_rmf(mock_session, fname)
+            # Three features should have been added
+            features = structures[0].rmf_features
+            self.assertEqual(len(features), 3)
+            self.assertIsInstance(features[0].chimera_obj, Pseudobond)
+            self.assertIsInstance(features[1].chimera_obj, Pseudobond)
+            self.assertIsNone(features[2].chimera_obj)
 
     def test_read_geometry(self):
         """Test open_rmf handling of RMF geometry"""
