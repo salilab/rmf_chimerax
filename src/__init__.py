@@ -19,6 +19,9 @@ class _MyAPI(BundleAPI):
         elif ci.name == "rmf chains":
             func = cmd.chains
             desc = cmd.chains_desc
+        elif ci.name == "rmf readtraj":
+            func = cmd.readtraj
+            desc = cmd.readtraj_desc
         else:
             raise ValueError("trying to register unknown command: %s" % ci.name)
         if desc.synopsis is None:

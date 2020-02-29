@@ -8,6 +8,9 @@ utils.set_search_paths(TOPDIR)
 import src
 import src.cmd
 import src.io
+from utils import make_session
+
+INDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'input'))
 
 class MockLogger(object):
     def __init__(self):
@@ -107,6 +110,15 @@ class Tests(unittest.TestCase):
         self.assertIn('<td>child1</td>', log)
         self.assertIn('<td><a title="Select chain" '
                       'href="cxcmd:select #1/A">A</a></td>', log)
+
+    def test_read_traj(self):
+        """Test readtraj with a simple coarse-grained RMF file"""
+        path = os.path.join(INDIR, 'simple.rmf3')
+        mock_session = make_session()
+        mock_session.logger = MockLogger()
+        structures, status = src.io.open_rmf(mock_session, path)
+        state = structures[0].child_models()[0]
+        src.cmd.readtraj(mock_session, state)
 
 
 if __name__ == '__main__':

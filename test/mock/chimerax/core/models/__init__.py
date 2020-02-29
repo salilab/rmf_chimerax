@@ -1,3 +1,5 @@
+import weakref
+
 class Model(object):
     def __init__(self, name, session):
         self.name = name
@@ -6,7 +8,9 @@ class Model(object):
         self._child_models = []
 
     def add(self, models):
-        self._child_models.extend(models)
+        for m in models:
+            self._child_models.append(m)
+            m.parent = weakref.proxy(self)
 
     def child_models(self):
         return self._child_models

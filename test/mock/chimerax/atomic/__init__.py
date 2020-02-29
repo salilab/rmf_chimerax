@@ -43,6 +43,11 @@ class Structure(object):
         self._drawings = []
         self.atoms = []
         self.residues = []
+        self.parent = None
+        self.id_string = '1.1'
+
+    def add_coordset(self, id, coord):
+        pass
 
     def apply_auto_styling(self, set_lighting = False, style=None):
         pass

@@ -302,6 +302,7 @@ class _RMFLoader(object):
 
         top_level = _RMFModel(session, path)
         rhi = _RMFHierarchyInfo(top_level)
+        top_level.rmf_filename = os.path.abspath(path)
         top_level.rmf_features = []
         top_level.rmf_hierarchy, = self._handle_node(r.get_root_node(), rhi,
                                                      top_level.rmf_features)

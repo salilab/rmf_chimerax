@@ -20,6 +20,11 @@ class="clRight" title="User Guide Index"/></a>
 [&nbsp;<b>depth</b>&nbsp;<i>N</i>&nbsp;]
 </h3>
 
+<h3 class="usage"><a href="usageconventions.html">Usage</a>:
+<br><b>rmf readtraj</b>
+&nbsp;<a href="atomspec.html"><i>model</i></a>
+</h3>
+
 <a name="chains"/>
 <p>
 The <b>rmf chains</b> command, given a
@@ -36,6 +41,17 @@ print to the <i>N</i> levels under the root of the hierarchy - for example
 a depth of 0 will show only the root node, 1 will show the root and only
 its immediate children, and so on.
 </p>
+
+<a name="readtraj"/>
+<p>
+The <b>rmf readtraj</b> command, given a
+<a href="atomspec.html"><i>model</i></a> (an RMF state previously read from
+an RMF file), will load all frames from the file. These can then be displayed
+using the <a href="coordset.html"><b>coordset slider</b></a> command.</p>
+
+<p>Note that this command reopens the existing RMF file, so it will likely fail
+if the RMF file has been modified externally since it was originally opened
+in ChimeraX.</p>
 
 <hr>
 <address>

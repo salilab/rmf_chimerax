@@ -5,6 +5,7 @@ HEAD
    features (usually restraints) to be selected in the structure
    by clicking on them in the list.
  - Enable ribbon representation for atomic RMF files.
+ - Add an `rmf readtraj` command to read multiple frames from RMF files.
 
 0.2 - 2020-02-25
 ================
