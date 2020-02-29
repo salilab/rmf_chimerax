@@ -138,8 +138,7 @@ class _RMFTrajectoryLoader:
             raise ValueError("atom number mismatch, %d vs %s"
                              % (numatoms, len(state.atoms)))
         numframes = r.get_number_of_frames()
-        coords = numpy.array([])
-        coords.resize(numatoms, 3)
+        coords = numpy.empty((numatoms, 3))
         self.add_rmf_coordinates(top_node, None, _Coords(coords))
         model.child_models()[0].add_coordset(0, coords)
         for nframe in range(1, numframes):
