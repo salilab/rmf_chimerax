@@ -65,6 +65,9 @@ class Tests(unittest.TestCase):
         ci = MockCommandInfo("rmf chains", "test synopsis")
         bundle_api.register_command(None, ci, None)
 
+        ci = MockCommandInfo("rmf readtraj", "test synopsis")
+        bundle_api.register_command(None, ci, None)
+
         ci = MockCommandInfo("bad command", "test synopsis")
         self.assertRaises(ValueError, bundle_api.register_command,
                           None, ci, None)
@@ -119,6 +122,12 @@ class Tests(unittest.TestCase):
         structures, status = src.io.open_rmf(mock_session, path)
         state = structures[0].child_models()[0]
         src.cmd.readtraj(mock_session, state)
+
+    def test_readtraj_not_rmf(self):
+        """Test readtraj command on a model that is not an RMF"""
+        mock_session = MockSession('test')
+        src.cmd.chains(mock_session, 'garbage model')
+        self.assertEqual(mock_session.logger.info_log, [])
 
 
 if __name__ == '__main__':
