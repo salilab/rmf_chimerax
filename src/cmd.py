@@ -111,7 +111,7 @@ class _RMFTrajectoryLoader:
     def __init__(self):
         pass
 
-    def load(self, state):
+    def load(self, state, first, last, step):
         if sys.platform == 'darwin':
             from .mac import RMF
         elif sys.platform == 'linux':
@@ -131,21 +131,25 @@ class _RMFTrajectoryLoader:
         self.ballf = RMF.BallConstFactory(r)
         self.altf = RMF.AlternativesConstFactory(r)
 
-        r.set_current_frame(RMF.FrameID(0))
+        numframes = r.get_number_of_frames()
+        if last is None or last >= numframes:
+            last = numframes - 1
+        frames_to_read = range(first, last + 1, step)
+
+        r.set_current_frame(RMF.FrameID(frames_to_read[0]))
         top_node = _RMFNode(None, None)
         numatoms = self.get_rmf_nodes(self._get_state_node(r, istate), top_node)
         if numatoms != len(state.atoms):
             raise ValueError("atom number mismatch, %d vs %s"
                              % (numatoms, len(state.atoms)))
-        numframes = r.get_number_of_frames()
         coords = numpy.empty((numatoms, 3))
         self.add_rmf_coordinates(top_node, None, _Coords(coords))
-        model.child_models()[0].add_coordset(0, coords)
-        for nframe in range(1, numframes):
+        model.child_models()[0].add_coordset(frames_to_read[0], coords)
+        for nframe in frames_to_read[1:]:
             r.set_current_frame(RMF.FrameID(nframe))
             self.add_rmf_coordinates(top_node, None, _Coords(coords))
             model.child_models()[0].add_coordset(nframe, coords)
-        return numframes
+        return len(frames_to_read)
 
     def _get_ref_frame(self, rf):
         rot = Rotation.from_quat(rf.get_rotation())
@@ -212,16 +216,19 @@ class _RMFTrajectoryLoader:
         return numatoms
 
 
-def readtraj(session, model):
+def readtraj(session, model, first=0, last=None, step=1):
     if (not hasattr(model, 'atoms') or model.parent is None
         or not hasattr(model.parent, 'rmf_filename')):
         print("%s does not look like an RMF state" % model)
         return
     t = _RMFTrajectoryLoader()
-    numframes = t.load(model)
+    numframes = t.load(model, first, last, step)
     session.logger.info(
         "Read %d frames into coordset; use 'coordset slider #%s' to view"
         % (numframes, model.id_string))
 
 
-readtraj_desc = CmdDesc(required=[("model", ModelArg)])
+readtraj_desc = CmdDesc(required=[("model", ModelArg)],
+                        optional=[("first", IntArg),
+                                  ("last", IntArg),
+                                  ("step", IntArg)])
