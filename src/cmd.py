@@ -166,21 +166,22 @@ class _RMFTrajectoryLoader:
 
     def _get_state_node(self, r, istate):
         """Return the RMF node corresponding to the istate'th state"""
-        def _check_node(node, statesel):
+        def _check_node(node, root, statesel):
             if self.statef.get_is(node):
                 if statesel.is_selected():
                     return node
             elif self.ballf.get_is(node) or self.particlef.get_is(node):
                 # If we found coordinates, we must have no states, so
                 # return the top level ("unnamed state")
-                return r.get_root_node()
+                return root
             else:  # don't descend into unwanted states
                 for child in node.get_children():
-                    found = _check_node(child, statesel)
+                    found = _check_node(child, root, statesel)
                     if found is not None:
                         return found
         statesel = _StateSelector(istate)
-        c =_check_node(r.get_root_node(), statesel)
+        root = r.get_root_node()
+        c =_check_node(root, root, statesel)
         if c is None:
             raise ValueError("Couldn't find state #%d" % istate)
         return c
