@@ -1,5 +1,5 @@
-HEAD
-====
+0.3 - 2020-03-02
+================
  - Add support for multiple RMF models to the RMF Viewer tool.
  - Add a Features view to the RMF Viewer tool which allows RMF
    features (usually restraints) to be selected in the structure
