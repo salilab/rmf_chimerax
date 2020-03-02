@@ -12,6 +12,8 @@ from utils import make_session
 
 INDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'input'))
 
+RMF = utils.import_rmf_module()
+
 class MockLogger(object):
     def __init__(self):
         self.info_log = []
@@ -128,6 +130,94 @@ class Tests(unittest.TestCase):
         mock_session = MockSession('test')
         src.cmd.chains(mock_session, 'garbage model')
         self.assertEqual(mock_session.logger.info_log, [])
+
+    def test_read_balls(self):
+        """Test readtraj handling of RMF Balls"""
+        def make_rmf_file(fname):
+            r = RMF.create_rmf_file(fname)
+            r.add_frame("root", RMF.FRAME)
+            rn = r.get_root_node()
+            bf = RMF.BallFactory(r)
+            cf = RMF.ColoredFactory(r)
+
+            n = rn.add_child("ball", RMF.GEOMETRY)
+            b1 = bf.get(n)
+            b1.set_radius(6)
+            b1.set_coordinates(RMF.Vector3(1.,2.,3.))
+            c1 = cf.get(n)
+            c1.set_rgb_color(RMF.Vector3(1,0,0))
+
+            b2 = bf.get(rn.add_child("ball", RMF.GEOMETRY))
+            b2.set_radius(4)
+            b2.set_coordinates(RMF.Vector3(4.,5.,6.))
+            # no color
+
+            r.add_frame("f1", RMF.FRAME)
+            r.add_frame("f2", RMF.FRAME)
+
+        with utils.temporary_file(suffix='.rmf') as fname:
+            make_rmf_file(fname)
+            mock_session = make_session()
+            mock_session.logger = MockLogger()
+            structures, status = src.io.open_rmf(mock_session, fname)
+            state = structures[0].child_models()[0]
+            # Just one frame to start with
+            self.assertEqual(list(state.coordset_ids), [1])
+            # Test noop read of structure
+            src.cmd.readtraj(mock_session, structures[0])
+            src.cmd.readtraj(mock_session, state, last=1)
+            # Two frames should have been read
+            self.assertEqual(list(state.coordset_ids), [1, 2])
+
+    def test_alternatives(self):
+        """Test readtraj handling of RMF alternatives"""
+        def make_rmf_file(fname):
+            r = RMF.create_rmf_file(fname)
+            r.add_frame("root", RMF.FRAME)
+            rn = r.get_root_node()
+
+            af = RMF.AlternativesFactory(r)
+            pf = RMF.ParticleFactory(r)
+            gf = RMF.GaussianParticleFactory(r)
+
+            n = rn.add_child("topp1", RMF.REPRESENTATION)
+            p = n.add_child("p1", RMF.REPRESENTATION)
+            b = pf.get(p)
+            b.set_mass(1)
+            b.set_radius(4)
+            b.set_coordinates(RMF.Vector3(4.,5.,6.))
+            a = af.get(n)
+
+            root = r.add_node("topp2", RMF.REPRESENTATION)
+            p = root.add_child("p2", RMF.REPRESENTATION)
+            b = pf.get(p)
+            b.set_radius(4)
+            b.set_coordinates(RMF.Vector3(4.,5.,6.))
+            a.add_alternative(root, RMF.PARTICLE)
+
+            root = r.add_node("topg1", RMF.REPRESENTATION)
+            g = root.add_child("g1", RMF.REPRESENTATION)
+            b = gf.get(g)
+            b.set_variances(RMF.Vector3(1.,1.,1.))
+            b.set_mass(1.)
+            a.add_alternative(root, RMF.GAUSSIAN_PARTICLE)
+            r.add_frame("f1", RMF.FRAME)
+            r.add_frame("f2", RMF.FRAME)
+            r.add_frame("f3", RMF.FRAME)
+            r.add_frame("f4", RMF.FRAME)
+            r.add_frame("f5", RMF.FRAME)
+
+        with utils.temporary_file(suffix='.rmf') as fname:
+            make_rmf_file(fname)
+            mock_session = make_session()
+            mock_session.logger = MockLogger()
+            structures, status = src.io.open_rmf(mock_session, fname)
+            state = structures[0].child_models()[0]
+            # Just one frame to start with
+            self.assertEqual(list(state.coordset_ids), [1])
+            src.cmd.readtraj(mock_session, state, first=2, step=2)
+            # Two frames (f2, f4) should have been read
+            self.assertEqual(list(state.coordset_ids), [1, 3, 5])
 
 
 if __name__ == '__main__':

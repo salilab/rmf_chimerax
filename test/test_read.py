@@ -238,6 +238,7 @@ class Tests(unittest.TestCase):
             n = rn.add_child("topp1", RMF.REPRESENTATION)
             p = n.add_child("p1", RMF.REPRESENTATION)
             b = pf.get(p)
+            b.set_mass(1)
             b.set_radius(4)
             b.set_coordinates(RMF.Vector3(4.,5.,6.))
             a = af.get(n)

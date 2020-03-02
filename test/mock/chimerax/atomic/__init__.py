@@ -45,9 +45,11 @@ class Structure(object):
         self.residues = []
         self.parent = None
         self.id_string = '1.1'
+        self.coordset_ids = [1]
 
     def add_coordset(self, id, coord):
-        pass
+        if id not in self.coordset_ids:
+            self.coordset_ids.append(id)
 
     def apply_auto_styling(self, set_lighting = False, style=None):
         pass

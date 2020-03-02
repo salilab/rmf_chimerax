@@ -144,11 +144,11 @@ class _RMFTrajectoryLoader:
                              % (numatoms, len(state.atoms)))
         coords = numpy.empty((numatoms, 3))
         self.add_rmf_coordinates(top_node, None, _Coords(coords))
-        model.child_models()[0].add_coordset(frames_to_read[0], coords)
+        model.child_models()[0].add_coordset(frames_to_read[0] + 1, coords)
         for nframe in frames_to_read[1:]:
             r.set_current_frame(RMF.FrameID(nframe))
             self.add_rmf_coordinates(top_node, None, _Coords(coords))
-            model.child_models()[0].add_coordset(nframe, coords)
+            model.child_models()[0].add_coordset(nframe + 1, coords)
         return len(frames_to_read)
 
     def _get_ref_frame(self, rf):
