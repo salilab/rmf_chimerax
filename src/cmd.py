@@ -151,15 +151,22 @@ class _RMFTrajectoryLoader:
             state.add_coordset(nframe + 1, coords)
         return len(frames_to_read)
 
-    def _get_ref_frame(self, rf):
+    def _get_ref_frame(self, rf, parent):
         rot = Rotation.from_quat(rf.get_rotation())
-        return rot, numpy.array(rf.get_translation())
+        tran = numpy.array(rf.get_translation())
+        if parent:
+            # Compose with existing transformation
+            oldrot, oldtran = parent
+            tran = oldrot.apply(tran) + oldtran
+            rot = oldrot * rot
+        return rot, tran
 
-    def add_rmf_coordinates(self, parent, refframe, coords):
+    def add_rmf_coordinates(self, parent, parent_refframe, coords):
         for node in parent.children:
             if node.refframe is not None:
-                # todo: handle nested reference frames
-                refframe = self._get_ref_frame(node.refframe)
+                refframe = self._get_ref_frame(node.refframe, parent_refframe)
+            else:
+                refframe = parent_refframe
             if node.coords is not None:
                 coords.add(node.coords.get_coordinates(), refframe)
             self.add_rmf_coordinates(node, refframe, coords)
@@ -193,10 +200,7 @@ class _RMFTrajectoryLoader:
         refframe = coords = thisnode = None
         if self.refframef.get_is(node):
             refframe = self.refframef.get(node)
-        if self.gparticlef.get_is(node):
-            # todo: do something with Gaussians
-            pass
-        elif self.ballf.get_is(node):
+        if self.ballf.get_is(node):
             numatoms += 1
             coords = self.ballf.get(node)
         elif self.particlef.get_is(node):

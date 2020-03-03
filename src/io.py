@@ -138,10 +138,15 @@ class _RMFHierarchyInfo(object):
 
     def _set_reference_frame(self, rf):
         """Set the current reference frame from an RMF ReferenceFrame node"""
-        # todo: handle nested reference frames
         from scipy.spatial.transform import Rotation
         rot = Rotation.from_quat(rf.get_rotation())
-        self._refframe = (rot, numpy.array(rf.get_translation()))
+        tran = numpy.array(rf.get_translation())
+        if self._refframe:
+            # Compose with existing transformation
+            oldrot, oldtran = self._refframe
+            tran = oldrot.apply(tran) + oldtran
+            rot = oldrot * rot
+        self._refframe = (rot, tran)
 
     def handle_node(self, node, hierarchy, loader):
         """Extract structural information from the given RMF node.
@@ -339,10 +344,11 @@ class _RMFLoader(object):
         rmf_nodes = [_RMFHierarchyNode(node)]
         # Get hierarchy-related info from this node (e.g. chain, state)
         rhi = parent_rhi.handle_node(node, rmf_nodes[0], self)
-        if self.gparticlef.get_is(node):
-            # todo: do something with Gaussians
-            pass
-        elif self.particlef.get_is(node):
+        if self.particlef.get_is(node):
+            # todo: special handling for Gaussians; right now we assume that
+            # every Gaussian is also a Particle, as 1) this is the case for
+            # IMP-generated structures and 2) particlef.get_is() returns True
+            # for Gaussians anyway (since it appears to only check for mass)
             p = self.particlef.get(node)
             atom = self._add_atom(node, p, p.get_mass(), rhi)
             rmf_nodes[0].chimera_obj = atom

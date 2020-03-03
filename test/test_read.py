@@ -255,6 +255,9 @@ class Tests(unittest.TestCase):
             b = gf.get(g)
             b.set_variances(RMF.Vector3(1.,1.,1.))
             b.set_mass(1.)
+            b = pf.get(g)
+            b.set_radius(4)
+            b.set_coordinates(RMF.Vector3(4.,5.,6.))
             a.add_alternative(root, RMF.GAUSSIAN_PARTICLE)
 
         with utils.temporary_file(suffix='.rmf') as fname:
