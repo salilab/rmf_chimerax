@@ -4,7 +4,7 @@ import numpy
 import os.path
 import sys
 import weakref
-
+import copy
 
 def open_rmf(session, path):
     """Read an RMF file from a named file.
@@ -151,9 +151,9 @@ class _RMFHierarchyInfo(object):
             # Make a copy if we need to so we don't mess with the information
             # used by parent nodes
             if x is self:
-                return x
-            else:
                 return copy.copy(x)
+            else:
+                return x
         rhi = self
         if loader.statef.get_is(node):
             rhi = copy_if_needed(rhi)
@@ -236,7 +236,7 @@ class _RMFHierarchyInfo(object):
         return atom
 
     def new_bond(self, a1, a2):
-        state = self.get_state()
+        state = a1.structure
         return state.new_bond(a1, a2)
 
     def new_feature(self, atoms):
