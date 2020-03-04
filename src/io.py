@@ -17,9 +17,16 @@ def open_rmf(session, path):
 
     numframes = r.get_number_of_frames()
     producer = r.get_producer()
-    status = ("Opened RMF file%s with %d frame%s"
+    status = ("Opened RMF file%s with %d frame%s."
               % (" produced with %s," % producer if producer else "",
                  numframes, "" if numframes == 1 else "s"))
+    if structures[0]._rmf_resolutions:
+        status += (" Representation read at the following resolutions: %s."
+                   % ", ".join("%.1f" % i for i in
+                               sorted(structures[0]._rmf_resolutions)))
+    if numframes > 1:
+        status += (" Only the first frame was read; to read additional "
+                   "frames, use the 'rmf readtraj' command.")
     if session.ui.is_gui:
         from chimerax.core.commands import run
         run(session, 'toolshed show "RMF Viewer"', log=False)
@@ -67,8 +74,12 @@ class _RMFModel(Model):
         self._drawing = None
         self._provenance = None
         self._provenance_map = {}
+        self._rmf_resolutions = set()
         self._rmf_chains = []
         super().__init__(name, session)
+
+    def _add_rmf_resolution(self, res):
+        self._rmf_resolutions.add(res)
 
     def get_drawing(self):
         if self._drawing is None:
@@ -288,6 +299,7 @@ class _RMFHierarchyInfo(object):
             rhi = copy_if_needed(rhi)
             n = loader.resolutionf.get(node)
             rhi._resolution = n.get_explicit_resolution()
+            self.top_level._add_rmf_resolution(rhi._resolution)
         if loader.fragmentf.get_is(node):
             rhi = copy_if_needed(rhi)
             f = loader.fragmentf.get(node)
