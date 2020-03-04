@@ -281,6 +281,103 @@ class Tests(unittest.TestCase):
             self.assertEqual([c.name for c in root.children],
                              ['topp1', 'topp2', 'topg1'])
 
+    def test_provenance(self):
+        """Test open_rmf handling of RMF provenance"""
+        def make_rmf_file(fname):
+            r = RMF.create_rmf_file(fname)
+            r.add_frame("root", RMF.FRAME)
+            rn = r.get_root_node()
+
+            strucpf = RMF.StructureProvenanceFactory(r)
+            samplepf = RMF.SampleProvenanceFactory(r)
+            scriptpf = RMF.ScriptProvenanceFactory(r)
+            softwarepf = RMF.SoftwareProvenanceFactory(r)
+
+            n = rn.add_child("struc", RMF.PROVENANCE)
+            p = strucpf.get(n)
+            p.set_chain('A')
+            p.set_residue_offset(42)
+            p.set_filename('xyz')
+
+            n = n.add_child("sample", RMF.PROVENANCE)
+            p = samplepf.get(n)
+            p.set_frames(100)
+            p.set_iterations(10)
+            p.set_method('Monte Carlo')
+            p.set_replicas(8)
+
+            n = n.add_child("script", RMF.PROVENANCE)
+            p = scriptpf.get(n)
+            p.set_filename('abc')
+
+            n = rn.add_child("software", RMF.PROVENANCE)
+            p = softwarepf.get(n)
+            p.set_location('testurl')
+            p.set_name('testsoftware')
+            p.set_version('1.2.3')
+
+        with utils.temporary_file(suffix='.rmf') as fname:
+            make_rmf_file(fname)
+            mock_session = make_session()
+            structures, status = src.io.open_rmf(mock_session, fname)
+            p1, p2 = structures[0].rmf_provenance
+            self.assertEqual(p1.name, 'Chain A from xyz')
+            self.assertEqual(p2.name,
+                'Using software testsoftware version 1.2.3 from testurl')
+            self.assertIsNone(p2.previous)
+            prev = p1.previous
+            self.assertEqual(prev.name,
+                'Sampling using Monte Carlo making 100 frames')
+            prev = prev.previous
+            self.assertIn('Using script', prev.name)
+            self.assertIsNone(prev.previous)
+
+    def test_em_provenance(self):
+        """Test open_rmf handling of RMF EM restraint provenance"""
+        def make_rmf_file(fname):
+            r = RMF.create_rmf_file(fname)
+            imp_restraint_cat = r.get_category("IMP restraint")
+            rsr_typek = r.get_key(imp_restraint_cat, "type", RMF.StringTag())
+
+            imp_restraint_fn_cat = r.get_category("IMP restraint files")
+            rsr_filenamek = r.get_key(imp_restraint_fn_cat, "filename",
+                                      RMF.StringTag())
+
+            r.add_frame("root", RMF.FRAME)
+            rn = r.get_root_node()
+
+            represf = RMF.RepresentationFactory(r)
+            particlef = RMF.ParticleFactory(r)
+
+            pn = rn.add_child("p1", RMF.REPRESENTATION)
+            p = particlef.get(pn)
+            p.set_mass(12.)
+            p.set_radius(1.)
+            p.set_coordinates(RMF.Vector3(1,2,3))
+
+            n = rn.add_child("r1", RMF.FEATURE)
+            p = represf.get(n)
+            p.set_representation([pn])
+            n.set_value(rsr_typek, "some other restraint")
+
+            n = rn.add_child("nofname", RMF.FEATURE)
+            p = represf.get(n)
+            p.set_representation([pn])
+            n.set_value(rsr_typek, "IMP.isd.GaussianEMRestraint")
+
+            n = rn.add_child("emr", RMF.FEATURE)
+            p = represf.get(n)
+            p.set_representation([pn])
+            n.set_value(rsr_typek, "IMP.isd.GaussianEMRestraint")
+            n.set_value(rsr_filenamek, "abc")
+
+        with utils.temporary_file(suffix='.rmf') as fname:
+            make_rmf_file(fname)
+            mock_session = make_session()
+            structures, status = src.io.open_rmf(mock_session, fname)
+            p1, = structures[0].rmf_provenance
+            self.assertIsInstance(p1, src.io._RMFEMRestraintProvenance)
+
 
 if __name__ == '__main__':
     unittest.main()

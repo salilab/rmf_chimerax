@@ -163,15 +163,22 @@ class _RMFProvenance(object):
         self.next = None
 
     def set_previous(self, previous):
+        """Add another _RMFProvenance node that represents the previous state
+           of the system"""
         self.previous = previous
         previous.next = weakref.proxy(self)
 
     def load(self, session, model):
+        """Override to load file(s) referenced by this object into the
+           given session and model."""
         pass
 
+    # Displayed name of this provenance (defaults to the name of the RMF node)
     name = property(lambda self: self._name)
 
+
 def _atomic_model_reader(filename):
+    """Get a ChimeraX function to read the given atomic model (PDB, mmCIF)"""
     if filename.endswith('.cif'):
         from chimerax.atomic.mmcif import open_mmcif
         return open_mmcif
@@ -181,13 +188,19 @@ def _atomic_model_reader(filename):
 
 
 class _RMFStructureProvenance(_RMFProvenance):
+    """Represent a structure file (PDB, mmCIF) used as input for an RMF"""
     def __init__(self, rmf_node, prov):
         super().__init__(rmf_node)
+        #: The chain ID used in the given file
         self.chain = prov.get_chain()
+        #: Value to add to RMF residue numbers to get residue numbers
+        #: in the file (usually zero)
         self.residue_offset = prov.get_residue_offset()
+        #: Full path to PDB/mmCIF file
         self.filename = prov.get_filename()
 
     def load(self, session, model):
+        # todo: read only the referenced chain(s) from each file
         if model._has_provenance(self.filename):
             return
         if not os.path.exists(self.filename):
@@ -212,11 +225,16 @@ class _RMFStructureProvenance(_RMFProvenance):
 
 
 class _RMFSampleProvenance(_RMFProvenance):
+    """Information about how an RMF model was sampled"""
     def __init__(self, rmf_node, prov):
         super().__init__(rmf_node)
+        #: Number of frames generated in the sampling
         self.frames = prov.get_frames()
+        #: Number of scoring function iterations per frame
         self.iterations = prov.get_iterations()
+        #: Sampling method used (e.g. Monte Carlo)
         self.method = prov.get_method()
+        #: Number of replicas used in replica exchange sampling
         self.replicas = prov.get_replicas()
 
     def _get_name(self):
@@ -226,8 +244,10 @@ class _RMFSampleProvenance(_RMFProvenance):
 
 
 class _RMFScriptProvenance(_RMFProvenance):
+    """Information about the script used to build an RMF model"""
     def __init__(self, rmf_node, prov):
         super().__init__(rmf_node)
+        #: Full path to the script
         self.filename = prov.get_filename()
 
     def _get_name(self):
@@ -236,10 +256,14 @@ class _RMFScriptProvenance(_RMFProvenance):
 
 
 class _RMFSoftwareProvenance(_RMFProvenance):
+    """Information about the software used to build an RMF model"""
     def __init__(self, rmf_node, prov):
         super().__init__(rmf_node)
+        #: URL to obtain the software
         self.location = prov.get_location()
+        #: Name of the software package
         self.software_name = prov.get_name()
+        #: Version of the software used
         self.version = prov.get_version()
 
     def _get_name(self):
@@ -249,16 +273,17 @@ class _RMFSoftwareProvenance(_RMFProvenance):
 
 
 class _RMFEMRestraintProvenance(_RMFProvenance):
+    """Information about an electron microscopy restraint"""
     def __init__(self, rmf_node, filename):
         super().__init__(rmf_node)
-        # GMM file
+        #: Full path to GMM file
         self.filename = filename
-        # MRC file
+        #: Full path to MRC file (if known)
         self.mrc_filename = self._parse_gmm(filename)
 
     def _parse_gmm(self, filename):
-        # Extract metadata from the GMM file (to find the original MRC file)
-        # if available
+        """Extract metadata from the GMM file (to find the original MRC file)
+           if available"""
         if not os.path.exists(filename):
             return
         with open(filename) as fh:
