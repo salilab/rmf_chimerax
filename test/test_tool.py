@@ -1,3 +1,4 @@
+import weakref
 import sys
 import os
 import utils
@@ -112,23 +113,33 @@ class Tests(unittest.TestCase):
 
     def test_rmf_provenance_model(self):
         """Test RMFProvenanceModel class"""
-        provs = [make_provenance("f1", 1), make_provenance("f2", 2)]
+        f1 = make_provenance("f1", 1)
+        f2 = make_provenance("f2", 2)
+        child = make_provenance("child", 3)
+        f1.previous = child
+        child.next = weakref.proxy(f1)
+        provs = [f1, f2]
 
         m = src.tool._RMFProvenanceModel(provs)
         top = QModelIndex()
         self.assertEqual(m.columnCount(None), 1)
+
         self.assertEqual(m.rowCount(top), 2)
+        f1_ind = m.createIndex(0,0,f1)
+        child_ind = m.createIndex(0,0,child)
+        self.assertEqual(m.columnCount(f1_ind), 1)
 
         # Test indices
         self.assertEqual(m.index(0,0,top).internalPointer().name, 'f1')
         self.assertEqual(m.index(1,0,top).internalPointer().name, 'f2')
         self.assertFalse(m.index(2,0,top).isValid())
-        # No parents
+        self.assertEqual(m.index(0,0,f1_ind).internalPointer().name, 'child')
+        # No parents for top level
         self.assertFalse(m.parent(top).isValid())
-        childind = m.createIndex(0,0,provs[0])
-        self.assertFalse(m.parent(childind).isValid())
-        self.assertEqual(m.data(childind, Qt.DisplayRole), "f1")
-        self.assertIsNone(m.data(childind, Qt.SizeHintRole))
+        self.assertFalse(m.parent(f1_ind).isValid())
+        self.assertEqual(m.parent(child_ind).internalPointer().name, 'f1')
+        self.assertEqual(m.data(f1_ind, Qt.DisplayRole), "f1")
+        self.assertIsNone(m.data(f1_ind, Qt.SizeHintRole))
 
     @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
     def test_rmf_viewer(self):
