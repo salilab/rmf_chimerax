@@ -1,6 +1,10 @@
 HEAD
 ====
  - Add basic support for Gaussian particles (they are shown as spheres).
+ - Add support for provenance (information about how the model was generated)
+   to the RMF Viewer tool. This can be used to read in external files to
+   supplement the model, such as electron microscopy density maps or input
+   PDB files.
 
 0.3 - 2020-03-02
 ================

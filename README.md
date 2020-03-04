@@ -6,11 +6,14 @@
 This is an experimental ChimeraX plugin to read and visualize
 [RMF](https://integrativemodeling.org/rmf/) files, used primarily by the
 [Integrative Modeling Platform (IMP)](https://integrativemodeling.org/).
-Currently it will read and display all frames from an RMF file, any
-2-particle restraints (such as cross-links), and RMF geometry, such as
-bounding boxes, although the longer-term goal
-is to offer the same functionality as the RMF viewer in legacy Chimera plus
-support for newer RMF features, such as provenance.
+
+Currently it will:
+ - read and display all frames from an RMF file
+ - display 2-particle restraints (such as cross-links)
+ - display RMF geometry, such as bounding boxes
+ - show provenance (information about how the model was generated, including
+   external files such as electron microscopy density maps or input
+   PDB files)
 
 Residues in read-in RMF files are given the following attributes which can
 be used in ChimeraX selections (see `help select` from the ChimeraX command
@@ -32,8 +35,8 @@ An `rmf` command is also added to ChimeraX, which if run will show
 the RMF hierarchy or chain names in the log, or read additional frames
 from the RMF file. Use `help rmf` from ChimeraX for more information.
 
-An RMF Viewer tool is also added to ChimeraX, which allows the RMF hierarchy
-and features to be explored.
+An RMF Viewer tool is also added to ChimeraX, which allows the RMF hierarchy,
+features and provenance to be explored.
 
 ## Installation
 
