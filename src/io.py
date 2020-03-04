@@ -65,6 +65,8 @@ class _RMFModel(Model):
         name = os.path.splitext(os.path.basename(filename))[0]
         self._unnamed_state = None
         self._drawing = None
+        self._provenance = None
+        self._provenance_map = {}
         self._rmf_chains = []
         super().__init__(name, session)
 
@@ -73,6 +75,17 @@ class _RMFModel(Model):
             self._drawing = _RMFDrawing(self.session, name="Geometry")
             self.add([self._drawing])
         return self._drawing
+
+    def _has_provenance(self, filename):
+        return filename in self._provenance_map
+
+    def _add_provenance(self, filename, p):
+        if self._provenance is None:
+            self._provenance = Model('Provenance', self.session)
+            self.add([self._provenance])
+        self._provenance_map[filename] = p
+        self._provenance.add([p])
+        return self._provenance
 
     def _add_state(self, name):
         """Create and return a new _RMFState"""
@@ -100,7 +113,7 @@ class _RMFModel(Model):
 class _RMFHierarchyNode(object):
     """Represent a single RMF node.
        Note that features (restraints) are stored outside of this hierarchy,
-       as _RMFFeature objects."""
+       as _RMFFeature objects, as are provenance nodes."""
     __slots__ = ['name', 'rmf_index', 'children', 'parent', "__weakref__",
                  'chimera_obj']
 
@@ -126,6 +139,104 @@ class _RMFFeature(object):
         self.name = rmf_node.get_name()
         self.rmf_index = rmf_node.get_index()
         self.chimera_obj = None
+
+
+class _RMFProvenance(object):
+    """Represent some provenance of the RMF file."""
+
+    def __init__(self, rmf_node):
+        self._name = rmf_node.get_name()
+        self.rmf_index = rmf_node.get_index()
+        self.chimera_obj = None
+        self.previous = None
+
+    def set_previous(self, previous):
+        self.previous = previous
+
+    def load(self, session, model):
+        pass
+
+    name = property(lambda self: self._name)
+
+def _atomic_model_reader(filename):
+    if filename.endswith('.cif'):
+        from chimerax.atomic.mmcif import open_mmcif
+        return open_mmcif
+    elif filename.endswith('.pdb'):
+        from chimerax.atomic.pdb import open_pdb
+        return open_pdb
+
+
+class _RMFStructureProvenance(_RMFProvenance):
+    def __init__(self, rmf_node, prov):
+        super().__init__(rmf_node)
+        self.chain = prov.get_chain()
+        self.residue_offset = prov.get_residue_offset()
+        self.filename = prov.get_filename()
+
+    def load(self, session, model):
+        if model._has_provenance(self.filename):
+            return
+        if not os.path.exists(self.filename):
+            session.logger.warning("Not reading %s; does not exist"
+                                   % self.filename)
+        else:
+            open_model = _atomic_model_reader(self.filename)
+            if open_model:
+                with open(self.filename) as fh:
+                    models, msg = open_model(
+                        session, fh, os.path.basename(self.filename),
+                        auto_style=False, log_info=False)
+                model._add_provenance(self.filename, models[0])
+            else:
+                session.logger.warning("Not reading %s; file format "
+                                       "not recognized" % self.filename)
+
+    def _get_name(self):
+        return ("Chain %s from %s"
+                % (self.chain, os.path.basename(self.filename)))
+    name = property(_get_name)
+
+
+class _RMFEMRestraintProvenance(_RMFProvenance):
+    def __init__(self, rmf_node, filename):
+        super().__init__(rmf_node)
+        # GMM file
+        self.filename = filename
+        # MRC file
+        self.mrc_filename = self._parse_gmm(filename)
+
+    def _parse_gmm(self, filename):
+        # Extract metadata from the GMM file (to find the original MRC file)
+        # if available
+        if not os.path.exists(filename):
+            return
+        with open(filename) as fh:
+            for line in fh:
+                if line.startswith('# data_fn: '):
+                    relpath = line[11:].rstrip('\r\n')
+                    return os.path.join(os.path.dirname(filename), relpath)
+
+    def load(self, session, model):
+        if (self.mrc_filename
+            and not model._has_provenance(self.mrc_filename)):
+            from chimerax.map.volume import open_map
+            from chimerax.map.data import UnknownFileType
+            try:
+                maps, msg = open_map(session, self.mrc_filename)
+            except UnknownFileType:
+                return
+            v = maps[0]
+            v.set_display_style('image')
+            v.show()
+            model._add_provenance(self.mrc_filename, v)
+
+    def _get_name(self):
+        desc = "EM map from %s" % os.path.basename(self.filename)
+        if self.mrc_filename:
+            desc += " (derived from %s)" % os.path.basename(self.mrc_filename)
+        return desc
+    name = property(_get_name)
 
 
 class _RMFHierarchyInfo(object):
@@ -283,11 +394,13 @@ class _RMFLoader(object):
 
         self.GAUSSIAN_PARTICLE = RMF.GAUSSIAN_PARTICLE
         self.PARTICLE = RMF.PARTICLE
+        self.PROVENANCE = RMF.PROVENANCE
 
         r = RMF.open_rmf_file_read_only(path)
         self.particlef = RMF.ParticleConstFactory(r)
         self.gparticlef = RMF.GaussianParticleConstFactory(r)
         self.ballf = RMF.BallConstFactory(r)
+        self.strucprovf = RMF.StructureProvenanceConstFactory(r)
         self.coloredf = RMF.ColoredConstFactory(r)
         self.chainf = RMF.ChainConstFactory(r)
         self.fragmentf = RMF.FragmentConstFactory(r)
@@ -303,14 +416,27 @@ class _RMFLoader(object):
         self.segmentf = RMF.SegmentConstFactory(r)
         self.rmf_index_to_atom = {}
 
+        imp_restraint_cat = r.get_category("IMP restraint")
+        keys = dict((r.get_name(k), k)
+                    for k in r.get_keys(imp_restraint_cat))
+        self.rsr_typek = keys.get('type')
+
+        imp_restraint_fn_cat = r.get_category("IMP restraint files")
+        keys = dict((r.get_name(k), k)
+                    for k in r.get_keys(imp_restraint_fn_cat))
+        self.rsr_filenamek = keys.get('filename')
+
         r.set_current_frame(RMF.FrameID(0))
 
         top_level = _RMFModel(session, path)
         rhi = _RMFHierarchyInfo(top_level)
         top_level.rmf_filename = os.path.abspath(path)
         top_level.rmf_features = []
+        top_level.rmf_provenance = []
         top_level.rmf_hierarchy, = self._handle_node(r.get_root_node(), rhi,
-                                                     top_level.rmf_features)
+                                                     top_level.rmf_features,
+                                                     top_level.rmf_provenance,
+                                                     os.path.dirname(path))
         return r, [top_level]
 
     def _add_atom(self, node, p, mass, rhi):
@@ -332,13 +458,44 @@ class _RMFLoader(object):
         rhi.add_atom(atom)
         return atom
 
-    def _handle_node(self, node, parent_rhi, features):
+    def _handle_provenance(self, node):
+        if self.strucprovf.get_is(node):
+            prov = _RMFStructureProvenance(node, self.strucprovf.get(node))
+        else:
+            prov = _RMFProvenance(node)
+        # Provenance nodes *should* only have at most one "child"
+        for child in node.get_children():
+            prov.set_previous(self._handle_provenance(child))
+        return prov
+
+    def _handle_feature_provenance(self, node, rmf_dir):
+        # noop if these keys aren't in the file at all
+        if self.rsr_typek is None or self.rsr_filenamek is None:
+            return
+        rsrtype = node.get_value(self.rsr_typek)
+        if rsrtype == 'IMP.isd.GaussianEMRestraint':
+            fname = node.get_value(self.rsr_filenamek)
+            if fname:
+                # path is relative to that of the RMF file
+                fname = os.path.join(rmf_dir, fname)
+                return _RMFEMRestraintProvenance(node, fname)
+
+    def _handle_node(self, node, parent_rhi, features, provenance, rmf_dir):
         # Features are handled outside of the regular hierarchy
         if self.represf.get_is(node):
             feature = _RMFFeature(node)
             feature.chimera_obj = self._add_feature(
                                     self.represf.get(node), parent_rhi)
             features.append(feature)
+            # Extract provenance from restraint if present
+            p = self._handle_feature_provenance(node, rmf_dir)
+            if p:
+                provenance.append(p)
+            return []
+
+        # Provenance is handled outside of the regular hierarchy
+        if node.get_type() == self.PROVENANCE:
+            provenance.append(self._handle_provenance(node))
             return []
 
         rmf_nodes = [_RMFHierarchyNode(node)]
@@ -362,7 +519,8 @@ class _RMFLoader(object):
         if self.segmentf.get_is(node):
             self._add_segment(self.segmentf.get(node), node.get_name(), rhi)
         for child in node.get_children():
-            rmf_nodes[0].add_children(self._handle_node(child, rhi, features))
+            rmf_nodes[0].add_children(self._handle_node(child, rhi, features,
+                                                        provenance, rmf_dir))
         # Handle any alternatives (usually different resolutions)
         # Alternatives replace the current node - they are not children of
         # it - so use parent_rhi, not rhi.
@@ -370,9 +528,11 @@ class _RMFLoader(object):
             alt = self.altf.get(node)
             # The node itself should be the first alternative, so ignore that
             for p in alt.get_alternatives(self.PARTICLE)[1:]:
-                rmf_nodes.extend(self._handle_node(p, parent_rhi, features))
+                rmf_nodes.extend(self._handle_node(p, parent_rhi, features,
+                                                   provenance, rmf_dir))
             for gauss in alt.get_alternatives(self.GAUSSIAN_PARTICLE):
-                rmf_nodes.extend(self._handle_node(gauss, parent_rhi, features))
+                rmf_nodes.extend(self._handle_node(gauss, parent_rhi, features,
+                                                   provenance, rmf_dir))
         return rmf_nodes
 
     def _add_bond(self, bond, rhi):

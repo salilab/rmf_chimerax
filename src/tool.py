@@ -102,6 +102,39 @@ class _RMFFeaturesModel(QAbstractItemModel):
         return item.name
 
 
+class _RMFProvenanceModel(QAbstractItemModel):
+    """Map a list of RMF provenance into a QTreeView"""
+    def __init__(self, rmf_provenance):
+        super().__init__()
+        self.rmf_provenance = rmf_provenance
+
+    def columnCount(self, parent):
+        # We always have just a single column (the node's name)
+        return 1
+
+    def rowCount(self, parent):
+        if not parent.isValid():
+            # the hidden top level owns all features
+            return len(self.rmf_provenance)
+        else:
+            return 0
+
+    def index(self, row, column, parent):
+        if not self.hasIndex(row, column, parent):
+            return QModelIndex()
+        return self.createIndex(row, column, self.rmf_provenance[row])
+
+    def parent(self, index):
+        # Only one level so always return the hidden top level
+        return QModelIndex()
+
+    def data(self, index, role):
+        if not index.isValid() or role != Qt.DisplayRole:
+            return None
+        item = index.internalPointer()
+        return item.name
+
+
 class RMFViewer(ToolInstance):
     SESSION_ENDURING = False    # Does this instance persist when session closes
     SESSION_SAVE = False        # We do save/restore in sessions
@@ -180,6 +213,15 @@ class RMFViewer(ToolInstance):
         layout.addWidget(tree)
         top.addWidget(pane)
 
+        pane = self._get_hierarchy_pane(m)
+        top.addWidget(pane)
+
+        pane = self._get_provenance_pane(m)
+        top.addWidget(pane)
+
+        return top
+
+    def _get_hierarchy_pane(self, m):
         pane = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout()
         pane.setLayout(layout)
@@ -195,6 +237,7 @@ class RMFViewer(ToolInstance):
         tree.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
         tree.setSortingEnabled(False)
         tree.setHeaderHidden(True)
+        tree.setModel(_RMFHierarchyModel(m.rmf_hierarchy))
 
         tree_and_buttons = QtWidgets.QHBoxLayout()
         tree_and_buttons.setContentsMargins(0,0,0,0)
@@ -223,10 +266,42 @@ class RMFViewer(ToolInstance):
         buttons.addWidget(view_button)
         tree_and_buttons.addLayout(buttons)
         layout.addLayout(tree_and_buttons, stretch=1)
-        top.addWidget(pane)
+        return pane
 
-        tree.setModel(_RMFHierarchyModel(m.rmf_hierarchy))
-        return top
+    def _get_provenance_pane(self, m):
+        pane = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout()
+        pane.setLayout(layout)
+
+        layout.setContentsMargins(0,0,0,0)
+        layout.setSpacing(0)
+        label = QtWidgets.QLabel("Provenance")
+        layout.addWidget(label)
+
+        tree = QtWidgets.QTreeView()
+        tree.setAnimated(False)
+        tree.setIndentation(20)
+        tree.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
+        tree.setSortingEnabled(False)
+        tree.setHeaderHidden(True)
+        tree.setModel(_RMFProvenanceModel(m.rmf_provenance))
+
+        tree_and_buttons = QtWidgets.QHBoxLayout()
+        tree_and_buttons.setContentsMargins(0,0,0,0)
+        tree_and_buttons.setSpacing(0)
+
+        tree_and_buttons.addWidget(tree, stretch=1)
+
+        buttons = QtWidgets.QVBoxLayout()
+        buttons.setContentsMargins(0,0,0,0)
+        buttons.setSpacing(0)
+        load_button = QtWidgets.QPushButton("Load")
+        load_button.clicked.connect(lambda chk, tree=tree, m=m:
+                                    self._load_button_clicked(tree, m))
+        buttons.addWidget(load_button)
+        tree_and_buttons.addLayout(buttons)
+        layout.addLayout(tree_and_buttons, stretch=1)
+        return pane
 
     def _get_selected_chimera_objects(self, tree):
         def _get_node_objects(node, objs):
@@ -271,3 +346,8 @@ class RMFViewer(ToolInstance):
     def _select_feature(self, tree):
         from chimerax.std_commands.select import select
         select(self.session, self._get_selected_features(tree))
+
+    def _load_button_clicked(self, tree, m):
+        for f in tree.selectedIndexes():
+            obj = f.internalPointer()
+            obj.load(self.session, m)

@@ -39,6 +39,10 @@ def make_feature(name, index):
     n = MockRMFNode(name, index)
     return src.io._RMFFeature(n)
 
+def make_provenance(name, index):
+    n = MockRMFNode(name, index)
+    return src.io._RMFProvenance(n)
+
 
 class Tests(unittest.TestCase):
     def test_rmf_hierarchy_model_none(self):
@@ -106,6 +110,26 @@ class Tests(unittest.TestCase):
         self.assertEqual(m.data(childind, Qt.DisplayRole), "f1")
         self.assertIsNone(m.data(childind, Qt.SizeHintRole))
 
+    def test_rmf_provenance_model(self):
+        """Test RMFProvenanceModel class"""
+        provs = [make_provenance("f1", 1), make_provenance("f2", 2)]
+
+        m = src.tool._RMFProvenanceModel(provs)
+        top = QModelIndex()
+        self.assertEqual(m.columnCount(None), 1)
+        self.assertEqual(m.rowCount(top), 2)
+
+        # Test indices
+        self.assertEqual(m.index(0,0,top).internalPointer().name, 'f1')
+        self.assertEqual(m.index(1,0,top).internalPointer().name, 'f2')
+        self.assertFalse(m.index(2,0,top).isValid())
+        # No parents
+        self.assertFalse(m.parent(top).isValid())
+        childind = m.createIndex(0,0,provs[0])
+        self.assertFalse(m.parent(childind).isValid())
+        self.assertEqual(m.data(childind, Qt.DisplayRole), "f1")
+        self.assertIsNone(m.data(childind, Qt.SizeHintRole))
+
     @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
     def test_rmf_viewer(self):
         """Test creation of RMFViewer tool"""
@@ -113,6 +137,7 @@ class Tests(unittest.TestCase):
         m1 = Model(mock_session, 'test')
         m1.rmf_hierarchy = None
         m1.rmf_features = []
+        m1.rmf_provenance = []
         m2 = Model(mock_session, 'test')
         mock_session.models.add((m1, m2))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
@@ -120,6 +145,7 @@ class Tests(unittest.TestCase):
         m3 = Model(mock_session, 'test')
         m3.rmf_hierarchy = None
         m3.rmf_features = []
+        m3.rmf_provenance = []
         mock_session.models.add((m3,))
 
     @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
@@ -164,6 +190,7 @@ class Tests(unittest.TestCase):
         m1.rmf_hierarchy = root
 
         m1.rmf_features = [make_node("f1", 4), make_node("f2", 5)]
+        m1.rmf_provenance = []
         mock_session.models.add((m1,))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
         tree1 = get_first_tree(r.model_stack.widget(0))
@@ -196,11 +223,40 @@ class Tests(unittest.TestCase):
         m1.rmf_hierarchy = root
         m1.rmf_features = [make_node("f1", 4), make_node("f2", 5)]
         m1.rmf_features[0].chimera_obj = 'test object'
+        m1.rmf_provenance = []
         mock_session.models.add((m1,))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
         tree1 = get_first_tree(r.model_stack.widget(0))
         r._select_feature(tree1)
         tree1.selectAll()
+
+    @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
+    def test_load_provenance(self):
+        """Test loading provenance"""
+        def get_first_tree(stack):
+            for w in stack.widget(2).children():
+                if isinstance(w, QTreeView):
+                    self.assertIsInstance(w.model(),
+                            src.tool._RMFProvenanceModel)
+                    return w
+            raise ValueError("could not find tree")
+        def get_buttons(stack):
+            for w in stack.widget(2).children():
+                if isinstance(w, QPushButton):
+                    yield w
+        root = make_node("root", 0)
+        mock_session = make_session()
+        m1 = Model(mock_session, 'test')
+        m1.rmf_hierarchy = root
+        m1.rmf_features = []
+        m1.rmf_provenance = [make_provenance("f1", 4), make_provenance("f2", 5)]
+        mock_session.models.add((m1,))
+        r = src.tool.RMFViewer(mock_session, "RMF Viewer")
+        tree1 = get_first_tree(r.model_stack.widget(0))
+        tree1.selectAll()
+        r._load_button_clicked(tree1, m1)
+        load_button, = list(get_buttons(r.model_stack.widget(0)))
+        load_button.click()
 
 
 if __name__ == '__main__':
