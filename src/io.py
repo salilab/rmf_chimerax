@@ -160,9 +160,11 @@ class _RMFProvenance(object):
         self.rmf_index = rmf_node.get_index()
         self.chimera_obj = None
         self.previous = None
+        self.next = None
 
     def set_previous(self, previous):
         self.previous = previous
+        previous.next = weakref.proxy(self)
 
     def load(self, session, model):
         pass
@@ -206,6 +208,43 @@ class _RMFStructureProvenance(_RMFProvenance):
     def _get_name(self):
         return ("Chain %s from %s"
                 % (self.chain, os.path.basename(self.filename)))
+    name = property(_get_name)
+
+
+class _RMFSampleProvenance(_RMFProvenance):
+    def __init__(self, rmf_node, prov):
+        super().__init__(rmf_node)
+        self.frames = prov.get_frames()
+        self.iterations = prov.get_iterations()
+        self.method = prov.get_method()
+        self.replicas = prov.get_replicas()
+
+    def _get_name(self):
+        return ("Sampling using %s making %d frames"
+                % (self.method, self.frames))
+    name = property(_get_name)
+
+
+class _RMFScriptProvenance(_RMFProvenance):
+    def __init__(self, rmf_node, prov):
+        super().__init__(rmf_node)
+        self.filename = prov.get_filename()
+
+    def _get_name(self):
+        return ("Using script %s" % self.filename)
+    name = property(_get_name)
+
+
+class _RMFSoftwareProvenance(_RMFProvenance):
+    def __init__(self, rmf_node, prov):
+        super().__init__(rmf_node)
+        self.location = prov.get_location()
+        self.software_name = prov.get_name()
+        self.version = prov.get_version()
+
+    def _get_name(self):
+        return ("Using software %s version %s from %s" %
+                (self.software_name, self.version, self.location))
     name = property(_get_name)
 
 
@@ -413,6 +452,9 @@ class _RMFLoader(object):
         self.gparticlef = RMF.GaussianParticleConstFactory(r)
         self.ballf = RMF.BallConstFactory(r)
         self.strucprovf = RMF.StructureProvenanceConstFactory(r)
+        self.sampleprovf = RMF.SampleProvenanceConstFactory(r)
+        self.scriptprovf = RMF.ScriptProvenanceConstFactory(r)
+        self.softwareprovf = RMF.SoftwareProvenanceConstFactory(r)
         self.coloredf = RMF.ColoredConstFactory(r)
         self.chainf = RMF.ChainConstFactory(r)
         self.fragmentf = RMF.FragmentConstFactory(r)
@@ -473,6 +515,12 @@ class _RMFLoader(object):
     def _handle_provenance(self, node):
         if self.strucprovf.get_is(node):
             prov = _RMFStructureProvenance(node, self.strucprovf.get(node))
+        elif self.sampleprovf.get_is(node):
+            prov = _RMFSampleProvenance(node, self.sampleprovf.get(node))
+        elif self.scriptprovf.get_is(node):
+            prov = _RMFScriptProvenance(node, self.scriptprovf.get(node))
+        elif self.softwareprovf.get_is(node):
+            prov = _RMFSoftwareProvenance(node, self.softwareprovf.get(node))
         else:
             prov = _RMFProvenance(node)
         # Provenance nodes *should* only have at most one "child"

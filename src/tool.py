@@ -117,16 +117,29 @@ class _RMFProvenanceModel(QAbstractItemModel):
             # the hidden top level owns all features
             return len(self.rmf_provenance)
         else:
-            return 0
+            parent_item = parent.internalPointer()
+            return 1 if parent_item.previous else 0
 
     def index(self, row, column, parent):
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
-        return self.createIndex(row, column, self.rmf_provenance[row])
+        if not parent.isValid():
+            return self.createIndex(row, column, self.rmf_provenance[row])
+        else:
+            parent_item = parent.internalPointer()
+            return self.createIndex(row, column, parent_item.previous)
 
     def parent(self, index):
-        # Only one level so always return the hidden top level
-        return QModelIndex()
+        if not index.isValid():
+            return QModelIndex()
+        child_item = index.internalPointer()
+        parent_item = child_item.next
+        if not parent_item:
+             # hidden top level node doesn't have an index
+            return QModelIndex()
+        else:
+            # provenance only has a single "previous", so row is always 0
+            return self.createIndex(0, 0, parent_item)
 
     def data(self, index, role):
         if not index.isValid() or role != Qt.DisplayRole:
