@@ -46,11 +46,15 @@ class Tests(unittest.TestCase):
                          ['|Chen|0.1|Rpb1|1|Rpb1|18|0|PSI|'])
         # Check provenance
         self.assertEqual([n.name for n in structures[0].rmf_provenance],
-                         ["sampling"])
+                         ["Sampling using Monte Carlo making 50 frames"])
         s = structures[0].rmf_provenance[0]
-        self.assertEqual(s.previous.name, 'script')
-        self.assertEqual(s.previous.previous.name, 'software')
-        self.assertEqual(s.previous.previous.previous.name, 'software')
+        self.assertIn('Using script ', s.previous.name)
+        self.assertEqual(s.previous.previous.name,
+            'Using software IMP PMI module version develop-d9b88ed5a1 from '
+            'https://integrativemodeling.org')
+        self.assertEqual(s.previous.previous.previous.name,
+            'Using software Integrative Modeling Platform (IMP) version '
+            'develop-d9b88ed5a1 from https://integrativemodeling.org')
         self.assertIsNone(s.previous.previous.previous.previous)
         # Check chains
         chains = structures[0]._rmf_chains
