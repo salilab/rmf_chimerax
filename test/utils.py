@@ -30,6 +30,11 @@ def temporary_file(suffix):
     yield fname
     os.unlink(fname)
 
+@contextlib.contextmanager
+def temporary_directory(dir=None):
+    _tmpdir = tempfile.mkdtemp(dir=dir)
+    yield _tmpdir
+    shutil.rmtree(_tmpdir, ignore_errors=True)
 
 def import_rmf_module():
     """Import and return the copy of RMF included in the bundle"""

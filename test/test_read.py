@@ -25,6 +25,25 @@ def get_all_nodes(structure):
     return get_node(structure.rmf_hierarchy)
 
 
+class MockLogger(object):
+    def __init__(self):
+        self.info_log = []
+        self.warning_log = []
+
+    def info(self, msg, is_html=False):
+        self.info_log.append((msg, is_html))
+
+    def warning(self, msg, is_html=False):
+        self.warning_log.append((msg, is_html))
+
+
+class MockRMFNode:
+    def __init__(self, name, index):
+        self.name, self.index = name, index
+    def get_name(self): return self.name
+    def get_index(self): return self.index
+
+
 class Tests(unittest.TestCase):
     def test_open_rmf(self):
         """Test open_rmf with a simple coarse-grained RMF file"""
@@ -377,6 +396,110 @@ class Tests(unittest.TestCase):
             structures, status = src.io.open_rmf(mock_session, fname)
             p1, = structures[0].rmf_provenance
             self.assertIsInstance(p1, src.io._RMFEMRestraintProvenance)
+
+    def test_rmf_provenance_class(self):
+        """Test _RMFProvenance class"""
+        rmf_node = MockRMFNode("r1", 1)
+        p = src.io._RMFProvenance(rmf_node)
+
+        rmf_node = MockRMFNode("r2", 2)
+        p2 = src.io._RMFProvenance(rmf_node)
+
+        self.assertEqual(p.name, "r1")
+        self.assertIsNone(p.previous)
+        p.load(None, None)  # noop
+        p.set_previous(p2)
+        self.assertEqual(p.previous.name, "r2")
+        self.assertEqual(p2.next.name, "r1")
+
+    def test_rmf_structure_provenance(self):
+        """Test _RMFStructureProvenance class"""
+        class MockStructureProvenance:
+            get_chain = lambda self: self.chain
+            get_residue_offset = lambda self: self.residue_offset
+            get_filename = lambda self: self.filename
+        prov = MockStructureProvenance()
+        prov.chain = 'A'
+        prov.residue_offset = 0
+        prov.filename = '/does/notexist'
+        rmf_node = MockRMFNode("r1", 1)
+        p = src.io._RMFStructureProvenance(rmf_node, prov)
+        self.assertEqual(p.name, 'Chain A from notexist')
+
+        # Test with non-existent file
+        mock_session = make_session()
+        mock_session.logger = MockLogger()
+        model = src.io._RMFModel(mock_session, 'fname')
+        p.load(mock_session, model)
+        self.assertIn('does not exist', mock_session.logger.warning_log[0][0])
+
+        # File that does exist but unrecognized file format (not PDB, mmCIF)
+        with utils.temporary_file(suffix='.dcd') as fname:
+            p.filename = fname
+            mock_session = make_session()
+            mock_session.logger = MockLogger()
+            model = src.io._RMFModel(mock_session, 'fname')
+            p.load(mock_session, model)
+            self.assertIn('file format not recognized',
+                          mock_session.logger.warning_log[0][0])
+
+        # PDB file
+        with utils.temporary_file(suffix='.pdb') as fname:
+            with open(fname, 'w') as fh:
+                fh.write("""EXPDTA    THEORETICAL MODEL
+ATOM      1  N   CYS     1       0.000   0.000   0.000  0.00999.99           N
+ATOM      2  CA  CYS     1       1.453   0.000   0.000  0.00999.99           C
+END
+""")
+            p.filename = fname
+            mock_session = make_session()
+            mock_session.logger = MockLogger()
+            model = src.io._RMFModel(mock_session, 'fname')
+            p.load(mock_session, model)
+            provmodel, = model.child_models()
+            self.assertEqual(provmodel.name, 'Provenance')
+            self.assertEqual(len(provmodel.child_models()), 1)
+            # Should be a noop to try to read it again
+            p.load(mock_session, model)
+            self.assertEqual(len(provmodel.child_models()), 1)
+
+    def test_rmf_em_restraint_provenance(self):
+        """Test _RMFEMRestraintProvenance class"""
+        rmf_node = MockRMFNode("r1", 1)
+
+        # Test with non-existent GMM file
+        p = src.io._RMFEMRestraintProvenance(rmf_node, '/does/notexist')
+        self.assertEqual(p.name, 'EM map from notexist')
+        self.assertIsNone(p.mrc_filename)
+        p.load(None, None)  # noop
+
+        # Test with GMM file containing no metadata
+        with utils.temporary_file(suffix='.gmm') as fname:
+            with open(fname, 'w') as fh:
+                pass
+            p = src.io._RMFEMRestraintProvenance(rmf_node, fname)
+            self.assertIsNone(p.mrc_filename)
+
+        # Test with GMM file containing valid metadata
+        with utils.temporary_directory() as tmpdir:
+            gmm = os.path.join(tmpdir, 'test.gmm')
+            mrc = os.path.join(tmpdir, 'test.mrc2')
+            with open(gmm, 'w') as fh:
+                fh.write("""# Created by create_gmm.py
+# data_fn: test.mrc2
+# ncenters: 50
+""")
+            with open(mrc, 'w') as fh:
+                pass
+            p = src.io._RMFEMRestraintProvenance(rmf_node, gmm)
+            self.assertEqual(p.mrc_filename, mrc)
+            self.assertEqual(p.name,
+                'EM map from test.gmm (derived from test.mrc2)')
+            mock_session = make_session()
+            mock_session.logger = MockLogger()
+            model = src.io._RMFModel(mock_session, 'fname')
+            # Should be a noop since mrc2 isn't a known map format
+            p.load(mock_session, model)
 
 
 if __name__ == '__main__':
