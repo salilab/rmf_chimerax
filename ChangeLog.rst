@@ -1,5 +1,5 @@
-HEAD
-====
+0.4 - 2020-03-05
+================
  - Add basic support for Gaussian particles (they are shown as spheres).
  - Add support for provenance (information about how the model was generated)
    to the RMF Viewer tool. This can be used to read in external files to
