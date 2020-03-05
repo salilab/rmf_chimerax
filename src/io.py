@@ -89,15 +89,28 @@ class _RMFModel(Model):
         return self._drawing
 
     def _has_provenance(self, filename):
+        """Return True iff provenance from the given filename has been read"""
         return filename in self._provenance_map
 
+    def _update_provenance_map(self):
+        """Make sure that provenance mapping is up to date, by deleting
+           references to models that have been closed since the map was
+           last modified."""
+        to_delete = [filename for filename, model
+                     in self._provenance_map.items() if model.was_deleted]
+        for filename in to_delete:
+            del self._provenance_map[filename]
+            if filename in self._provenance_chains:
+                del self._provenance_chains[filename]
+
     def _add_provenance_chain(self, filename, chain):
+        """Note that the given chain ID is used from the given filename"""
         self._provenance_chains.setdefault(filename, set()).add(chain)
 
     def _prune_provenance_chains(self):
+        """Only keep structure from any read-in provenance files for chain
+           IDs that we're interested in"""
         for filename, model in self._provenance_map.items():
-            if model.was_deleted:
-                continue
             if filename not in self._provenance_chains:
                 continue
             chains_to_keep = self._provenance_chains[filename]
@@ -107,6 +120,7 @@ class _RMFModel(Model):
                 atoms.delete()
 
     def _add_provenance(self, filename, p):
+        """Add a Model containing provenance information from the given file"""
         if self._provenance is None:
             self._provenance = Model('Provenance', self.session)
             self.add([self._provenance])

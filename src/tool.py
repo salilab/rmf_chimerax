@@ -361,6 +361,7 @@ class RMFViewer(ToolInstance):
         select(self.session, self._get_selected_features(tree))
 
     def _load_button_clicked(self, tree, m):
+        m._update_provenance_map()
         for f in tree.selectedIndexes():
             obj = f.internalPointer()
             obj.load(self.session, m)
