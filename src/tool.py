@@ -4,6 +4,7 @@ from chimerax.core.tools import ToolInstance
 from chimerax.core.objects import Objects
 from chimerax.atomic import Atoms, Bonds, Pseudobonds, Atom, Bond
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
+from PyQt5.QtCore import QItemSelectionModel
 from PyQt5 import QtWidgets
 
 
@@ -12,6 +13,16 @@ class _RMFHierarchyModel(QAbstractItemModel):
     def __init__(self, rmf_hierarchy):
         super().__init__()
         self.rmf_hierarchy = rmf_hierarchy
+
+    def index_for_node(self, rmf_node):
+        """Return the index for a given node in the hierarchy"""
+        parent = rmf_node.parent
+        if parent is None:
+            return self.index(0, 0, QModelIndex())
+        else:
+            parent = parent()
+            row = parent.children.index(rmf_node)
+            return self.index(row, 0, self.index_for_node(parent))
 
     def columnCount(self, parent):
         # We always have just a single column (the node's name)
@@ -226,10 +237,10 @@ class RMFViewer(ToolInstance):
         layout.addWidget(tree)
         top.addWidget(pane)
 
-        pane = self._get_hierarchy_pane(m)
+        pane, hierarchy_tree = self._get_hierarchy_pane(m)
         top.addWidget(pane)
 
-        pane = self._get_provenance_pane(m)
+        pane = self._get_provenance_pane(m, hierarchy_tree)
         top.addWidget(pane)
 
         return top
@@ -279,9 +290,9 @@ class RMFViewer(ToolInstance):
         buttons.addWidget(view_button)
         tree_and_buttons.addLayout(buttons)
         layout.addLayout(tree_and_buttons, stretch=1)
-        return pane
+        return pane, tree
 
-    def _get_provenance_pane(self, m):
+    def _get_provenance_pane(self, m, hierarchy_tree):
         pane = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout()
         pane.setLayout(layout)
@@ -298,6 +309,9 @@ class RMFViewer(ToolInstance):
         tree.setSortingEnabled(False)
         tree.setHeaderHidden(True)
         tree.setModel(_RMFProvenanceModel(m.rmf_provenance))
+        tree.selectionModel().selectionChanged.connect(
+            lambda sel, desel, tree=tree, hierarchy_tree=hierarchy_tree:
+                self._select_provenance(tree, hierarchy_tree))
 
         tree_and_buttons = QtWidgets.QHBoxLayout()
         tree_and_buttons.setContentsMargins(0,0,0,0)
@@ -359,6 +373,17 @@ class RMFViewer(ToolInstance):
     def _select_feature(self, tree):
         from chimerax.std_commands.select import select
         select(self.session, self._get_selected_features(tree))
+
+    def _select_provenance(self, tree, hierarchy_tree):
+        mode = QItemSelectionModel.ClearAndSelect
+        hierarchy_model = hierarchy_tree.model()
+        hierarchy_selmodel = hierarchy_tree.selectionModel()
+        for f in tree.selectedIndexes():
+            obj = f.internalPointer()
+            if obj.hierarchy_node:
+                ind = hierarchy_model.index_for_node(obj.hierarchy_node)
+                hierarchy_selmodel.setCurrentIndex(ind, mode)
+                mode = QItemSelectionModel.Select
 
     def _load_button_clicked(self, tree, m):
         m._update_provenance_map()

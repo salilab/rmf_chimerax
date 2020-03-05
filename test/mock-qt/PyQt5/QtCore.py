@@ -21,6 +21,10 @@ class Qt:
     Vertical = 3
 
 
+class QItemSelectionModel:
+    Select = 2
+    ClearAndSelect = 3
+
 class QAbstractItemModel:
     def createIndex(self, row, column, pointer):
         ind = QModelIndex()

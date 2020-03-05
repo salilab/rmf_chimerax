@@ -173,6 +173,7 @@ class _RMFProvenance(object):
         self.chimera_obj = None
         self.previous = None
         self.next = None
+        self.hierarchy_node = None
 
     def set_previous(self, previous):
         """Add another _RMFProvenance node that represents the previous state
@@ -546,7 +547,7 @@ class _RMFLoader(object):
                                                      top_level.rmf_features,
                                                      top_level.rmf_provenance,
                                                      os.path.dirname(path),
-                                                     _provenance_chains)
+                                                     _provenance_chains, None)
         return r, [top_level]
 
     def _add_atom(self, node, p, mass, rhi):
@@ -568,7 +569,7 @@ class _RMFLoader(object):
         rhi.add_atom(atom)
         return atom
 
-    def _handle_provenance(self, node, provenance_chains):
+    def _handle_provenance(self, node, provenance_chains, parent_node):
         if self.strucprovf.get_is(node):
             prov = _RMFStructureProvenance(node, self.strucprovf.get(node),
                                            provenance_chains)
@@ -582,7 +583,9 @@ class _RMFLoader(object):
             prov = _RMFProvenance(node)
         # Provenance nodes *should* only have at most one "child"
         for child in node.get_children():
-            prov.set_previous(self._handle_provenance(child, provenance_chains))
+            prov.set_previous(self._handle_provenance(child, provenance_chains,
+                                                      parent_node))
+        prov.hierarchy_node = parent_node
         return prov
 
     def _handle_feature_provenance(self, node, rmf_dir):
@@ -598,7 +601,7 @@ class _RMFLoader(object):
                 return _RMFEMRestraintProvenance(node, fname)
 
     def _handle_node(self, node, parent_rhi, features, provenance, rmf_dir,
-                     provenance_chains):
+                     provenance_chains, parent_node):
         # Features are handled outside of the regular hierarchy
         if self.represf.get_is(node):
             feature = _RMFFeature(node)
@@ -613,7 +616,8 @@ class _RMFLoader(object):
 
         # Provenance is handled outside of the regular hierarchy
         if node.get_type() == self.PROVENANCE:
-            provenance.append(self._handle_provenance(node, provenance_chains))
+            provenance.append(self._handle_provenance(node, provenance_chains,
+                                                      parent_node))
             return []
 
         rmf_nodes = [_RMFHierarchyNode(node)]
@@ -638,7 +642,7 @@ class _RMFLoader(object):
             self._add_segment(self.segmentf.get(node), node.get_name(), rhi)
         for child in node.get_children():
             rmf_nodes[0].add_children(self._handle_node(child, rhi, features,
-                provenance, rmf_dir, provenance_chains))
+                provenance, rmf_dir, provenance_chains, rmf_nodes[0]))
         # Handle any alternatives (usually different resolutions)
         # Alternatives replace the current node - they are not children of
         # it - so use parent_rhi, not rhi.
@@ -647,10 +651,10 @@ class _RMFLoader(object):
             # The node itself should be the first alternative, so ignore that
             for p in alt.get_alternatives(self.PARTICLE)[1:]:
                 rmf_nodes.extend(self._handle_node(p, parent_rhi, features,
-                    provenance, rmf_dir, provenance_chains))
+                    provenance, rmf_dir, provenance_chains, rmf_nodes[0]))
             for gauss in alt.get_alternatives(self.GAUSSIAN_PARTICLE):
                 rmf_nodes.extend(self._handle_node(gauss, parent_rhi, features,
-                    provenance, rmf_dir, provenance_chains))
+                    provenance, rmf_dir, provenance_chains, rmf_nodes[0]))
         return rmf_nodes
 
     def _add_bond(self, bond, rhi):
