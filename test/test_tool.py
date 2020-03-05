@@ -257,7 +257,7 @@ class Tests(unittest.TestCase):
                     yield w
         root = make_node("root", 0)
         mock_session = make_session()
-        m1 = Model(mock_session, 'test')
+        m1 = src.io._RMFModel(mock_session, 'test')
         m1.rmf_hierarchy = root
         m1.rmf_features = []
         m1.rmf_provenance = [make_provenance("f1", 4), make_provenance("f2", 5)]
