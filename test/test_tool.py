@@ -79,6 +79,11 @@ class Tests(unittest.TestCase):
         # Test top level index
         self.assertEqual(m.index(0,0,QModelIndex()).internalPointer().name,
                          'root')
+        i = m.index_for_node(child2)
+        self.assertEqual(i.row(), 1)
+        self.assertEqual(i.column(), 0)
+        self.assertEqual(i.internalPointer().name, 'child2')
+
         # Top level doesn't have a parent
         self.assertFalse(m.parent(ind).isValid())
         self.assertFalse(m.parent(QModelIndex()).isValid())
