@@ -74,6 +74,7 @@ class _RMFModel(Model):
         self._drawing = None
         self._provenance = None
         self._provenance_map = {}
+        self._provenance_chains = {}
         self._rmf_resolutions = set()
         self._rmf_chains = []
         super().__init__(name, session)
@@ -89,6 +90,21 @@ class _RMFModel(Model):
 
     def _has_provenance(self, filename):
         return filename in self._provenance_map
+
+    def _add_provenance_chain(self, filename, chain):
+        self._provenance_chains.setdefault(filename, set()).add(chain)
+
+    def _prune_provenance_chains(self):
+        for filename, model in self._provenance_map.items():
+            if model.was_deleted:
+                continue
+            if filename not in self._provenance_chains:
+                continue
+            chains_to_keep = self._provenance_chains[filename]
+            atoms_to_del = [atoms for _, cid, atoms in model.atoms.by_chain
+                            if cid not in chains_to_keep]
+            for atoms in atoms_to_del:
+                atoms.delete()
 
     def _add_provenance(self, filename, p):
         if self._provenance is None:
@@ -200,7 +216,7 @@ class _RMFStructureProvenance(_RMFProvenance):
         self.filename = prov.get_filename()
 
     def load(self, session, model):
-        # todo: read only the referenced chain(s) from each file
+        model._add_provenance_chain(self.filename, self.chain)
         if model._has_provenance(self.filename):
             return
         if not os.path.exists(self.filename):

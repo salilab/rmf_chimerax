@@ -364,3 +364,4 @@ class RMFViewer(ToolInstance):
         for f in tree.selectedIndexes():
             obj = f.internalPointer()
             obj.load(self.session, m)
+        m._prune_provenance_chains()
