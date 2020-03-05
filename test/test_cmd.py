@@ -223,6 +223,44 @@ class Tests(unittest.TestCase):
             # Two frames (f2, f4) should have been read
             self.assertEqual(list(state.coordset_ids), [1, 3, 5])
 
+    def test_nest_refframe(self):
+        """Test readtraj handling of nested reference frames"""
+        def make_rmf_file(fname):
+            r = RMF.create_rmf_file(fname)
+            r.add_frame("root", RMF.FRAME)
+            rn = r.get_root_node()
+            bf = RMF.BallFactory(r)
+            rff = RMF.ReferenceFrameFactory(r)
+
+            n = rn.add_child("toprf", RMF.REPRESENTATION)
+            rf = rff.get(n)
+            rf.set_rotation(RMF.Vector4(1,0,0,0))
+            rf.set_translation(RMF.Vector3(1,2,3))
+            n = n.add_child("botrf", RMF.REPRESENTATION)
+            rf = rff.get(n)
+            rf.set_rotation(RMF.Vector4(1,0,0,0))
+            rf.set_translation(RMF.Vector3(9,8,7))
+
+            n = n.add_child("ball", RMF.GEOMETRY)
+            b1 = bf.get(n)
+            b1.set_radius(6)
+            b1.set_coordinates(RMF.Vector3(4.,5.,6.))
+
+            r.add_frame("f1", RMF.FRAME)
+            r.add_frame("f2", RMF.FRAME)
+
+        with utils.temporary_file(suffix='.rmf') as fname:
+            make_rmf_file(fname)
+            mock_session = make_session()
+            mock_session.logger = MockLogger()
+            structures, status = src.io.open_rmf(mock_session, fname)
+            state = structures[0].child_models()[0]
+            # One atom should have been read, and transformed twice
+            atom, = state.atoms
+            # Truncate so comparison is exact
+            self.assertEqual([int(x) for x in atom.coord], [14,15,16])
+            src.cmd.readtraj(mock_session, state)
+
 
 if __name__ == '__main__':
     unittest.main()
