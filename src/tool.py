@@ -22,7 +22,7 @@ class _RMFHierarchyModel(QAbstractItemModel):
         else:
             parent = parent()
             row = parent.children.index(rmf_node)
-            return self.index(row, 0, self.index_for_node(parent))
+            return self.createIndex(row, 0, rmf_node)
 
     def columnCount(self, parent):
         # We always have just a single column (the node's name)
