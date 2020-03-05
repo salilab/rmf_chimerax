@@ -1,3 +1,6 @@
+HEAD
+====
+
 0.4 - 2020-03-05
 ================
  - Add basic support for Gaussian particles (they are shown as spheres).
