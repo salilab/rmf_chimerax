@@ -40,7 +40,10 @@ the sampling algorithm, any PDB files used as starting guesses for subunits,
 or additional files used as input by restraints (such as electron microscopy
 density maps). The Load button will attempt to load any external files
 referenced by the selected item(s) in the list (this requires the file to
-be present on disk and to be in a format recognized by ChimeraX).
+be present on disk and to be in a format recognized by ChimeraX). (Note that
+if multiple chains are read from a single structure file, loading any item
+that references one of those chains will load all chains, as a single structure,
+as this is more efficient than creating a separate model for each chain.)
 </p>
 
 <p>The <b>Features</b>, <b>Hierarchy</b> and <b>Provenance</b> frames can be

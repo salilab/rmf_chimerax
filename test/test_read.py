@@ -423,8 +423,22 @@ class Tests(unittest.TestCase):
         prov.residue_offset = 0
         prov.filename = '/does/notexist'
         rmf_node = MockRMFNode("r1", 1)
-        p = src.io._RMFStructureProvenance(rmf_node, prov)
+        provenance_chains = {}
+        p = src.io._RMFStructureProvenance(rmf_node, prov, provenance_chains)
         self.assertEqual(p.name, 'Chain A from notexist')
+        self.assertEqual(p.chain, 'A')
+        self.assertEqual(p.allchains, set('A'))
+
+        prov2 = MockStructureProvenance()
+        prov2.chain = 'B'
+        prov2.residue_offset = 0
+        prov2.filename = '/does/notexist'
+        rmf_node2 = MockRMFNode("r2", 2)
+        p2 = src.io._RMFStructureProvenance(rmf_node2, prov2, provenance_chains)
+        self.assertEqual(p2.chain, 'B')
+        self.assertEqual(p2.allchains, set('AB'))
+        # allchains should have been updated for p too
+        self.assertEqual(p.allchains, set('AB'))
 
         # Test with non-existent file
         mock_session = make_session()

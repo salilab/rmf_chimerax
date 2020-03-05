@@ -74,7 +74,6 @@ class _RMFModel(Model):
         self._drawing = None
         self._provenance = None
         self._provenance_map = {}
-        self._provenance_chains = {}
         self._rmf_resolutions = set()
         self._rmf_chains = []
         super().__init__(name, session)
@@ -88,43 +87,26 @@ class _RMFModel(Model):
             self.add([self._drawing])
         return self._drawing
 
-    def _has_provenance(self, filename):
-        """Return True iff provenance from the given filename has been read"""
-        return filename in self._provenance_map
+    def _has_provenance(self, name):
+        """Return True iff provenance from the given name has been read"""
+        return name in self._provenance_map
 
     def _update_provenance_map(self):
         """Make sure that provenance mapping is up to date, by deleting
            references to models that have been closed since the map was
            last modified."""
-        to_delete = [filename for filename, model
+        to_delete = [name for name, model
                      in self._provenance_map.items() if model.was_deleted]
-        for filename in to_delete:
-            del self._provenance_map[filename]
-            if filename in self._provenance_chains:
-                del self._provenance_chains[filename]
+        for name in to_delete:
+            del self._provenance_map[name]
 
-    def _add_provenance_chain(self, filename, chain):
-        """Note that the given chain ID is used from the given filename"""
-        self._provenance_chains.setdefault(filename, set()).add(chain)
-
-    def _prune_provenance_chains(self):
-        """Only keep structure from any read-in provenance files for chain
-           IDs that we're interested in"""
-        for filename, model in self._provenance_map.items():
-            if filename not in self._provenance_chains:
-                continue
-            chains_to_keep = self._provenance_chains[filename]
-            atoms_to_del = [atoms for _, cid, atoms in model.atoms.by_chain
-                            if cid not in chains_to_keep]
-            for atoms in atoms_to_del:
-                atoms.delete()
-
-    def _add_provenance(self, filename, p):
-        """Add a Model containing provenance information from the given file"""
+    def _add_provenance(self, name, p):
+        """Add a Model containing provenance information keyed by the given
+           name (usually a filename)"""
         if self._provenance is None:
             self._provenance = Model('Provenance', self.session)
             self.add([self._provenance])
-        self._provenance_map[filename] = p
+        self._provenance_map[name] = p
         self._provenance.add([p])
         return self._provenance
 
@@ -217,9 +199,17 @@ def _atomic_model_reader(filename):
         return open_pdb
 
 
+def _prune_chains(model, chains):
+    """Delete all but the given chains from the model"""
+    atoms_to_del = [atoms for _, cid, atoms in model.atoms.by_chain
+                    if cid not in chains]
+    for atoms in atoms_to_del:
+        atoms.delete()
+
+
 class _RMFStructureProvenance(_RMFProvenance):
     """Represent a structure file (PDB, mmCIF) used as input for an RMF"""
-    def __init__(self, rmf_node, prov):
+    def __init__(self, rmf_node, prov, provenance_chains):
         super().__init__(rmf_node)
         #: The chain ID used in the given file
         self.chain = prov.get_chain()
@@ -228,9 +218,14 @@ class _RMFStructureProvenance(_RMFProvenance):
         self.residue_offset = prov.get_residue_offset()
         #: Full path to PDB/mmCIF file
         self.filename = prov.get_filename()
+        # Keep track of *all* chains we're interested in in this structure
+        # (across all provenance nodes in the RMF file)
+        self.allchains = provenance_chains.setdefault(self.filename, set())
+        self.allchains.add(self.chain)
 
     def load(self, session, model):
-        model._add_provenance_chain(self.filename, self.chain)
+        # Note that we load all chains referenced by the RMF file, as this is
+        # more efficient than creating a separate model for each chain.
         if model._has_provenance(self.filename):
             return
         if not os.path.exists(self.filename):
@@ -243,6 +238,7 @@ class _RMFStructureProvenance(_RMFProvenance):
                     models, msg = open_model(
                         session, fh, os.path.basename(self.filename),
                         auto_style=False, log_info=False)
+                    _prune_chains(models[0], self.allchains)
                 model._add_provenance(self.filename, models[0])
             else:
                 session.logger.warning("Not reading %s; file format "
@@ -544,10 +540,13 @@ class _RMFLoader(object):
         top_level.rmf_filename = os.path.abspath(path)
         top_level.rmf_features = []
         top_level.rmf_provenance = []
+        # The set of chain IDs to read from each named input structure file
+        _provenance_chains = {}
         top_level.rmf_hierarchy, = self._handle_node(r.get_root_node(), rhi,
                                                      top_level.rmf_features,
                                                      top_level.rmf_provenance,
-                                                     os.path.dirname(path))
+                                                     os.path.dirname(path),
+                                                     _provenance_chains)
         return r, [top_level]
 
     def _add_atom(self, node, p, mass, rhi):
@@ -569,9 +568,10 @@ class _RMFLoader(object):
         rhi.add_atom(atom)
         return atom
 
-    def _handle_provenance(self, node):
+    def _handle_provenance(self, node, provenance_chains):
         if self.strucprovf.get_is(node):
-            prov = _RMFStructureProvenance(node, self.strucprovf.get(node))
+            prov = _RMFStructureProvenance(node, self.strucprovf.get(node),
+                                           provenance_chains)
         elif self.sampleprovf.get_is(node):
             prov = _RMFSampleProvenance(node, self.sampleprovf.get(node))
         elif self.scriptprovf.get_is(node):
@@ -582,7 +582,7 @@ class _RMFLoader(object):
             prov = _RMFProvenance(node)
         # Provenance nodes *should* only have at most one "child"
         for child in node.get_children():
-            prov.set_previous(self._handle_provenance(child))
+            prov.set_previous(self._handle_provenance(child, provenance_chains))
         return prov
 
     def _handle_feature_provenance(self, node, rmf_dir):
@@ -597,7 +597,8 @@ class _RMFLoader(object):
                 fname = os.path.join(rmf_dir, fname)
                 return _RMFEMRestraintProvenance(node, fname)
 
-    def _handle_node(self, node, parent_rhi, features, provenance, rmf_dir):
+    def _handle_node(self, node, parent_rhi, features, provenance, rmf_dir,
+                     provenance_chains):
         # Features are handled outside of the regular hierarchy
         if self.represf.get_is(node):
             feature = _RMFFeature(node)
@@ -612,7 +613,7 @@ class _RMFLoader(object):
 
         # Provenance is handled outside of the regular hierarchy
         if node.get_type() == self.PROVENANCE:
-            provenance.append(self._handle_provenance(node))
+            provenance.append(self._handle_provenance(node, provenance_chains))
             return []
 
         rmf_nodes = [_RMFHierarchyNode(node)]
@@ -637,7 +638,7 @@ class _RMFLoader(object):
             self._add_segment(self.segmentf.get(node), node.get_name(), rhi)
         for child in node.get_children():
             rmf_nodes[0].add_children(self._handle_node(child, rhi, features,
-                                                        provenance, rmf_dir))
+                provenance, rmf_dir, provenance_chains))
         # Handle any alternatives (usually different resolutions)
         # Alternatives replace the current node - they are not children of
         # it - so use parent_rhi, not rhi.
@@ -646,10 +647,10 @@ class _RMFLoader(object):
             # The node itself should be the first alternative, so ignore that
             for p in alt.get_alternatives(self.PARTICLE)[1:]:
                 rmf_nodes.extend(self._handle_node(p, parent_rhi, features,
-                                                   provenance, rmf_dir))
+                    provenance, rmf_dir, provenance_chains))
             for gauss in alt.get_alternatives(self.GAUSSIAN_PARTICLE):
                 rmf_nodes.extend(self._handle_node(gauss, parent_rhi, features,
-                                                   provenance, rmf_dir))
+                    provenance, rmf_dir, provenance_chains))
         return rmf_nodes
 
     def _add_bond(self, bond, rhi):

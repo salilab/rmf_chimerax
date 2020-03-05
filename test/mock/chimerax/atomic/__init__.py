@@ -36,12 +36,14 @@ class Residue(object):
     def add_atom(self, atom):
         atom.structure.atoms.append(atom)
 
+class _AtomList(list):
+    by_chain = property(lambda self: [])
 
 class Structure(object):
     def __init__(self, session, *, name='structure'):
         self._pbg = None
         self._drawings = []
-        self.atoms = []
+        self.atoms = _AtomList()
         self.residues = []
         self.parent = None
         self.id_string = '1.1'
