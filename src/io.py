@@ -325,7 +325,9 @@ class _RMFHierarchyInfo(object):
     def _set_reference_frame(self, rf):
         """Set the current reference frame from an RMF ReferenceFrame node"""
         from scipy.spatial.transform import Rotation
-        rot = Rotation.from_quat(rf.get_rotation())
+        rot = rf.get_rotation()
+        # RMF quaternions are scalar-first; scipy uses scalar-last
+        rot = Rotation.from_quat((rot[1], rot[2], rot[3], rot[0]))
         tran = numpy.array(rf.get_translation())
         if self._refframe:
             # Compose with existing transformation
