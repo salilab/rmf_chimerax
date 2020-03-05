@@ -88,6 +88,8 @@ class QStackedWidget:
 class _SelectionModel:
     def __init__(self):
         self.selectionChanged = _Signal()
+    def setCurrentIndex(self, ind, mode):
+        pass
 
 class QTreeView:
     SingleSelection = 0

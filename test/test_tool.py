@@ -265,7 +265,12 @@ class Tests(unittest.TestCase):
         m1 = src.io._RMFModel(mock_session, 'test')
         m1.rmf_hierarchy = root
         m1.rmf_features = []
-        m1.rmf_provenance = [make_provenance("f1", 4), make_provenance("f2", 5)]
+        p1 = make_provenance("f1", 4)
+        p2 = make_provenance("f2", 5)
+        p3 = make_provenance("f3", 6)
+        p1.hierarchy_node = root
+        p2.hierarchy_node = root
+        m1.rmf_provenance = [p1, p2, p3]
         mock_session.models.add((m1,))
         r = src.tool.RMFViewer(mock_session, "RMF Viewer")
         tree1 = get_first_tree(r.model_stack.widget(0))
