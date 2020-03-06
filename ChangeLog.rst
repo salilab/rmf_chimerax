@@ -1,5 +1,6 @@
 HEAD
 ====
+ - Handle nested RMF features.
 
 0.4 - 2020-03-05
 ================

@@ -95,16 +95,31 @@ class _RMFFeaturesModel(QAbstractItemModel):
             # the hidden top level owns all features
             return len(self.rmf_features)
         else:
-            return 0
+            parent_item = parent.internalPointer()
+            return len(parent_item.children)
 
     def index(self, row, column, parent):
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
-        return self.createIndex(row, column, self.rmf_features[row])
+        if not parent.isValid():
+            parent_list = self.rmf_features
+        else:
+            parent_list = parent.internalPointer().children
+        return self.createIndex(row, column, parent_list[row])
 
     def parent(self, index):
-        # Only one level so always return the hidden top level
-        return QModelIndex()
+        if not index.isValid():
+            return QModelIndex()
+        child_item = index.internalPointer()
+        parent_item = child_item.parent
+        if parent_item is None:
+            return QModelIndex()
+        parent_item = parent_item()
+        if parent_item.parent is None:
+            row = self.rmf_features.index(parent_item)
+        else:
+            row = parent_item.parent().children.index(parent_item)
+        return self.createIndex(row, 0, parent_item)
 
     def data(self, index, role):
         if not index.isValid() or role != Qt.DisplayRole:
@@ -345,11 +360,21 @@ class RMFViewer(ToolInstance):
         return objects
 
     def _get_selected_features(self, tree):
+        def get_child_chimera_obj(feat):
+            for child in feat.children:
+                if child.chimera_obj:
+                    yield child.chimera_obj
+                for obj in get_child_chimera_obj(child):
+                    yield obj
         def get_selection():
             for f in tree.selectedIndexes():
-                obj = f.internalPointer().chimera_obj
+                feat = f.internalPointer()
+                obj = feat.chimera_obj
                 if obj is not None:
                     yield obj
+                else:
+                    for obj in get_child_chimera_obj(feat):
+                        yield obj
         objs = Objects()
         objs.add_pseudobonds(Pseudobonds(get_selection()))
         return objs

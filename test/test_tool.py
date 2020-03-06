@@ -98,23 +98,36 @@ class Tests(unittest.TestCase):
 
     def test_rmf_features_model(self):
         """Test RMFFeaturesModel class"""
-        features = [make_feature("f1", 1), make_feature("f2", 2)]
+        f1 = make_feature("f1", 1)
+        f2 = make_feature("f2", 2)
+        child1 = make_feature("child1", 3)
+        f2.add_child(child1)
+        child2 = make_feature("child2", 4)
+        f2.add_child(child2)
+        features = [f1, f2]
 
         m = src.tool._RMFFeaturesModel(features)
         top = QModelIndex()
+        f2_ind = m.createIndex(1,0,features[1])
+        child1_ind = m.createIndex(0,0,child1)
         self.assertEqual(m.columnCount(None), 1)
         self.assertEqual(m.rowCount(top), 2)
+        self.assertEqual(m.rowCount(f2_ind), 2)
+        self.assertEqual(m.rowCount(child1_ind), 0)
 
         # Test indices
         self.assertEqual(m.index(0,0,top).internalPointer().name, 'f1')
         self.assertEqual(m.index(1,0,top).internalPointer().name, 'f2')
         self.assertFalse(m.index(2,0,top).isValid())
+        self.assertEqual(m.index(0,0,f2_ind).internalPointer().name, 'child1')
+        self.assertEqual(m.index(1,0,f2_ind).internalPointer().name, 'child2')
+        self.assertFalse(m.index(2,0,f2_ind).isValid())
         # No parents
         self.assertFalse(m.parent(top).isValid())
-        childind = m.createIndex(0,0,features[0])
-        self.assertFalse(m.parent(childind).isValid())
-        self.assertEqual(m.data(childind, Qt.DisplayRole), "f1")
-        self.assertIsNone(m.data(childind, Qt.SizeHintRole))
+        self.assertFalse(m.parent(f2_ind).isValid())
+        self.assertEqual(m.parent(child1_ind).internalPointer().name, 'f2')
+        self.assertEqual(m.data(f2_ind, Qt.DisplayRole), "f2")
+        self.assertIsNone(m.data(f2_ind, Qt.SizeHintRole))
 
     def test_rmf_provenance_model(self):
         """Test RMFProvenanceModel class"""

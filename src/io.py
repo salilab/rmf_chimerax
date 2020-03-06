@@ -156,12 +156,20 @@ class _RMFHierarchyNode(object):
 
 class _RMFFeature(object):
     """Represent a single feature in an RMF file."""
-    __slots__ = ['name', 'rmf_index', 'chimera_obj']
+    __slots__ = ['name', 'rmf_index', 'chimera_obj', 'children', 'parent',
+                 '__weakref__']
 
     def __init__(self, rmf_node):
         self.name = rmf_node.get_name()
         self.rmf_index = rmf_node.get_index()
+        self.children = []
         self.chimera_obj = None
+        self.parent = None
+
+    def add_child(self, child):
+        self.children.append(child)
+        # avoid circular reference
+        child.parent = weakref.ref(self)
 
 
 class _RMFProvenance(object):
@@ -600,18 +608,26 @@ class _RMFLoader(object):
                 fname = os.path.join(rmf_dir, fname)
                 return _RMFEMRestraintProvenance(node, fname)
 
+    def _handle_feature(self, node, parent_rhi, rmf_dir, provenance):
+        feature = _RMFFeature(node)
+        feature.chimera_obj = self._add_feature(
+                                self.represf.get(node), parent_rhi)
+        # Extract provenance from restraint if present
+        p = self._handle_feature_provenance(node, rmf_dir)
+        if p:
+            provenance.append(p)
+        for child in node.get_children():
+            if self.represf.get_is(child):
+                feature.add_child(self._handle_feature(child, parent_rhi,
+                                                       rmf_dir, provenance))
+        return feature
+
     def _handle_node(self, node, parent_rhi, features, provenance, rmf_dir,
                      provenance_chains, parent_node):
         # Features are handled outside of the regular hierarchy
         if self.represf.get_is(node):
-            feature = _RMFFeature(node)
-            feature.chimera_obj = self._add_feature(
-                                    self.represf.get(node), parent_rhi)
-            features.append(feature)
-            # Extract provenance from restraint if present
-            p = self._handle_feature_provenance(node, rmf_dir)
-            if p:
-                provenance.append(p)
+            features.append(self._handle_feature(node, parent_rhi, rmf_dir,
+                                                 provenance))
             return []
 
         # Provenance is handled outside of the regular hierarchy
