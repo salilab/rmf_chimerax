@@ -349,6 +349,17 @@ class _RMFEMRestraintProvenance(_RMFProvenance):
     name = property(_get_name)
 
 
+class _RMFXLMSRestraintProvenance(_RMFProvenance):
+    """Information about an XL-MS restraint"""
+    def __init__(self, rmf_node, filename):
+        super().__init__(rmf_node)
+        self.filename = filename
+
+    def _get_name(self):
+        return "XL-MS data from %s" % os.path.basename(self.filename)
+    name = property(_get_name)
+
+
 class _RMFHierarchyInfo(object):
     """Track structural information encountered through the RMF hierarchy"""
     def __init__(self, top_level):
@@ -597,16 +608,23 @@ class _RMFLoader(object):
         return prov
 
     def _handle_feature_provenance(self, node, rmf_dir):
+        def get_node_filename(node):
+            fname = node.get_value(self.rsr_filenamek)
+            if fname:
+                # path is relative to that of the RMF file
+                return os.path.join(rmf_dir, fname)
         # noop if these keys aren't in the file at all
         if self.rsr_typek is None or self.rsr_filenamek is None:
             return
         rsrtype = node.get_value(self.rsr_typek)
         if rsrtype == 'IMP.isd.GaussianEMRestraint':
-            fname = node.get_value(self.rsr_filenamek)
+            fname = get_node_filename(node)
             if fname:
-                # path is relative to that of the RMF file
-                fname = os.path.join(rmf_dir, fname)
                 return _RMFEMRestraintProvenance(node, fname)
+        elif rsrtype == 'IMP.pmi.CrossLinkingMassSpectrometryRestraint':
+            fname = get_node_filename(node)
+            if fname:
+                return _RMFXLMSRestraintProvenance(node, fname)
 
     def _handle_feature(self, node, parent_rhi, rmf_dir, provenance):
         feature = _RMFFeature(node)

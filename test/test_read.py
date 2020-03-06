@@ -397,6 +397,50 @@ class Tests(unittest.TestCase):
             p1, = structures[0].rmf_provenance
             self.assertIsInstance(p1, src.io._RMFEMRestraintProvenance)
 
+    def test_xlms_provenance(self):
+        """Test open_rmf handling of RMF XL-MS restraint provenance"""
+        def make_rmf_file(fname):
+            r = RMF.create_rmf_file(fname)
+            imp_restraint_cat = r.get_category("IMP restraint")
+            rsr_typek = r.get_key(imp_restraint_cat, "type", RMF.StringTag())
+
+            imp_restraint_fn_cat = r.get_category("IMP restraint files")
+            rsr_filenamek = r.get_key(imp_restraint_fn_cat, "filename",
+                                      RMF.StringTag())
+
+            r.add_frame("root", RMF.FRAME)
+            rn = r.get_root_node()
+
+            represf = RMF.RepresentationFactory(r)
+            particlef = RMF.ParticleFactory(r)
+
+            pn = rn.add_child("p1", RMF.REPRESENTATION)
+            p = particlef.get(pn)
+            p.set_mass(12.)
+            p.set_radius(1.)
+            p.set_coordinates(RMF.Vector3(1,2,3))
+
+            n = rn.add_child("nofname", RMF.FEATURE)
+            p = represf.get(n)
+            p.set_representation([pn])
+            n.set_value(rsr_typek,
+                    "IMP.pmi.CrossLinkingMassSpectrometryRestraint")
+
+            n = rn.add_child("emr", RMF.FEATURE)
+            p = represf.get(n)
+            p.set_representation([pn])
+            n.set_value(rsr_typek,
+                    "IMP.pmi.CrossLinkingMassSpectrometryRestraint")
+            n.set_value(rsr_filenamek, "abc")
+
+        with utils.temporary_file(suffix='.rmf') as fname:
+            make_rmf_file(fname)
+            mock_session = make_session()
+            structures, status = src.io.open_rmf(mock_session, fname)
+            p1, = structures[0].rmf_provenance
+            self.assertIsInstance(p1, src.io._RMFXLMSRestraintProvenance)
+            self.assertEqual(p1.name, 'XL-MS data from abc')
+
     def test_rmf_provenance_class(self):
         """Test _RMFProvenance class"""
         rmf_node = MockRMFNode("r1", 1)
