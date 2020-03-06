@@ -306,17 +306,17 @@ class _RMFSoftwareProvenance(_RMFProvenance):
                 (self.software_name, self.version, self.location))
     name = property(_get_name)
 
-
-class _RMFEMRestraintProvenance(_RMFProvenance):
-    """Information about an electron microscopy restraint"""
+class _RMFEMRestraintGMMProvenance(_RMFProvenance):
+    """Information about an electron microscopy restraint read from GMMs"""
     def __init__(self, rmf_node, filename):
         super().__init__(rmf_node)
-        #: Full path to GMM file
         self.filename = filename
-        #: Full path to MRC file (if known)
-        self.mrc_filename = self._parse_gmm(filename)
+        # The original MRC file (if known)
+        mrc = self._parse_gmm(rmf_node, filename)
+        if mrc:
+            self.set_previous(mrc)
 
-    def _parse_gmm(self, filename):
+    def _parse_gmm(self, rmf_node, filename):
         """Extract metadata from the GMM file (to find the original MRC file)
            if available"""
         if not os.path.exists(filename):
@@ -325,27 +325,36 @@ class _RMFEMRestraintProvenance(_RMFProvenance):
             for line in fh:
                 if line.startswith('# data_fn: '):
                     relpath = line[11:].rstrip('\r\n')
-                    return os.path.join(os.path.dirname(filename), relpath)
+                    fname = os.path.join(os.path.dirname(filename), relpath)
+                    return _RMFEMRestraintMRCProvenance(rmf_node, fname)
+
+    def _get_name(self):
+        return ("Gaussian Mixture Model from %s"
+                 % os.path.basename(self.filename))
+    name = property(_get_name)
+
+
+class _RMFEMRestraintMRCProvenance(_RMFProvenance):
+    """Information about an electron microscopy restraint read from MRC"""
+    def __init__(self, rmf_node, filename):
+        super().__init__(rmf_node)
+        self.filename = filename
 
     def load(self, session, model):
-        if (self.mrc_filename
-            and not model._has_provenance(self.mrc_filename)):
+        if not model._has_provenance(self.filename):
             from chimerax.map.volume import open_map
             from chimerax.map.data import UnknownFileType
             try:
-                maps, msg = open_map(session, self.mrc_filename)
+                maps, msg = open_map(session, self.filename)
             except UnknownFileType:
                 return
             v = maps[0]
             v.set_display_style('image')
             v.show()
-            model._add_provenance(self.mrc_filename, v)
+            model._add_provenance(self.filename, v)
 
     def _get_name(self):
-        desc = "EM map from %s" % os.path.basename(self.filename)
-        if self.mrc_filename:
-            desc += " (derived from %s)" % os.path.basename(self.mrc_filename)
-        return desc
+        return "EM map from %s" % os.path.basename(self.filename)
     name = property(_get_name)
 
 
@@ -620,7 +629,7 @@ class _RMFLoader(object):
         if rsrtype == 'IMP.isd.GaussianEMRestraint':
             fname = get_node_filename(node)
             if fname:
-                return _RMFEMRestraintProvenance(node, fname)
+                return _RMFEMRestraintGMMProvenance(node, fname)
         elif rsrtype == 'IMP.pmi.CrossLinkingMassSpectrometryRestraint':
             fname = get_node_filename(node)
             if fname:

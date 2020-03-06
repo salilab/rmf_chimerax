@@ -395,7 +395,7 @@ class Tests(unittest.TestCase):
             mock_session = make_session()
             structures, status = src.io.open_rmf(mock_session, fname)
             p1, = structures[0].rmf_provenance
-            self.assertIsInstance(p1, src.io._RMFEMRestraintProvenance)
+            self.assertIsInstance(p1, src.io._RMFEMRestraintGMMProvenance)
 
     def test_xlms_provenance(self):
         """Test open_rmf handling of RMF XL-MS restraint provenance"""
@@ -526,17 +526,17 @@ END
         rmf_node = MockRMFNode("r1", 1)
 
         # Test with non-existent GMM file
-        p = src.io._RMFEMRestraintProvenance(rmf_node, '/does/notexist')
-        self.assertEqual(p.name, 'EM map from notexist')
-        self.assertIsNone(p.mrc_filename)
+        p = src.io._RMFEMRestraintGMMProvenance(rmf_node, '/does/notexist')
+        self.assertEqual(p.name, 'Gaussian Mixture Model from notexist')
+        self.assertIsNone(p.previous)
         p.load(None, None)  # noop
 
         # Test with GMM file containing no metadata
         with utils.temporary_file(suffix='.gmm') as fname:
             with open(fname, 'w') as fh:
                 pass
-            p = src.io._RMFEMRestraintProvenance(rmf_node, fname)
-            self.assertIsNone(p.mrc_filename)
+            p = src.io._RMFEMRestraintGMMProvenance(rmf_node, fname)
+            self.assertIsNone(p.previous)
 
         # Test with GMM file containing valid metadata
         with utils.temporary_directory() as tmpdir:
@@ -549,15 +549,18 @@ END
 """)
             with open(mrc, 'w') as fh:
                 pass
-            p = src.io._RMFEMRestraintProvenance(rmf_node, gmm)
-            self.assertEqual(p.mrc_filename, mrc)
+            p = src.io._RMFEMRestraintGMMProvenance(rmf_node, gmm)
+            prev = p.previous
+            self.assertEqual(prev.filename, mrc)
             self.assertEqual(p.name,
-                'EM map from test.gmm (derived from test.mrc2)')
+                'Gaussian Mixture Model from test.gmm')
+            self.assertEqual(prev.name,
+                'EM map from test.mrc2')
             mock_session = make_session()
             mock_session.logger = MockLogger()
             model = src.io._RMFModel(mock_session, 'fname')
             # Should be a noop since mrc2 isn't a known map format
-            p.load(mock_session, model)
+            prev.load(mock_session, model)
 
 
 if __name__ == '__main__':
