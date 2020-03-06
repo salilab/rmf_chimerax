@@ -196,7 +196,7 @@ class RMFViewer(ToolInstance):
                            if hasattr(m, 'rmf_hierarchy')]
 
         self.model_list.clear()
-        self.model_list.addItems("%s; %s" % (m.name, m.id_string)
+        self.model_list.addItems("%s; #%s" % (m.name, m.id_string)
                                  for m in self.rmf_models)
 
         self._fill_model_stack()
