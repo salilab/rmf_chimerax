@@ -45,6 +45,33 @@ class _RMFState(AtomicStructure):
         # atomic information
         self._atomic = True
 
+    def take_snapshot(self, session, flags):
+        data = {'version': 1,
+                'atomic structure state':
+                    AtomicStructure.take_snapshot(self, session, flags)}
+        return data
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFState(session, auto_style=False, log_info=False)
+        s.set_state_from_snapshot(session, data)
+        return s
+
+    def set_state_from_snapshot(self, session, data):
+        self._as_set_state_from_snapshot(session,
+            data['atomic structure state'])
+
+    def _as_set_state_from_snapshot(self, session, data):
+        # AtomicStructure doesn't provide a set_state_from_snapshot method,
+        # so duplicate its restore_snapshot functionality
+        if data.get('AtomicStructure version', 1) == 1:
+            Structure.set_state_from_snapshot(self, session, data)
+        else:
+            from chimerax.atomic.molobject import set_custom_attrs
+            Structure.set_state_from_snapshot(self, session,
+                    data['structure state'])
+            set_custom_attrs(self, data)
+
     def _add_pseudobond(self, atoms):
         if self._features is None:
             self._features = self.pseudobond_group("Features")
@@ -65,6 +92,22 @@ class _RMFDrawing(Structure):
         self._drawing = AtomicShapeDrawing('geometry')
         self.add_drawing(self._drawing)
 
+    def take_snapshot(self, session, flags):
+        data = {'version': 1,
+                'structure state':
+                    Structure.take_snapshot(self, session, flags)}
+        return data
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFDrawing(session)
+        s.set_state_from_snapshot(session, data)
+        return s
+
+    def set_state_from_snapshot(self, session, data):
+        Structure.set_state_from_snapshot(self, session,
+                                          data['structure state'])
+
 
 class _RMFModel(Model):
     """Representation of the top level of an RMF model"""
@@ -77,6 +120,20 @@ class _RMFModel(Model):
         self._rmf_resolutions = set()
         self._rmf_chains = []
         super().__init__(name, session)
+
+    def take_snapshot(self, session, flags):
+        data = {'version': 1,
+                'model state': Model.take_snapshot(self, session, flags)}
+        return data
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFModel(session, '')
+        s.set_state_from_snapshot(session, data)
+        return s
+
+    def set_state_from_snapshot(self, session, data):
+        Model.set_state_from_snapshot(self, session, data['model state'])
 
     def _add_rmf_resolution(self, res):
         self._rmf_resolutions.add(res)

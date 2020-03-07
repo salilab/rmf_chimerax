@@ -56,6 +56,19 @@ class _MyAPI(BundleAPI):
         from .io import open_rmf
         return open_rmf(session, path)
 
+    @staticmethod
+    def get_class(class_name):
+        if class_name == '_RMFModel':
+            from . import io
+            return io._RMFModel
+        elif class_name == '_RMFState':
+            from . import io
+            return io._RMFState
+        elif class_name == '_RMFHierarchyNode':
+            from . import io
+            return io._RMFHierarchyNode
+        raise ValueError("Unknown class name '%s'" % class_name)
+
 
 # Create the ``bundle_api`` object that ChimeraX expects.
 bundle_api = _MyAPI()
