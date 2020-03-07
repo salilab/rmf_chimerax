@@ -2,7 +2,7 @@
 
 from chimerax.core.tools import ToolInstance
 from chimerax.core.objects import Objects
-from chimerax.atomic import Atoms, Bonds, Pseudobonds, Atom, Bond
+from chimerax.atomic import Atoms, Bonds, Pseudobonds, Atom, Bond, Pseudobond
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
 from PyQt5.QtCore import QItemSelectionModel
 from PyQt5 import QtWidgets
@@ -370,13 +370,20 @@ class RMFViewer(ToolInstance):
             for f in tree.selectedIndexes():
                 feat = f.internalPointer()
                 obj = feat.chimera_obj
-                if obj is not None:
+                # Prefer to select pseudobonds (even from children)
+                if (obj is not None
+                    and (not isinstance(obj, Atoms) or not feat.children)):
                     yield obj
                 else:
                     for obj in get_child_chimera_obj(feat):
                         yield obj
+        s = list(get_selection())
         objs = Objects()
-        objs.add_pseudobonds(Pseudobonds(get_selection()))
+        objs.add_pseudobonds(Pseudobonds(x for x in s
+                                         if isinstance(x, Pseudobond)))
+        for x in s:
+            if isinstance(x, Atoms):
+                objs.add_atoms(x)
         return objs
 
     def _select_button_clicked(self, tree):

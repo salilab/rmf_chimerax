@@ -14,6 +14,7 @@ INDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'input'))
 RMF = utils.import_rmf_module()
 
 from chimerax.atomic import Pseudobond
+from chimerax.atomic import Atoms
 
 def get_all_nodes(structure):
     """Yield all RMF nodes in a given structure, by flattening the hierarchy"""
@@ -140,7 +141,7 @@ class Tests(unittest.TestCase):
             self.assertEqual(len(features), 3)
             self.assertIsInstance(features[0].chimera_obj, Pseudobond)
             self.assertIsInstance(features[1].chimera_obj, Pseudobond)
-            self.assertIsNone(features[2].chimera_obj)
+            self.assertIsInstance(features[2].chimera_obj, Atoms)
 
     def test_read_geometry(self):
         """Test open_rmf handling of RMF geometry"""

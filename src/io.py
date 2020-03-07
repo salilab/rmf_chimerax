@@ -490,8 +490,13 @@ class _RMFHierarchyInfo(object):
 
     def new_feature(self, atoms):
         if len(atoms) == 2:
+            # Make and return a pseudobond if the feature acts on 2 atoms
             state = atoms[0].structure
             return state._add_pseudobond(atoms)
+        else:
+            # Otherwise, return the list of atoms the feature acts on
+            from chimerax.atomic import Atoms
+            return Atoms(atoms)
 
     def new_segment(self, coords, name):
         # todo: don't rely on chimerax.bild (not public API)
