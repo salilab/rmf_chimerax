@@ -175,7 +175,7 @@ class _RMFModel(Model):
     def _add_provenance(self, name, p):
         """Add a Model containing provenance information keyed by the given
            name (usually a filename)"""
-        if self._provenance is None:
+        if self._provenance is None or self._provenance.was_deleted:
             self._provenance = Model('Provenance', self.session)
             self.add([self._provenance])
         self._provenance_map[name] = p
