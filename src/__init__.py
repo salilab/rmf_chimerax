@@ -58,15 +58,13 @@ class _MyAPI(BundleAPI):
 
     @staticmethod
     def get_class(class_name):
-        if class_name == '_RMFModel':
+        io_classes = frozenset(('_RMFModel', '_RMFState', '_RMFHierarchyNode',
+                               '_RMFFeature', '_RMFSampleProvenance',
+                               '_RMFScriptProvenance',
+                               '_RMFSoftwareProvenance'))
+        if class_name in io_classes:
             from . import io
-            return io._RMFModel
-        elif class_name == '_RMFState':
-            from . import io
-            return io._RMFState
-        elif class_name == '_RMFHierarchyNode':
-            from . import io
-            return io._RMFHierarchyNode
+            return getattr(io, class_name)
         raise ValueError("Unknown class name '%s'" % class_name)
 
 

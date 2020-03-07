@@ -6,6 +6,14 @@ import sys
 import weakref
 import copy
 
+class _MockRMFNode:
+    __slots__ = ['name', 'rmf_index']
+    def __init__(self, data):
+        self.name, self.rmf_index = data['name'], data['rmf_index']
+    def get_name(self): return self.name
+    def get_index(self): return self.rmf_index
+
+
 def open_rmf(session, path):
     """Read an RMF file from a named file.
 
@@ -33,6 +41,7 @@ def open_rmf(session, path):
     return structures, status
 
 
+from chimerax.core.state import State
 from chimerax.core.models import Model
 from chimerax.atomic import Structure, AtomicStructure, AtomicShapeDrawing
 
@@ -123,7 +132,10 @@ class _RMFModel(Model):
 
     def take_snapshot(self, session, flags):
         data = {'version': 1,
-                'model state': Model.take_snapshot(self, session, flags)}
+                'model state': Model.take_snapshot(self, session, flags),
+                'rmf_filename': self.rmf_filename,
+                'rmf_features': self.rmf_features,
+                'rmf_provenance': self.rmf_provenance}
         return data
 
     @staticmethod
@@ -134,6 +146,9 @@ class _RMFModel(Model):
 
     def set_state_from_snapshot(self, session, data):
         Model.set_state_from_snapshot(self, session, data['model state'])
+        self.rmf_filename = data['rmf_filename']
+        self.rmf_features = data['rmf_features']
+        self.rmf_provenance = data['rmf_provenance']
 
     def _add_rmf_resolution(self, res):
         self._rmf_resolutions.add(res)
@@ -204,6 +219,19 @@ class _RMFHierarchyNode(object):
         self.chimera_obj = None
         self.parent = None
 
+    def take_snapshot(self, session, flags):
+        data = {'version': 1,
+                'name': self.name,
+                'rmf_index': self.rmf_index,
+                'children': self.children}
+        return data
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFHierarchyNode(_MockRMFNode(data))
+        s.add_children(data['children'])
+        return s
+
     def add_children(self, children):
         for child in children:
             self.children.append(child)
@@ -211,10 +239,10 @@ class _RMFHierarchyNode(object):
             child.parent = weakref.ref(self)
 
 
-class _RMFFeature(object):
+class _RMFFeature(State):
     """Represent a single feature in an RMF file."""
-    __slots__ = ['name', 'rmf_index', 'chimera_obj', 'children', 'parent',
-                 '__weakref__']
+
+    __slots__ = ['name', 'rmf_index', 'chimera_obj', 'children', 'parent']
 
     def __init__(self, rmf_node):
         self.name = rmf_node.get_name()
@@ -223,14 +251,30 @@ class _RMFFeature(object):
         self.chimera_obj = None
         self.parent = None
 
+    def take_snapshot(self, session, flags):
+        data = {'version': 1,
+                'name': self.name,
+                'rmf_index': self.rmf_index,
+                'children': self.children}
+        return data
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFFeature(_MockRMFNode(data))
+        for child in data['children']:
+            s.add_child(child)
+        return s
+
     def add_child(self, child):
         self.children.append(child)
         # avoid circular reference
         child.parent = weakref.ref(self)
 
 
-class _RMFProvenance(object):
+class _RMFProvenance(State):
     """Represent some provenance of the RMF file."""
+
+    _snapshot_keys = []
 
     def __init__(self, rmf_node):
         self._name = rmf_node.get_name()
@@ -250,6 +294,15 @@ class _RMFProvenance(object):
         """Override to load file(s) referenced by this object into the
            given session and model."""
         pass
+
+    def take_snapshot(self, session, flags):
+        data = {'version': 1,
+                'name': self._name,
+                'rmf_index': self.rmf_index,
+                'previous': self.previous}
+        for k in self._snapshot_keys:
+            data[k] = getattr(self, k)
+        return data
 
     # Displayed name of this provenance (defaults to the name of the RMF node)
     name = property(lambda self: self._name)
@@ -318,6 +371,9 @@ class _RMFStructureProvenance(_RMFProvenance):
 
 class _RMFSampleProvenance(_RMFProvenance):
     """Information about how an RMF model was sampled"""
+
+    _snapshot_keys = ['frames', 'iterations', 'method', 'replicas']
+
     def __init__(self, rmf_node, prov):
         super().__init__(rmf_node)
         #: Number of frames generated in the sampling
@@ -329,6 +385,19 @@ class _RMFSampleProvenance(_RMFProvenance):
         #: Number of replicas used in replica exchange sampling
         self.replicas = prov.get_replicas()
 
+    @staticmethod
+    def restore_snapshot(session, data):
+        class MockSampleProvenance:
+            def __init__(self, data): self.data = data
+            def get_frames(self): return self.data['frames']
+            def get_iterations(self): return self.data['iterations']
+            def get_method(self): return self.data['method']
+            def get_replicas(self): return self.data['replicas']
+        s = _RMFSampleProvenance(_MockRMFNode(data), MockSampleProvenance(data))
+        if data['previous']:
+            s.set_previous(data['previous'])
+        return s
+
     def _get_name(self):
         return ("Sampling using %s making %d frames"
                 % (self.method, self.frames))
@@ -337,10 +406,23 @@ class _RMFSampleProvenance(_RMFProvenance):
 
 class _RMFScriptProvenance(_RMFProvenance):
     """Information about the script used to build an RMF model"""
+
+    _snapshot_keys = ['filename']
+
     def __init__(self, rmf_node, prov):
         super().__init__(rmf_node)
         #: Full path to the script
         self.filename = prov.get_filename()
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        class MockScriptProvenance:
+            def __init__(self, data): self.data = data
+            def get_filename(self): return self.data['filename']
+        s = _RMFScriptProvenance(_MockRMFNode(data), MockScriptProvenance(data))
+        if data['previous']:
+            s.set_previous(data['previous'])
+        return s
 
     def _get_name(self):
         return ("Using script %s" % self.filename)
@@ -349,6 +431,9 @@ class _RMFScriptProvenance(_RMFProvenance):
 
 class _RMFSoftwareProvenance(_RMFProvenance):
     """Information about the software used to build an RMF model"""
+
+    _snapshot_keys = ['location', 'software_name', 'version']
+
     def __init__(self, rmf_node, prov):
         super().__init__(rmf_node)
         #: URL to obtain the software
@@ -357,6 +442,19 @@ class _RMFSoftwareProvenance(_RMFProvenance):
         self.software_name = prov.get_name()
         #: Version of the software used
         self.version = prov.get_version()
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        class MockSoftwareProvenance:
+            def __init__(self, data): self.data = data
+            def get_location(self): return self.data['location']
+            def get_name(self): return self.data['software_name']
+            def get_version(self): return self.data['version']
+        s = _RMFSoftwareProvenance(_MockRMFNode(data),
+                                   MockSoftwareProvenance(data))
+        if data['previous']:
+            s.set_previous(data['previous'])
+        return s
 
     def _get_name(self):
         return ("Using software %s version %s from %s" %
