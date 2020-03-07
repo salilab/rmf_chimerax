@@ -483,6 +483,10 @@ class _RMFEMRestraintGMMProvenance(_RMFProvenance):
                     fname = os.path.join(os.path.dirname(filename), relpath)
                     return _RMFEMRestraintMRCProvenance(rmf_node, fname)
 
+    def load(self, session, model):
+        if self.previous:
+            self.previous.load(session, model)
+
     def _get_name(self):
         return ("Gaussian Mixture Model from %s"
                  % os.path.basename(self.filename))
