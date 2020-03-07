@@ -135,7 +135,9 @@ class _RMFModel(Model):
                 'model state': Model.take_snapshot(self, session, flags),
                 'rmf_filename': self.rmf_filename,
                 'rmf_features': self.rmf_features,
-                'rmf_provenance': self.rmf_provenance}
+                'rmf_provenance': self.rmf_provenance,
+                'rmf_hierarchy': self.rmf_hierarchy,
+                'rmf_chains': self._rmf_chains}
         return data
 
     @staticmethod
@@ -149,6 +151,8 @@ class _RMFModel(Model):
         self.rmf_filename = data['rmf_filename']
         self.rmf_features = data['rmf_features']
         self.rmf_provenance = data['rmf_provenance']
+        self.rmf_hierarchy = data['rmf_hierarchy']
+        self._rmf_chains = data['rmf_chains']
 
     def _add_rmf_resolution(self, res):
         self._rmf_resolutions.add(res)
@@ -205,12 +209,11 @@ class _RMFModel(Model):
                                    description=name)
 
 
-class _RMFHierarchyNode(object):
+class _RMFHierarchyNode(State):
     """Represent a single RMF node.
        Note that features (restraints) are stored outside of this hierarchy,
        as _RMFFeature objects, as are provenance nodes."""
-    __slots__ = ['name', 'rmf_index', 'children', 'parent', "__weakref__",
-                 'chimera_obj']
+    __slots__ = ['name', 'rmf_index', 'children', 'parent', 'chimera_obj']
 
     def __init__(self, rmf_node):
         self.name = rmf_node.get_name()
@@ -299,10 +302,16 @@ class _RMFProvenance(State):
         data = {'version': 1,
                 'name': self._name,
                 'rmf_index': self.rmf_index,
-                'previous': self.previous}
+                'previous': self.previous,
+                'hierarchy_node': self.hierarchy_node}
         for k in self._snapshot_keys:
             data[k] = getattr(self, k)
         return data
+
+    def set_state_from_snapshot(self, data):
+        self.hierarchy_node = data['hierarchy_node']
+        if data['previous']:
+            self.set_previous(data['previous'])
 
     # Displayed name of this provenance (defaults to the name of the RMF node)
     name = property(lambda self: self._name)
@@ -328,6 +337,9 @@ def _prune_chains(model, chains):
 
 class _RMFStructureProvenance(_RMFProvenance):
     """Represent a structure file (PDB, mmCIF) used as input for an RMF"""
+
+    _snapshot_keys = ['chain', 'residue_offset', 'filename', 'allchains']
+
     def __init__(self, rmf_node, prov, provenance_chains):
         super().__init__(rmf_node)
         #: The chain ID used in the given file
@@ -341,6 +353,20 @@ class _RMFStructureProvenance(_RMFProvenance):
         # (across all provenance nodes in the RMF file)
         self.allchains = provenance_chains.setdefault(self.filename, set())
         self.allchains.add(self.chain)
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        class MockStructureProvenance:
+            def __init__(self, data): self.data = data
+            def get_chain(self): return self.data['chain']
+            def get_residue_offset(self): return self.data['residue_offset']
+            def get_filename(self): return self.data['filename']
+            def get_allchains(self): return self.data['allchains']
+        s = _RMFStructureProvenance(_MockRMFNode(data),
+                                    MockStructureProvenance(data), {})
+        s.set_state_from_snapshot(data)
+        s.allchains = data['allchains']
+        return s
 
     def load(self, session, model):
         # Note that we load all chains referenced by the RMF file, as this is
@@ -394,8 +420,7 @@ class _RMFSampleProvenance(_RMFProvenance):
             def get_method(self): return self.data['method']
             def get_replicas(self): return self.data['replicas']
         s = _RMFSampleProvenance(_MockRMFNode(data), MockSampleProvenance(data))
-        if data['previous']:
-            s.set_previous(data['previous'])
+        s.set_state_from_snapshot(data)
         return s
 
     def _get_name(self):
@@ -420,8 +445,7 @@ class _RMFScriptProvenance(_RMFProvenance):
             def __init__(self, data): self.data = data
             def get_filename(self): return self.data['filename']
         s = _RMFScriptProvenance(_MockRMFNode(data), MockScriptProvenance(data))
-        if data['previous']:
-            s.set_previous(data['previous'])
+        s.set_state_from_snapshot(data)
         return s
 
     def _get_name(self):
@@ -452,8 +476,7 @@ class _RMFSoftwareProvenance(_RMFProvenance):
             def get_version(self): return self.data['version']
         s = _RMFSoftwareProvenance(_MockRMFNode(data),
                                    MockSoftwareProvenance(data))
-        if data['previous']:
-            s.set_previous(data['previous'])
+        s.set_state_from_snapshot(data)
         return s
 
     def _get_name(self):
@@ -463,6 +486,9 @@ class _RMFSoftwareProvenance(_RMFProvenance):
 
 class _RMFEMRestraintGMMProvenance(_RMFProvenance):
     """Information about an electron microscopy restraint read from GMMs"""
+
+    _snapshot_keys = ['filename']
+
     def __init__(self, rmf_node, filename):
         super().__init__(rmf_node)
         self.filename = filename
@@ -470,6 +496,12 @@ class _RMFEMRestraintGMMProvenance(_RMFProvenance):
         mrc = self._parse_gmm(rmf_node, filename)
         if mrc:
             self.set_previous(mrc)
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFEMRestraintGMMProvenance(_MockRMFNode(data), data['filename'])
+        s.set_state_from_snapshot(data)
+        return s
 
     def _parse_gmm(self, rmf_node, filename):
         """Extract metadata from the GMM file (to find the original MRC file)
@@ -495,9 +527,18 @@ class _RMFEMRestraintGMMProvenance(_RMFProvenance):
 
 class _RMFEMRestraintMRCProvenance(_RMFProvenance):
     """Information about an electron microscopy restraint read from MRC"""
+
+    _snapshot_keys = ['filename']
+
     def __init__(self, rmf_node, filename):
         super().__init__(rmf_node)
         self.filename = filename
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFEMRestraintMRCProvenance(_MockRMFNode(data), data['filename'])
+        s.set_state_from_snapshot(data)
+        return s
 
     def load(self, session, model):
         if not model._has_provenance(self.filename):
@@ -519,9 +560,18 @@ class _RMFEMRestraintMRCProvenance(_RMFProvenance):
 
 class _RMFXLMSRestraintProvenance(_RMFProvenance):
     """Information about an XL-MS restraint"""
+
+    _snapshot_keys = ['filename']
+
     def __init__(self, rmf_node, filename):
         super().__init__(rmf_node)
         self.filename = filename
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFXLMSRestraintProvenance(_MockRMFNode(data), data['filename'])
+        s.set_state_from_snapshot(data)
+        return s
 
     def _get_name(self):
         return "XL-MS data from %s" % os.path.basename(self.filename)

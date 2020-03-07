@@ -61,7 +61,11 @@ class _MyAPI(BundleAPI):
         io_classes = frozenset(('_RMFModel', '_RMFState', '_RMFHierarchyNode',
                                '_RMFFeature', '_RMFSampleProvenance',
                                '_RMFScriptProvenance',
-                               '_RMFSoftwareProvenance'))
+                               '_RMFSoftwareProvenance',
+                               '_RMFStructureProvenance',
+                               '_RMFXLMSRestraintProvenance',
+                               '_RMFEMRestraintGMMProvenance',
+                               '_RMFEMRestraintMRCProvenance'))
         if class_name in io_classes:
             from . import io
             return getattr(io, class_name)
