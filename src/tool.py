@@ -173,6 +173,32 @@ class _RMFProvenanceModel(QAbstractItemModel):
         item = index.internalPointer()
         return item.name
 
+def _load_snapshot_chimera_obj(session, data):
+    def model_by_id(id):
+        return session.models.list(model_id=id)[0]
+    if data['type'] == 'Atoms':
+        if 'single_structure' in data:
+            m = model_by_id(data['single_structure'])
+            atoms = [m.atoms[x] for x in data['indices']]
+        else:
+            atoms = []
+            for s, ind in zip(data['structures'], data['indices']):
+                atoms.append(model_by_id(s).atoms[ind])
+        obj = Atoms(atoms)
+        return obj
+    elif data['type'] == 'Atom':
+        return model_by_id(data['structure']).atoms[data['index']]
+    elif data['type'] == 'Bond':
+        return model_by_id(data['structure']).bonds[data['index']]
+    elif data['type'] == 'Pseudobond':
+        s = model_by_id(data['structure'])
+        # todo: merge with code in io
+        if not s._features:
+            s._features = s.pseudobond_group("Features")
+        obj = s._features.pseudobonds[data['index']]
+        return obj
+    raise TypeError("Don't know how to load snapshot %s" % str(data))
+
 
 class RMFViewer(ToolInstance):
     SESSION_ENDURING = False    # Does this instance persist when session closes
@@ -357,10 +383,17 @@ class RMFViewer(ToolInstance):
         layout.addLayout(tree_and_buttons, stretch=1)
         return pane
 
+    def _get_chimera_obj(self, node):
+        if isinstance(node.chimera_obj, dict):
+            node.chimera_obj = _load_snapshot_chimera_obj(self.session,
+                                                          node.chimera_obj)
+        return node.chimera_obj
+
     def _get_selected_chimera_objects(self, tree):
         def _get_node_objects(node, objs):
-            if node.chimera_obj:
-                objs.append(node.chimera_obj)
+            o = self._get_chimera_obj(node)
+            if o:
+                objs.append(o)
             for child in node.children:
                 _get_node_objects(child, objs)
         objs = []
@@ -374,14 +407,15 @@ class RMFViewer(ToolInstance):
     def _get_selected_features(self, tree):
         def get_child_chimera_obj(feat):
             for child in feat.children:
-                if child.chimera_obj:
-                    yield child.chimera_obj
+                o = self._get_chimera_obj(child)
+                if o:
+                    yield o
                 for obj in get_child_chimera_obj(child):
                     yield obj
         def get_selection():
             for f in tree.selectedIndexes():
                 feat = f.internalPointer()
-                obj = feat.chimera_obj
+                obj = self._get_chimera_obj(feat)
                 # Prefer to select pseudobonds (even from children)
                 if (obj is not None
                     and (not isinstance(obj, Atoms) or not feat.children)):

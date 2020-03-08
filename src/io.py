@@ -6,6 +6,8 @@ import sys
 import weakref
 import copy
 
+from chimerax.atomic import Atom, Atoms, Bond, Pseudobond
+
 class _MockRMFNode:
     __slots__ = ['name', 'rmf_index']
     def __init__(self, data):
@@ -226,12 +228,14 @@ class _RMFHierarchyNode(State):
         data = {'version': 1,
                 'name': self.name,
                 'rmf_index': self.rmf_index,
+                'chimera_obj': _save_snapshot_chimera_obj(self.chimera_obj),
                 'children': self.children}
         return data
 
     @staticmethod
     def restore_snapshot(session, data):
         s = _RMFHierarchyNode(_MockRMFNode(data))
+        s.chimera_obj = data['chimera_obj']
         s.add_children(data['children'])
         return s
 
@@ -241,6 +245,35 @@ class _RMFHierarchyNode(State):
             # avoid circular reference
             child.parent = weakref.ref(self)
 
+def _save_snapshot_chimera_obj(obj):
+    if obj is None:
+        return None
+    if isinstance(obj, Atoms):
+        data = {'type': 'Atoms',
+                'indices': obj.coord_indices}
+        if obj.single_structure:
+            data['single_structure'] = obj.structures[0].id
+        else:
+            data['structures'] = [s.id for s in obj.structures]
+        return data
+    elif isinstance(obj, Atom):
+        data = {'type': 'Atom',
+                'index': obj.coord_index,
+                'structure': obj.structure.id}
+        return data
+    elif isinstance(obj, Bond):
+        s = obj.atoms[0].structure
+        data = {'type': 'Bond',
+                'index': s.bonds.index(obj),
+                'structure': s.id}
+        return data
+    elif isinstance(obj, Pseudobond):
+        s = obj.atoms[0].structure
+        data = {'type': 'Pseudobond',
+                'structure': s.id,
+                'index': s._features.pseudobonds.index(obj)}
+        return data
+    raise TypeError("Don't know how to snapshot %s" % str(obj))
 
 class _RMFFeature(State):
     """Represent a single feature in an RMF file."""
@@ -258,6 +291,7 @@ class _RMFFeature(State):
         data = {'version': 1,
                 'name': self.name,
                 'rmf_index': self.rmf_index,
+                'chimera_obj': _save_snapshot_chimera_obj(self.chimera_obj),
                 'children': self.children}
         return data
 
@@ -266,6 +300,7 @@ class _RMFFeature(State):
         s = _RMFFeature(_MockRMFNode(data))
         for child in data['children']:
             s.add_child(child)
+        s.chimera_obj = data['chimera_obj']
         return s
 
     def add_child(self, child):
@@ -704,7 +739,6 @@ class _RMFHierarchyInfo(object):
             return state._add_pseudobond(atoms)
         else:
             # Otherwise, return the list of atoms the feature acts on
-            from chimerax.atomic import Atoms
             return Atoms(atoms)
 
     def new_segment(self, coords, name):
