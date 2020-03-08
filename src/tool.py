@@ -176,7 +176,7 @@ class _RMFProvenanceModel(QAbstractItemModel):
 
 class RMFViewer(ToolInstance):
     SESSION_ENDURING = False    # Does this instance persist when session closes
-    SESSION_SAVE = False        # We do save/restore in sessions
+    SESSION_SAVE = True         # We do save/restore in sessions
     help = "help:user/tools/rmf.html"
 
     def __init__(self, session, tool_name):
@@ -190,6 +190,18 @@ class RMFViewer(ToolInstance):
         session.triggers.add_handler(ADD_MODELS, self._fill_ui)
         session.triggers.add_handler(REMOVE_MODELS, self._fill_ui)
         self._fill_ui()
+
+    def take_snapshot(self, session, flags):
+        data = {'version': 1,
+                'tool_name': self.tool_name,
+                'selmodel': self.model_list.currentIndex()}
+        return data
+
+    @classmethod
+    def restore_snapshot(cls, session, data):
+        t = cls(session, data['tool_name'])
+        t.model_list.setCurrentIndex(data['selmodel'])
+        return t
 
     def _fill_ui(self, *args):
         self.rmf_models = [m for m in self.session.models.list()

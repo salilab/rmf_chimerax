@@ -69,6 +69,9 @@ class _MyAPI(BundleAPI):
         if class_name in io_classes:
             from . import io
             return getattr(io, class_name)
+        elif class_name == 'RMFViewer':
+            from . import tool
+            return tool.RMFViewer
         raise ValueError("Unknown class name '%s'" % class_name)
 
 
