@@ -626,6 +626,14 @@ END
         self.assertEqual(newp.iterations, 10)
         self.assertEqual(newp.method, 'Monte Carlo')
         self.assertEqual(newp.replicas, 8)
+        self.assertIsNone(newp.previous)
+
+        rmf_node = MockRMFNode("r2", 2)
+        previous = src.io._RMFProvenance(rmf_node)
+        p.set_previous(previous)
+        s = p.take_snapshot(mock_session, None)
+        newp = src.io._RMFSampleProvenance.restore_snapshot(mock_session, s)
+        self.assertIs(newp.previous, previous)
 
     def test_rmf_script_provenance(self):
         """Test _RMFScriptProvenance class"""
