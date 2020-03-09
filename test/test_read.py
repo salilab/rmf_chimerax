@@ -683,6 +683,104 @@ END
         self.assertIsInstance(news, src.io._RMFModel)
         self.assertEqual(news.rmf_filename, 'foo')
 
+    def test_save_snapshot_chimera_obj(self):
+        """Test save_snapshot of Chimera objects"""
+        self.assertIsNone(src.io._save_snapshot_chimera_obj(None))
+        self.assertRaises(TypeError, src.io._save_snapshot_chimera_obj,
+                          'non-chimera object')
+        session = make_session()
+        state = src.io._RMFState(session)
+        state2 = src.io._RMFState(session)
+        residue = state.new_residue('ALA', 'A', 1)
+        atom1 = state.new_atom('C', 'C')
+        residue.add_atom(atom1)
+        atom2 = state.new_atom('N', 'N')
+        residue.add_atom(atom2)
+
+        st2_residue = state2.new_residue('ALA', 'A', 1)
+        st2_atom1 = state2.new_atom('C', 'C')
+        st2_residue.add_atom(st2_atom1)
+
+        d = src.io._save_snapshot_chimera_obj(atom1)
+        self.assertEqual(d['type'], 'Atom')
+
+        # single structure
+        atoms = Atoms((atom1, atom2))
+        d = src.io._save_snapshot_chimera_obj(atoms)
+        self.assertEqual(d['type'], 'Atoms')
+        self.assertIn('single_structure', d)
+
+        # multiple structures
+        atoms = Atoms((atom1, st2_atom1))
+        d = src.io._save_snapshot_chimera_obj(atoms)
+        self.assertEqual(d['type'], 'Atoms')
+        self.assertIn('structures', d)
+
+        bond = state.new_bond(atom1, atom2)
+        d = src.io._save_snapshot_chimera_obj(bond)
+        self.assertEqual(d['type'], 'Bond')
+
+        pbond = state._add_pseudobond((atom1, atom2))
+        d = src.io._save_snapshot_chimera_obj(pbond)
+        self.assertEqual(d['type'], 'Pseudobond')
+
+    def test_load_snapshot_chimera_obj(self):
+        """Test load_snapshot of Chimera objects"""
+        session = make_session()
+        self.assertIsNone(src.io._load_snapshot_chimera_obj(session, None, {}))
+        self.assertRaises(TypeError, src.io._load_snapshot_chimera_obj,
+                          session, {'type': 'garbage'}, {})
+        state = src.io._RMFState(session)
+        state2 = src.io._RMFState(session)
+        residue = state.new_residue('ALA', 'A', 1)
+        atom1 = state.new_atom('C', 'C')
+        residue.add_atom(atom1)
+        atom2 = state.new_atom('N', 'N')
+        residue.add_atom(atom2)
+
+        st2_residue = state2.new_residue('ALA', 'A', 1)
+        st2_atom1 = state2.new_atom('C', 'C')
+        st2_residue.add_atom(st2_atom1)
+
+        bond = state.new_bond(atom1, atom2)
+        d = src.io._save_snapshot_chimera_obj(bond)
+        self.assertEqual(d['type'], 'Bond')
+
+        pbond = state._add_pseudobond((atom1, atom2))
+        d = src.io._save_snapshot_chimera_obj(pbond)
+        self.assertEqual(d['type'], 'Pseudobond')
+
+        model_by_id = {(1,1): state, (2,1): state2}
+        data = {'type': 'Atoms',
+                'single_structure': (1,1),
+                'indices': [0, 1]}
+        obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
+        self.assertIsInstance(obj, Atoms)
+
+        data = {'type': 'Atoms',
+                'structures': [(1,1), (2,1)],
+                'indices': [0, 0]}
+        obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
+        self.assertIsInstance(obj, Atoms)
+
+        data = {'type': 'Atom',
+                'structure': (1,1),
+                'index': 0}
+        obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
+        self.assertIs(obj, atom1)
+
+        data = {'type': 'Bond',
+                'structure': (1,1),
+                'index': 0}
+        obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
+        self.assertIs(obj, bond)
+
+        data = {'type': 'Pseudobond',
+                'structure': (1,1),
+                'index': 0}
+        obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
+        self.assertIs(obj, pbond)
+
 
 if __name__ == '__main__':
     unittest.main()

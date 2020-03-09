@@ -2,17 +2,23 @@ import weakref
 
 
 class Pseudobond(object):
-    pass
+    def __init__(self, atom1, atom2):
+        self.atoms = (atom1, atom2)
 
 
 class PseudobondGroup(object):
+    def __init__(self):
+        self.pseudobonds = []
+
     def new_pseudobond(self, atom1, atom2, cs_id=None):
-        return Pseudobond()
+        p = Pseudobond(atom1, atom2)
+        self.pseudobonds.append(p)
+        return p
 
 
 class Bond(object):
     def __init__(self, atom1, atom2):
-        pass
+        self.atoms = (atom1, atom2)
 
 
 class _Element:
@@ -24,9 +30,17 @@ class Atom(object):
     SPHERE_STYLE = 1
 
     def __init__(self, name, element, structure):
-        self.structure = weakref.proxy(structure)
+        self._structure = weakref.ref(structure)
         self.name = name
         self.element = _Element(element)
+
+    @property
+    def structure(self):
+        return self._structure()
+
+    @property
+    def coord_index(self):
+        return self.structure.atoms.index(self)
 
 
 class Residue(object):
@@ -45,8 +59,10 @@ class Structure(object):
         self._pbg = None
         self._drawings = []
         self.atoms = _AtomList()
+        self.bonds = []
         self.residues = []
         self.parent = None
+        self.id = (1,1)
         self.id_string = '1.1'
         self.coordset_ids = [1]
 
@@ -79,7 +95,9 @@ class Structure(object):
         return r
 
     def new_bond(self, atom1, atom2):
-        return Bond(atom1, atom2)
+        b = Bond(atom1, atom2)
+        self.bonds.append(b)
+        return b
 
     def pseudobond_group(self, name, *, create_type='normal'):
         if self._pbg is None:
@@ -104,6 +122,19 @@ class AtomicShapeDrawing(object):
 class Atoms:
     def __init__(self, atom_pointers=None):
         self._atom_pointers = list(atom_pointers)
+
+    @property
+    def coord_indices(self):
+        return [a.coord_index for a in self._atom_pointers]
+
+    @property
+    def structures(self):
+        return [a.structure for a in self._atom_pointers]
+
+    @property
+    def single_structure(self):
+        seen_structures = frozenset(a.structure for a in self._atom_pointers)
+        return len(seen_structures) <= 1
 
 class Bonds:
     def __init__(self, bond_pointers=None):
