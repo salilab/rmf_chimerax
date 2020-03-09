@@ -590,13 +590,18 @@ END
         """Test take/restore snapshot of RMFFeature"""
         rmf_node = MockRMFNode("r1", 1)
         n = src.io._RMFFeature(rmf_node)
+
+        rmf_node = MockRMFNode("r2", 2)
+        child = src.io._RMFFeature(rmf_node)
+        n.add_child(child)
+
         mock_session = make_session()
         s = n.take_snapshot(mock_session, None)
         newn = src.io._RMFFeature.restore_snapshot(mock_session, s)
         self.assertIsInstance(newn, src.io._RMFFeature)
         self.assertEqual(newn.name, "r1")
         self.assertEqual(newn.rmf_index, 1)
-        self.assertEqual(newn.children, [])
+        self.assertEqual(newn.children, [child])
 
     def test_rmf_sample_provenance(self):
         """Test _RMFSampleProvenance class"""
