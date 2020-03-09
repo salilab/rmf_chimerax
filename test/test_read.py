@@ -652,6 +652,42 @@ END
         self.assertEqual(newp.software_name, 'bar')
         self.assertEqual(newp.version, 'baz')
 
+    def test_rmf_em_gmm_provenance(self):
+        """Test _RMFEMRestraintGMMProvenance class"""
+        rmf_node = MockRMFNode("r1", 1)
+        p = src.io._RMFEMRestraintGMMProvenance(rmf_node, 'foo')
+
+        mock_session = make_session()
+        s = p.take_snapshot(mock_session, None)
+        newp = src.io._RMFEMRestraintGMMProvenance.restore_snapshot(
+                            mock_session, s)
+        self.assertIsInstance(newp, src.io._RMFEMRestraintGMMProvenance)
+        self.assertEqual(newp.filename, 'foo')
+
+    def test_rmf_em_mrc_provenance(self):
+        """Test _RMFEMRestraintMRCProvenance class"""
+        rmf_node = MockRMFNode("r1", 1)
+        p = src.io._RMFEMRestraintMRCProvenance(rmf_node, 'foo')
+
+        mock_session = make_session()
+        s = p.take_snapshot(mock_session, None)
+        newp = src.io._RMFEMRestraintMRCProvenance.restore_snapshot(
+                            mock_session, s)
+        self.assertIsInstance(newp, src.io._RMFEMRestraintMRCProvenance)
+        self.assertEqual(newp.filename, 'foo')
+
+    def test_rmf_xlms_provenance(self):
+        """Test _RMFXLMSRestraintProvenance class"""
+        rmf_node = MockRMFNode("r1", 1)
+        p = src.io._RMFXLMSRestraintProvenance(rmf_node, 'foo')
+
+        mock_session = make_session()
+        s = p.take_snapshot(mock_session, None)
+        newp = src.io._RMFXLMSRestraintProvenance.restore_snapshot(
+                            mock_session, s)
+        self.assertIsInstance(newp, src.io._RMFXLMSRestraintProvenance)
+        self.assertEqual(newp.filename, 'foo')
+
     @unittest.skipIf(utils.no_gui, "Cannot test in real ChimeraX environment")
     def test_rmf_state_snapshot(self):
         """Test snapshot of RMFState class"""
