@@ -292,6 +292,21 @@ class Tests(unittest.TestCase):
         load_button, = list(get_buttons(r.model_stack.widget(0)))
         load_button.click()
 
+    @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
+    def test_rmf_viewer_snapshot(self):
+        """Test snapshot of RMFViewer tool"""
+        mock_session = make_session()
+        m1 = Model(mock_session, 'test')
+        m1.rmf_hierarchy = None
+        m1.rmf_features = []
+        m1.rmf_provenance = []
+        mock_session.models.add((m1,))
+        r = src.tool.RMFViewer(mock_session, "RMF Viewer")
+        s = r.take_snapshot(mock_session, None)
+
+        newr = src.tool.RMFViewer.restore_snapshot(mock_session, s)
+        self.assertIsInstance(newr, src.tool.RMFViewer)
+
 
 if __name__ == '__main__':
     unittest.main()

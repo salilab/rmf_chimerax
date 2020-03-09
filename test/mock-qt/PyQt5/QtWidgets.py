@@ -66,6 +66,10 @@ class QPushButton:
 class QComboBox:
     def __init__(self):
         self.currentIndexChanged = _Signal()
+    def currentIndex(self):
+        return -1
+    def setCurrentIndex(self, ind):
+        pass
     def clear(self):
         pass
     def addItems(self, items):
