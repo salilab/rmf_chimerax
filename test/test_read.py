@@ -474,6 +474,11 @@ class Tests(unittest.TestCase):
         self.assertEqual(p.chain, 'A')
         self.assertEqual(p.allchains, set('A'))
 
+        mock_session = make_session()
+        s = p.take_snapshot(mock_session, None)
+        newp = src.io._RMFStructureProvenance.restore_snapshot(mock_session, s)
+        self.assertIsInstance(newp, src.io._RMFStructureProvenance)
+
         prov2 = MockStructureProvenance()
         prov2.chain = 'B'
         prov2.residue_offset = 0
@@ -562,6 +567,90 @@ END
             model = src.io._RMFModel(mock_session, 'fname')
             # Should be a noop since mrc2 isn't a known map format
             prev.load(mock_session, model)
+
+    def test_hierarchy_node_snapshot(self):
+        """Test take/restore snapshot of RMFHierarchyNode"""
+        rmf_node = MockRMFNode("r1", 1)
+        n = src.io._RMFHierarchyNode(rmf_node)
+        mock_session = make_session()
+        s = n.take_snapshot(mock_session, None)
+        newn = src.io._RMFHierarchyNode.restore_snapshot(mock_session, s)
+        self.assertIsInstance(newn, src.io._RMFHierarchyNode)
+        self.assertEqual(newn.name, "r1")
+        self.assertEqual(newn.rmf_index, 1)
+        self.assertEqual(newn.children, [])
+
+    def test_feature_snapshot(self):
+        """Test take/restore snapshot of RMFFeature"""
+        rmf_node = MockRMFNode("r1", 1)
+        n = src.io._RMFFeature(rmf_node)
+        mock_session = make_session()
+        s = n.take_snapshot(mock_session, None)
+        newn = src.io._RMFFeature.restore_snapshot(mock_session, s)
+        self.assertIsInstance(newn, src.io._RMFFeature)
+        self.assertEqual(newn.name, "r1")
+        self.assertEqual(newn.rmf_index, 1)
+        self.assertEqual(newn.children, [])
+
+    def test_rmf_sample_provenance(self):
+        """Test _RMFSampleProvenance class"""
+        class MockSampleProvenance:
+            get_frames = lambda self: self.frames
+            get_iterations = lambda self: self.iterations
+            get_method = lambda self: self.method
+            get_replicas = lambda self: self.replicas
+        prov = MockSampleProvenance()
+        prov.frames = 10
+        prov.iterations = 10
+        prov.method = 'Monte Carlo'
+        prov.replicas = 8
+        rmf_node = MockRMFNode("r1", 1)
+        p = src.io._RMFSampleProvenance(rmf_node, prov)
+
+        mock_session = make_session()
+        s = p.take_snapshot(mock_session, None)
+        newp = src.io._RMFSampleProvenance.restore_snapshot(mock_session, s)
+        self.assertIsInstance(newp, src.io._RMFSampleProvenance)
+        self.assertEqual(newp.frames, 10)
+        self.assertEqual(newp.iterations, 10)
+        self.assertEqual(newp.method, 'Monte Carlo')
+        self.assertEqual(newp.replicas, 8)
+
+    def test_rmf_script_provenance(self):
+        """Test _RMFScriptProvenance class"""
+        class MockScriptProvenance:
+            get_filename = lambda self: self.filename
+        prov = MockScriptProvenance()
+        prov.filename = 'foo'
+        rmf_node = MockRMFNode("r1", 1)
+        p = src.io._RMFScriptProvenance(rmf_node, prov)
+
+        mock_session = make_session()
+        s = p.take_snapshot(mock_session, None)
+        newp = src.io._RMFScriptProvenance.restore_snapshot(mock_session, s)
+        self.assertIsInstance(newp, src.io._RMFScriptProvenance)
+        self.assertEqual(newp.filename, 'foo')
+
+    def test_rmf_software_provenance(self):
+        """Test _RMFSoftwareProvenance class"""
+        class MockSoftwareProvenance:
+            get_location = lambda self: self.location
+            get_name = lambda self: self.software_name
+            get_version = lambda self: self.version
+        prov = MockSoftwareProvenance()
+        prov.location = 'foo'
+        prov.software_name = 'bar'
+        prov.version = 'baz'
+        rmf_node = MockRMFNode("r1", 1)
+        p = src.io._RMFSoftwareProvenance(rmf_node, prov)
+
+        mock_session = make_session()
+        s = p.take_snapshot(mock_session, None)
+        newp = src.io._RMFSoftwareProvenance.restore_snapshot(mock_session, s)
+        self.assertIsInstance(newp, src.io._RMFSoftwareProvenance)
+        self.assertEqual(newp.location, 'foo')
+        self.assertEqual(newp.software_name, 'bar')
+        self.assertEqual(newp.version, 'baz')
 
 
 if __name__ == '__main__':
