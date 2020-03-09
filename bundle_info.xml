@@ -6,7 +6,7 @@ will be displayed without the ChimeraX- prefix.
 -->
 
 <BundleInfo name="ChimeraX-RMF"
-	    version="0.5" package="chimerax.rmf"
+	    version="0.6" package="chimerax.rmf"
             minSessionVersion="1" maxSessionVersion="1"
 	    purePython="false">
 
