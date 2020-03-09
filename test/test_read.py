@@ -652,6 +652,24 @@ END
         self.assertEqual(newp.software_name, 'bar')
         self.assertEqual(newp.version, 'baz')
 
+    @unittest.skipIf(utils.no_gui, "Cannot test in real ChimeraX environment")
+    def test_rmf_state_snapshot(self):
+        """Test snapshot of RMFState class"""
+        session = make_session()
+        s = src.io._RMFState(session)
+        d = s.take_snapshot(session, None)
+        news = src.io._RMFState.restore_snapshot(session, d)
+        self.assertIsInstance(news, src.io._RMFState)
+
+    @unittest.skipIf(utils.no_gui, "Cannot test in real ChimeraX environment")
+    def test_rmf_drawing_snapshot(self):
+        """Test snapshot of RMFDrawing class"""
+        session = make_session()
+        s = src.io._RMFDrawing(session)
+        d = s.take_snapshot(session, None)
+        news = src.io._RMFDrawing.restore_snapshot(session, d)
+        self.assertIsInstance(news, src.io._RMFDrawing)
+
 
 if __name__ == '__main__':
     unittest.main()

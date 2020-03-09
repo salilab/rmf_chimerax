@@ -40,7 +40,8 @@ class _AtomList(list):
     by_chain = property(lambda self: [])
 
 class Structure(object):
-    def __init__(self, session, *, name='structure'):
+    def __init__(self, session, *, name='structure', auto_style=True,
+                 log_info=True):
         self._pbg = None
         self._drawings = []
         self.atoms = _AtomList()
@@ -48,6 +49,18 @@ class Structure(object):
         self.parent = None
         self.id_string = '1.1'
         self.coordset_ids = [1]
+
+    def take_snapshot(self, session, flags):
+        return {'mock snapshot': None}
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = Structure(session)
+        s.set_state_from_snapshot(session, data)
+        return s
+
+    def set_state_from_snapshot(self, session, data):
+        pass
 
     def add_coordset(self, id, coord):
         if id not in self.coordset_ids:
