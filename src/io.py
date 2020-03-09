@@ -133,12 +133,16 @@ class _RMFModel(Model):
         super().__init__(name, session)
 
     def take_snapshot(self, session, flags):
+        pm = {filename: model.id
+              for filename, model in self._provenance_map.items()
+              if not model.was_deleted}
         data = {'version': 1,
                 'model state': Model.take_snapshot(self, session, flags),
                 'rmf_filename': self.rmf_filename,
                 'rmf_features': self.rmf_features,
                 'rmf_provenance': self.rmf_provenance,
                 'rmf_hierarchy': self.rmf_hierarchy,
+                'provenance_map': pm,
                 'rmf_chains': self._rmf_chains}
         return data
 
@@ -159,6 +163,7 @@ class _RMFModel(Model):
         self.rmf_features = data['rmf_features']
         self.rmf_provenance = data['rmf_provenance']
         self.rmf_hierarchy = data['rmf_hierarchy']
+        self._provenance_map = data['provenance_map']
         self._rmf_chains = data['rmf_chains']
 
     def _add_rmf_resolution(self, res):
@@ -329,6 +334,8 @@ def _restore_chimera_obj(trigger_name, session):
 
     for m in session.models.list():
         if isinstance(m, _RMFModel):
+            m._provenance_map = {filename: model_by_id[mid]
+                for filename, mid in m._provenance_map.items()}
             _restore_nodes_chimera_obj(session, m.rmf_features, model_by_id)
             _restore_nodes_chimera_obj(session, [m.rmf_hierarchy], model_by_id)
     # Only need to call this once

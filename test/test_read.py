@@ -728,15 +728,27 @@ END
     def test_rmf_model_snapshot(self):
         """Test snapshot of RMFModel class"""
         session = make_session()
+        model1 = src.io._RMFModel(session, "test model")
+        model1.rmf_features = []
+        rmf_node = MockRMFNode("r1", 1)
+        h1 = src.io._RMFHierarchyNode(rmf_node)
+        model1.rmf_hierarchy = h1
+        model2 = src.io._RMFModel(session, "deleted model")
         s = src.io._RMFModel(session, 'testfile')
+
+        session.models.add([model1, model2, s])
         s.rmf_filename = 'foo'
         s.rmf_features = 'bar'
         s.rmf_provenance = 'baz'
         s.rmf_hierarchy = []
+        s._provenance_map['testfname'] = model1
+        s._provenance_map['test2'] = model2
+        model2.delete()
         d = s.take_snapshot(session, None)
         news = src.io._RMFModel.restore_snapshot(session, d)
         self.assertIsInstance(news, src.io._RMFModel)
         self.assertEqual(news.rmf_filename, 'foo')
+        self.assertEqual(news._provenance_map, {'testfname': model1.id})
 
     def test_save_snapshot_chimera_obj(self):
         """Test save_snapshot of Chimera objects"""
@@ -841,8 +853,9 @@ END
         from chimerax.core.triggerset import DEREGISTER
         session = make_session()
         model = src.io._RMFModel(session, "test model")
+        model2 = src.io._RMFModel(session, "test model")
         state = model._add_state("state 0")
-        session.models.add([model])
+        session.models.add([model, model2])
 
         residue = state.new_residue('ALA', 'A', 1)
         atom1 = state.new_atom('C', 'C')
@@ -859,6 +872,7 @@ END
         f2 = src.io._RMFFeature(rmf_node)
         f1.add_child(f2)
         model.rmf_features = [f1]
+        model2.rmf_features = []
 
         rmf_node = MockRMFNode("r3", 3)
         h1 = src.io._RMFHierarchyNode(rmf_node)
@@ -870,7 +884,13 @@ END
         h1.add_children([h2])
         model.rmf_hierarchy = h1
 
+        rmf_node = MockRMFNode("r4", 4)
+        h3 = src.io._RMFHierarchyNode(rmf_node)
+        model2.rmf_hierarchy = h3
+
+        model._provenance_map['testfname'] = model2.id
         ret = src.io._restore_chimera_obj('end restore session', session)
+        self.assertIs(model._provenance_map['testfname'], model2)
         self.assertIs(f1.chimera_obj, atom1)
         self.assertIs(h2.chimera_obj, atom2)
         self.assertEqual(ret, DEREGISTER)

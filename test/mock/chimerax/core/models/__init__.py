@@ -2,10 +2,14 @@ import weakref
 
 class Model(object):
     def __init__(self, name, session):
+        self.was_deleted = False
         self.name = name
         self.id_string = '1'
         self.session = session
         self._child_models = []
+
+    def delete(self):
+        self.was_deleted = True
 
     def add(self, models):
         for m in models:

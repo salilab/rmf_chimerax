@@ -21,7 +21,7 @@ class _Models:
         s = self._session()
         s.triggers.activate_trigger(ADD_MODELS, models)
     def list(self):
-        return self._models
+        return [m for m in self._models if not m.was_deleted]
 
 class Session:
     def __init__(self, app_name, *, debug=False, silent=False, minimal=False):

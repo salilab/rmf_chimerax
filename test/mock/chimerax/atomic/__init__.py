@@ -56,6 +56,7 @@ class _AtomList(list):
 class Structure(object):
     def __init__(self, session, *, name='structure', auto_style=True,
                  log_info=True):
+        self.was_deleted = False
         self._pbg = None
         self._drawings = []
         self.atoms = _AtomList()
