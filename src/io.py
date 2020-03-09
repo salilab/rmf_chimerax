@@ -146,6 +146,11 @@ class _RMFModel(Model):
     def restore_snapshot(session, data):
         s = _RMFModel(session, '')
         s.set_state_from_snapshot(session, data)
+        # Map session data back to ChimeraX objects only after all models have
+        # been loaded (and not later, since they refer to model IDs and atom
+        # indices which could be changed by the user after session-load)
+        session.triggers.add_handler('end restore session',
+                                     _restore_chimera_obj)
         return s
 
     def set_state_from_snapshot(self, session, data):
@@ -246,6 +251,10 @@ class _RMFHierarchyNode(State):
             child.parent = weakref.ref(self)
 
 def _save_snapshot_chimera_obj(obj):
+    """Snapshot a Chimera object. We can't store these directly in the session
+       (and rely on ChimeraX's own snapshot code) since this would result
+       in a circular reference (since they refer to the model, which also
+       holds the top-level rmf_hierarchy or rmf_features list)"""
     if obj is None:
         return None
     if isinstance(obj, Atoms):
@@ -274,6 +283,58 @@ def _save_snapshot_chimera_obj(obj):
                 'index': s._features.pseudobonds.index(obj)}
         return data
     raise TypeError("Don't know how to snapshot %s" % str(obj))
+
+
+def _load_snapshot_chimera_obj(session, data, model_by_id):
+    """Map data from _save_snapshot_chimera_obj back to a ChimeraX object"""
+    if data is None:
+        return None
+    elif data['type'] == 'Atoms':
+        if 'single_structure' in data:
+            m = model_by_id[data['single_structure']]
+            atoms = [m.atoms[x] for x in data['indices']]
+        else:
+            atoms = []
+            for s, ind in zip(data['structures'], data['indices']):
+                atoms.append(model_by_id[s].atoms[ind])
+        obj = Atoms(atoms)
+        return obj
+    elif data['type'] == 'Atom':
+        return model_by_id[data['structure']].atoms[data['index']]
+    elif data['type'] == 'Bond':
+        return model_by_id[data['structure']].bonds[data['index']]
+    elif data['type'] == 'Pseudobond':
+        s = model_by_id[data['structure']]
+        # todo: merge with code in io
+        if not s._features:
+            s._features = s.pseudobond_group("Features")
+        obj = s._features.pseudobonds[data['index']]
+        return obj
+    raise TypeError("Don't know how to load snapshot %s" % str(data))
+
+
+def _restore_nodes_chimera_obj(session, nodes, model_by_id):
+    """Replace chimera_obj session data with actual objects for all listed
+       nodes"""
+    for n in nodes:
+        n.chimera_obj = _load_snapshot_chimera_obj(session, n.chimera_obj,
+                                                   model_by_id)
+        _restore_nodes_chimera_obj(session, n.children, model_by_id)
+
+
+def _restore_chimera_obj(trigger_name, session):
+    """Replace chimera_obj session data with actual objects for all
+       RMF models"""
+    model_by_id = {m.id: m for m in session.models.list()}
+
+    for m in session.models.list():
+        if isinstance(m, _RMFModel):
+            _restore_nodes_chimera_obj(session, m.rmf_features, model_by_id)
+            _restore_nodes_chimera_obj(session, [m.rmf_hierarchy], model_by_id)
+    # Only need to call this once
+    from chimerax.core.triggerset import DEREGISTER
+    return DEREGISTER
+
 
 class _RMFFeature(State):
     """Represent a single feature in an RMF file."""

@@ -1,6 +1,7 @@
 HEAD
 ====
  - Handle nested RMF features.
+ - Add support for ChimeraX sessions.
 
 0.4 - 2020-03-05
 ================
