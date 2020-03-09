@@ -781,6 +781,45 @@ END
         obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
         self.assertIs(obj, pbond)
 
+    def test_restore_chimera_obj(self):
+        """Test _restore_chimera_obj function"""
+        from chimerax.core.triggerset import DEREGISTER
+        session = make_session()
+        model = src.io._RMFModel(session, "test model")
+        state = model._add_state("state 0")
+        session.models.add([model])
+
+        residue = state.new_residue('ALA', 'A', 1)
+        atom1 = state.new_atom('C', 'C')
+        residue.add_atom(atom1)
+        atom2 = state.new_atom('N', 'N')
+        residue.add_atom(atom2)
+
+        rmf_node = MockRMFNode("r1", 1)
+        f1 = src.io._RMFFeature(rmf_node)
+        f1.chimera_obj = {'type': 'Atom', 'structure': state.id,
+                          'index': 0}
+
+        rmf_node = MockRMFNode("r2", 2)
+        f2 = src.io._RMFFeature(rmf_node)
+        f1.add_child(f2)
+        model.rmf_features = [f1]
+
+        rmf_node = MockRMFNode("r3", 3)
+        h1 = src.io._RMFHierarchyNode(rmf_node)
+
+        rmf_node = MockRMFNode("r4", 4)
+        h2 = src.io._RMFHierarchyNode(rmf_node)
+        h2.chimera_obj = {'type': 'Atom', 'structure': state.id,
+                          'index': 1}
+        h1.add_children([h2])
+        model.rmf_hierarchy = h1
+
+        ret = src.io._restore_chimera_obj('end restore session', session)
+        self.assertIs(f1.chimera_obj, atom1)
+        self.assertIs(h2.chimera_obj, atom2)
+        self.assertEqual(ret, DEREGISTER)
+
 
 if __name__ == '__main__':
     unittest.main()

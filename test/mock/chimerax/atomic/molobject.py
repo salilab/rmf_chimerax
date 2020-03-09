@@ -1,0 +1,2 @@
+class ChangeTracker:
+    pass

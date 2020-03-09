@@ -1,25 +1,23 @@
 import weakref
 from chimerax.core.models import ADD_MODELS, REMOVE_MODELS
-
-class _TriggerSet:
-    def __init__(self):
-        self._tm = {}
-
-    def add_handler(self, name, func):
-        if name not in self._tm:
-            self._tm[name] = []
-        self._tm[name].append(func)
-
-    def activate_trigger(self, name, data, absent_okay=False):
-        for func in self._tm.get(name, []):
-            func(name, data)
+from . import triggerset
 
 class _Models:
     def __init__(self, session):
         self._models = []
+        self._next_id = 1
         self._session = weakref.ref(session)
     def add(self, models):
-        self._models.extend(models)
+        def models_and_children(ms):
+            for m in ms:
+                yield m
+                if hasattr(m, '_child_models'):
+                    for child in models_and_children(m._child_models):
+                        yield child
+        for m in models_and_children(models):
+            m.id = (self._next_id, 1)
+            self._models.append(m)
+            self._next_id += 1
         s = self._session()
         s.triggers.activate_trigger(ADD_MODELS, models)
     def list(self):
@@ -27,5 +25,5 @@ class _Models:
 
 class Session:
     def __init__(self, app_name, *, debug=False, silent=False, minimal=False):
-        self.triggers = _TriggerSet()
+        self.triggers = triggerset.TriggerSet()
         self.models = _Models(self)
