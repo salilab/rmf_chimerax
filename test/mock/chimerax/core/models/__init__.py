@@ -15,5 +15,17 @@ class Model(object):
     def child_models(self):
         return self._child_models
 
+    def take_snapshot(self, session, flags):
+        return {'mock snapshot': None}
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = Model(session)
+        s.set_state_from_snapshot(session, data)
+        return s
+
+    def set_state_from_snapshot(self, session, data):
+        pass
+
 ADD_MODELS = "add models"
 REMOVE_MODELS = "remove models"

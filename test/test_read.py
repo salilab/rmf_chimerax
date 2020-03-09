@@ -670,6 +670,19 @@ END
         news = src.io._RMFDrawing.restore_snapshot(session, d)
         self.assertIsInstance(news, src.io._RMFDrawing)
 
+    def test_rmf_model_snapshot(self):
+        """Test snapshot of RMFModel class"""
+        session = make_session()
+        s = src.io._RMFModel(session, 'testfile')
+        s.rmf_filename = 'foo'
+        s.rmf_features = 'bar'
+        s.rmf_provenance = 'baz'
+        s.rmf_hierarchy = []
+        d = s.take_snapshot(session, None)
+        news = src.io._RMFModel.restore_snapshot(session, d)
+        self.assertIsInstance(news, src.io._RMFModel)
+        self.assertEqual(news.rmf_filename, 'foo')
+
 
 if __name__ == '__main__':
     unittest.main()
