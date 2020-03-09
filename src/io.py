@@ -105,6 +105,7 @@ class _RMFDrawing(Structure):
 
     def take_snapshot(self, session, flags):
         data = {'version': 1,
+                'drawing': self._drawing,
                 'structure state':
                     Structure.take_snapshot(self, session, flags)}
         return data
@@ -118,6 +119,8 @@ class _RMFDrawing(Structure):
     def set_state_from_snapshot(self, session, data):
         Structure.set_state_from_snapshot(self, session,
                                           data['structure state'])
+        self._drawing = data['drawing']
+        self.add_drawing(self._drawing)
 
 
 class _RMFModel(Model):
