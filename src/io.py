@@ -132,6 +132,8 @@ class _RMFModel(Model):
         self._provenance = None
         self._provenance_map = {}
         self._rmf_resolutions = set()
+        # We always want to show nodes with no explicit resolution
+        self._selected_rmf_resolutions = set((None,))
         self._rmf_chains = []
         super().__init__(name, session)
 
@@ -146,6 +148,8 @@ class _RMFModel(Model):
                 'rmf_provenance': self.rmf_provenance,
                 'rmf_hierarchy': self.rmf_hierarchy,
                 'provenance_map': pm,
+                'rmf_resolutions': self._rmf_resolutions,
+                'selected_rmf_resolutions': self._selected_rmf_resolutions,
                 'rmf_chains': self._rmf_chains}
         return data
 
@@ -167,10 +171,13 @@ class _RMFModel(Model):
         self.rmf_provenance = data['rmf_provenance']
         self.rmf_hierarchy = data['rmf_hierarchy']
         self._provenance_map = data['provenance_map']
+        self._rmf_resolutions = data['rmf_resolutions']
+        self._selected_rmf_resolutions = data['selected_rmf_resolutions']
         self._rmf_chains = data['rmf_chains']
 
     def _add_rmf_resolution(self, res):
         self._rmf_resolutions.add(res)
+        self._selected_rmf_resolutions.add(res)
 
     def get_drawing(self):
         if self._drawing is None:
@@ -228,12 +235,15 @@ class _RMFHierarchyNode(State):
     """Represent a single RMF node.
        Note that features (restraints) are stored outside of this hierarchy,
        as _RMFFeature objects, as are provenance nodes."""
-    __slots__ = ['name', 'rmf_index', 'children', 'parent', 'chimera_obj']
+    __slots__ = ['name', 'rmf_index', 'children', 'parent', 'chimera_obj',
+                 'resolution', '_filtered_children']
 
     def __init__(self, rmf_node):
         self.name = rmf_node.get_name()
         self.rmf_index = rmf_node.get_index()
         self.children = []
+        self.resolution = None
+        self._filtered_children = self.children
         self.chimera_obj = None
         self.parent = None
 
@@ -241,6 +251,7 @@ class _RMFHierarchyNode(State):
         data = {'version': 1,
                 'name': self.name,
                 'rmf_index': self.rmf_index,
+                'resolution': self.resolution,
                 'chimera_obj': _save_snapshot_chimera_obj(self.chimera_obj),
                 'children': self.children}
         return data
@@ -248,6 +259,7 @@ class _RMFHierarchyNode(State):
     @staticmethod
     def restore_snapshot(session, data):
         s = _RMFHierarchyNode(_MockRMFNode(data))
+        s.resolution = data['resolution']
         s.chimera_obj = data['chimera_obj']
         s.add_children(data['children'])
         return s
@@ -985,6 +997,7 @@ class _RMFLoader(object):
         rmf_nodes = [_RMFHierarchyNode(node)]
         # Get hierarchy-related info from this node (e.g. chain, state)
         rhi = parent_rhi.handle_node(node, rmf_nodes[0], self)
+        rmf_nodes[0].resolution = rhi._resolution
         if self.particlef.get_is(node):
             # todo: special handling for Gaussians; right now we assume that
             # every Gaussian is also a Particle, as 1) this is the case for

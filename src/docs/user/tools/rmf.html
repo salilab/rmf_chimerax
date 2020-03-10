@@ -27,11 +27,40 @@ corresponding pseudobonds in the structure.
 
 <p>
 The <b>Hierarchy</b> frame shows the hierarchy of nodes in the selected
-RMF file.
+RMF file. If there is representation at multiple resolutions, the resolutions
+are shown along the top of this frame as checkboxes. Only nodes corresponding
+to the selected resolution(s) are shown.</p>
+
+<p>
 One or more nodes can be selected and the corresponding structure or bonds
 selected, hidden, shown or viewed (brought into the center of the screen)
-using the buttons on the right side.
-</p>
+using the buttons on the right side. The "Only" button will show only the
+selected nodes in the model and hide everything else (if no node is selected,
+this will operate on the top-level node).</p>
+
+<p>
+<b>Note:</b> For more fine grained control, note that residues are given
+the following <a href="../atomspec.html#attributes">attributes</a>
+which can be used in
+<a href="../commands/select.html">ChimeraX selections</a>:</p>
+
+<ul>
+  <li><b>rmf_name</b>: The name of the containing molecule</li>
+  <li><b>copy</b>: The (integer) copy number, usually 0 or unspecified
+  for the primary copy of a molecule</li>
+  <li><b>resolution</b>: The IMP/PMI resolution of the representation,
+  usually 0 for atomic, 1 for a single bead per residue, 10 or more for
+  multiple residues per bead</li>
+</ul>
+
+<p>For example, all of the non-primary copies could be selected with</p>
+
+<p><b>select ::copy&gt;0</b></p>
+
+<p>or only the bead-per-residue representation
+of the primary copy of Tub0 could be selected with</p>
+
+<p><b>select ::rmf_name="Tub0" &amp; ::copy=0 &amp; ::resolution=1</b></p>
 
 <p>
 The <b>Provenance</b> frame shows information extracted from the RMF file

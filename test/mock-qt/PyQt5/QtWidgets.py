@@ -152,3 +152,10 @@ class QSplitter:
         self._widgets.append(w)
     def widget(self, i):
         return self._widgets[i]
+
+class QCheckBox:
+    def __init__(self, text):
+        self._chk = True
+        self.clicked = _Signal()
+    def setChecked(self, chk):
+        self._chk = chk

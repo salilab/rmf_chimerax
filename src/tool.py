@@ -10,9 +10,32 @@ from PyQt5 import QtWidgets
 
 class _RMFHierarchyModel(QAbstractItemModel):
     """Map an RMF hierarchy into a QTreeView"""
-    def __init__(self, rmf_hierarchy):
+    def __init__(self, rmf_hierarchy, resolutions):
         super().__init__()
         self.rmf_hierarchy = rmf_hierarchy
+        self._resolutions = resolutions
+        if self.rmf_hierarchy:
+            self._filter_resolution(self.rmf_hierarchy)
+
+    def _filter_resolution(self, node):
+        node._filtered_children = [c for c in node.children
+                                   if c.resolution in self._resolutions]
+        # children not _filtered_children so parent-child relationships
+        # are correct at all levels
+        for c in node.children:
+            self._filter_resolution(c)
+
+    def set_resolution_filter(self, resolution, shown):
+        """Filter nodes; show those at given `resolution` only iff
+           `shown` is True"""
+        self.beginResetModel()
+        if shown:
+            self._resolutions.add(resolution)
+        else:
+            self._resolutions.discard(resolution)
+        if self.rmf_hierarchy:
+            self._filter_resolution(self.rmf_hierarchy)
+        self.endResetModel()  # force QTreeView to update
 
     def index_for_node(self, rmf_node):
         """Return the index for a given node in the hierarchy"""
@@ -21,7 +44,11 @@ class _RMFHierarchyModel(QAbstractItemModel):
             return self.index(0, 0, QModelIndex())
         else:
             parent = parent()
-            row = parent.children.index(rmf_node)
+            try:
+                row = parent._filtered_children.index(rmf_node)
+            except ValueError:
+                # The node is not in the (filtered) hierarchy
+                return QModelIndex()
             return self.createIndex(row, 0, rmf_node)
 
     def columnCount(self, parent):
@@ -36,7 +63,7 @@ class _RMFHierarchyModel(QAbstractItemModel):
             return 0 if self.rmf_hierarchy is None else 1
         else:
             parent_item = parent.internalPointer()
-            return len(parent_item.children)
+            return len(parent_item._filtered_children)
 
     def index(self, row, column, parent):
         if not self.hasIndex(row, column, parent):
@@ -50,7 +77,8 @@ class _RMFHierarchyModel(QAbstractItemModel):
                 return self.createIndex(row, column, self.rmf_hierarchy)
         else:
             parent_item = parent.internalPointer()
-            return self.createIndex(row, column, parent_item.children[row])
+            return self.createIndex(row, column,
+                                    parent_item._filtered_children[row])
 
     def parent(self, index):
         """Get the parent of the given index (as another index)"""
@@ -70,7 +98,7 @@ class _RMFHierarchyModel(QAbstractItemModel):
             else:
                 # otherwise, look up the parent in the grandparent's list of
                 # children to determine its row
-                row = parent_item.parent().children.index(parent_item)
+                row = parent_item.parent()._filtered_children.index(parent_item)
             return self.createIndex(row, 0, parent_item)
 
     def data(self, index, role):
@@ -279,16 +307,32 @@ class RMFViewer(ToolInstance):
 
         layout.setContentsMargins(0,0,0,0)
         layout.setSpacing(0)
-        label = QtWidgets.QLabel("Hierarchy")
-        layout.addWidget(label)
+
+        label_and_res = QtWidgets.QHBoxLayout()
+        label_and_res.setContentsMargins(0,0,0,0)
+        label_and_res.setSpacing(0)
+
+        label = QtWidgets.QLabel("Hierarchy @")
+        label_and_res.addWidget(label)
 
         tree = QtWidgets.QTreeView()
+
+        for res in sorted(m._rmf_resolutions):
+            cb = QtWidgets.QCheckBox("%.1f" % res)
+            cb.setChecked(res in m._selected_rmf_resolutions)
+            cb.clicked.connect(lambda chk, tree=tree, resolution=res:
+                self._resolution_button_clicked(chk, tree, resolution))
+            label_and_res.addWidget(cb)
+
+        layout.addLayout(label_and_res)
+
         tree.setAnimated(False)
         tree.setIndentation(20)
         tree.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
         tree.setSortingEnabled(False)
         tree.setHeaderHidden(True)
-        tree.setModel(_RMFHierarchyModel(m.rmf_hierarchy))
+        tree.setModel(_RMFHierarchyModel(m.rmf_hierarchy,
+            m._selected_rmf_resolutions))
 
         tree_and_buttons = QtWidgets.QHBoxLayout()
         tree_and_buttons.setContentsMargins(0,0,0,0)
@@ -311,6 +355,10 @@ class RMFViewer(ToolInstance):
         show_button.clicked.connect(lambda chk, tree=tree:
                                     self._show_button_clicked(tree))
         buttons.addWidget(show_button)
+        show_only_button = QtWidgets.QPushButton("Only")
+        show_only_button.clicked.connect(lambda chk, tree=tree:
+                                        self._show_only_button_clicked(tree))
+        buttons.addWidget(show_only_button)
         view_button = QtWidgets.QPushButton("View")
         view_button.clicked.connect(lambda chk, tree=tree:
                                     self._view_button_clicked(tree))
@@ -362,7 +410,7 @@ class RMFViewer(ToolInstance):
             o = node.chimera_obj
             if o:
                 objs.append(o)
-            for child in node.children:
+            for child in node._filtered_children:
                 _get_node_objects(child, objs)
         objs = []
         for ind in tree.selectedIndexes():
@@ -416,6 +464,27 @@ class RMFViewer(ToolInstance):
         from chimerax.std_commands.view import view
         view(self.session, self._get_selected_chimera_objects(tree))
 
+    def _show_only_button_clicked(self, tree):
+        def show_only(node, show_roots, under_root=False, show=True):
+            if not under_root and show and node in show_roots:
+                under_root = True
+            o = node.chimera_obj
+            if o:
+                o.display = under_root and show
+            if under_root:
+                to_show = frozenset(node._filtered_children)
+                for child in node.children:
+                    show_only(child, show_roots, under_root, child in to_show)
+            else:
+                for child in node.children:
+                    show_only(child, show_roots, under_root)
+        show_roots = frozenset(ind.internalPointer()
+                               for ind in tree.selectedIndexes())
+        top = tree.model().rmf_hierarchy
+        if not show_roots:
+            show_roots = frozenset([top])
+        show_only(top, show_roots)
+
     def _select_feature(self, tree):
         from chimerax.std_commands.select import select
         select(self.session, self._get_selected_features(tree))
@@ -428,7 +497,8 @@ class RMFViewer(ToolInstance):
             obj = f.internalPointer()
             if obj.hierarchy_node:
                 ind = hierarchy_model.index_for_node(obj.hierarchy_node)
-                hierarchy_selmodel.setCurrentIndex(ind, mode)
+                if ind.isValid():
+                    hierarchy_selmodel.setCurrentIndex(ind, mode)
                 mode = QItemSelectionModel.Select
 
     def _load_button_clicked(self, tree, m):
@@ -436,3 +506,16 @@ class RMFViewer(ToolInstance):
         for f in tree.selectedIndexes():
             obj = f.internalPointer()
             obj.load(self.session, m)
+
+    def _resolution_button_clicked(self, checked, tree, resolution):
+        model = tree.model()
+        selmodel = tree.selectionModel()
+        selected = [ind.internalPointer()
+                    for ind in selmodel.selectedIndexes()]
+        model.set_resolution_filter(resolution, checked)
+        mode = QItemSelectionModel.ClearAndSelect
+        for s in selected:
+            ind = model.index_for_node(s)
+            if ind.isValid():
+                selmodel.setCurrentIndex(ind, mode)
+                mode = QItemSelectionModel.Select
