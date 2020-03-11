@@ -413,8 +413,12 @@ class RMFViewer(ToolInstance):
             for child in node._filtered_children:
                 _get_node_objects(child, objs)
         objs = []
-        for ind in tree.selectedIndexes():
+        inds = tree.selectedIndexes()
+        for ind in inds:
             _get_node_objects(ind.internalPointer(), objs)
+        # If empty selection, use the root instead
+        if not inds:
+            _get_node_objects(tree.model().rmf_hierarchy, objs)
         objects = Objects()
         objects.add_atoms(Atoms(x for x in objs if isinstance(x, Atom)))
         objects.add_bonds(Bonds(x for x in objs if isinstance(x, Bond)))
