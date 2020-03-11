@@ -135,6 +135,8 @@ class _RMFTrajectoryLoader:
         if last is None or last >= numframes:
             last = numframes - 1
         frames_to_read = range(first, last + 1, step)
+        if len(frames_to_read) == 0:
+            return 0
 
         r.set_current_frame(RMF.FrameID(frames_to_read[0]))
         top_node = _RMFNode(None, None)
@@ -230,9 +232,12 @@ def readtraj(session, model, first=0, last=None, step=1):
         return
     t = _RMFTrajectoryLoader()
     numframes = t.load(model, first, last, step)
-    session.logger.info(
-        "Read %d frames into coordset; use 'coordset slider #%s' to view"
-        % (numframes, model.id_string))
+    if numframes:
+        session.logger.info(
+            "Read %d frames into coordset; use 'coordset slider #%s' to view"
+            % (numframes, model.id_string))
+    else:
+        session.logger.warning("No frames were read")
 
 
 readtraj_desc = CmdDesc(required=[("model", ModelArg)],
