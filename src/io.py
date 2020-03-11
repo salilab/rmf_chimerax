@@ -703,6 +703,7 @@ class _RMFHierarchyInfo(object):
         self._refframe = self._state = self._chain = self._copy = None
         self._resolution = self._resnum = self._restype = None
         self._residue = None
+        self._resnum_for_chain = {}
 
     def _set_reference_frame(self, rf):
         """Set the current reference frame from an RMF ReferenceFrame node"""
@@ -754,7 +755,7 @@ class _RMFHierarchyInfo(object):
             resinds = f.get_residue_indexes()
             rhi._residue = None  # clear residue cache
             rhi._resnum = resinds[len(resinds) // 2]
-            rhi._restype = 'ALA'  # Guess type
+            rhi._restype = 'UNK'  # Guess type
         if loader.residuef.get_is(node):
             rhi = copy_if_needed(rhi)
             r = loader.residuef.get(node)
@@ -781,7 +782,9 @@ class _RMFHierarchyInfo(object):
                 chain_id = self._chain[1].get_chain_id()
             if self._resnum is None:
                 # If RMF provides no residue info, make it up
-                self._residue = state.new_residue('ALA', chain_id, 1)
+                resnum = self._resnum_for_chain.setdefault(chain_id, 0) + 1
+                self._residue = state.new_residue('UNK', chain_id, resnum)
+                self._resnum_for_chain[chain_id] = resnum
             else:
                 self._residue = state.new_residue(self._restype, chain_id,
                                                   self._resnum)
