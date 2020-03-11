@@ -889,7 +889,7 @@ END
         model2.rmf_hierarchy = h3
 
         model._provenance_map['testfname'] = model2.id
-        ret = src.io._restore_chimera_obj('end restore session', session)
+        ret = src.io._restore_chimera_obj(session, model)
         self.assertIs(model._provenance_map['testfname'], model2)
         self.assertIs(f1.chimera_obj, atom1)
         self.assertIs(h2.chimera_obj, atom2)

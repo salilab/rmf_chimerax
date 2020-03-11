@@ -161,7 +161,8 @@ class _RMFModel(Model):
         # been loaded (and not later, since they refer to model IDs and atom
         # indices which could be changed by the user after session-load)
         session.triggers.add_handler('end restore session',
-                                     _restore_chimera_obj)
+            lambda trigger, session, model=s:
+            _restore_chimera_obj(session, model))
         return s
 
     def set_state_from_snapshot(self, session, data):
@@ -342,18 +343,17 @@ def _restore_nodes_chimera_obj(session, nodes, model_by_id):
         _restore_nodes_chimera_obj(session, n.children, model_by_id)
 
 
-def _restore_chimera_obj(trigger_name, session):
-    """Replace chimera_obj session data with actual objects for all
-       RMF models"""
+def _restore_chimera_obj(session, model):
+    """Replace chimera_obj session data with actual objects for the given
+       RMF model"""
     model_by_id = {m.id: m for m in session.models.list()}
 
-    for m in session.models.list():
-        if isinstance(m, _RMFModel):
-            m._provenance_map = {filename: model_by_id[mid]
-                for filename, mid in m._provenance_map.items()}
-            _restore_nodes_chimera_obj(session, m.rmf_features, model_by_id)
-            _restore_nodes_chimera_obj(session, [m.rmf_hierarchy], model_by_id)
-    # Only need to call this once
+    model._provenance_map = {filename: model_by_id[mid]
+        for filename, mid in model._provenance_map.items()}
+    _restore_nodes_chimera_obj(session, model.rmf_features, model_by_id)
+    _restore_nodes_chimera_obj(session, [model.rmf_hierarchy], model_by_id)
+
+    # Only need to call this once per model
     from chimerax.core.triggerset import DEREGISTER
     return DEREGISTER
 
