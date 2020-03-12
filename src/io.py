@@ -481,12 +481,14 @@ class _RMFStructureProvenance(_RMFProvenance):
             def get_chain(self): return self.data['chain']
             def get_residue_offset(self): return self.data['residue_offset']
             def get_filename(self): return self.data['filename']
-            def get_allchains(self): return self.data['allchains']
         s = _RMFStructureProvenance(_MockRMFNode(data),
                                     MockStructureProvenance(data), {})
         s.set_state_from_snapshot(data)
-        s.allchains = data['allchains']
         return s
+
+    def set_state_from_snapshot(self, data):
+        _RMFProvenance.set_state_from_snapshot(self, data)
+        self.allchains = data['allchains']
 
     def load(self, session, model):
         # Note that we load all chains referenced by the RMF file, as this is
