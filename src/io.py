@@ -84,11 +84,16 @@ class _RMFState(AtomicStructure):
             set_custom_attrs(self, data)
 
     def _add_pseudobond(self, atoms):
-        if self._features is None:
-            self._features = self.pseudobond_group("Features")
-        b = self._features.new_pseudobond(*atoms)
+        f = self._get_features()
+        b = f.new_pseudobond(*atoms)
         b.halfbond = False
         return b
+
+    def _get_features(self):
+        """Get the pseudobond group used to display RMF features"""
+        if self._features is None:
+            self._features = self.pseudobond_group("Features")
+        return self._features
 
     def apply_auto_styling(self, *args, **kwargs):
         # Only apply auto styling for truly atomic structures
@@ -325,11 +330,8 @@ def _load_snapshot_chimera_obj(session, data, model_by_id):
     elif data['type'] == 'Bond':
         return model_by_id[data['structure']].bonds[data['index']]
     elif data['type'] == 'Pseudobond':
-        s = model_by_id[data['structure']]
-        # todo: merge with code in io
-        if not s._features:
-            s._features = s.pseudobond_group("Features")
-        obj = s._features.pseudobonds[data['index']]
+        f = model_by_id[data['structure']]._get_features()
+        obj = f.pseudobonds[data['index']]
         return obj
     raise TypeError("Don't know how to load snapshot %s" % str(data))
 
