@@ -474,6 +474,47 @@ class Tests(unittest.TestCase):
         f = src.io._atomic_model_reader("test.dcd")
         self.assertIsNone(f)
 
+    def test_prune_chains(self):
+        """Test _prune_chains function"""
+        class MockAtom:
+            def __init__(self, cid, structure):
+                self.structure, self.cid = structure, cid
+                self.deleted = False
+            def delete(self):
+                self.deleted = True
+        class AtomList:
+            def __init__(self, atom):
+                self.atoms = [atom]
+            def delete(self):
+                for a in self.atoms:
+                    a.delete()
+        class MockAtoms:
+            def __init__(self):
+                self._atoms = []
+            def add(self, atoms):
+                self._atoms.extend(atoms)
+            @property
+            def by_chain(self):
+                # simple implementation, assumes only one atom in each chain
+                return [(atom.structure, atom.cid, AtomList(atom))
+                        for atom in self._atoms]
+        class MockModel:
+            def __init__(self):
+                self.atoms = MockAtoms()
+        m = MockModel()
+        a1 = MockAtom('A', m)
+        a2 = MockAtom('B', m)
+        a3 = MockAtom('C', m)
+        atoms = (a1, a2, a3)
+        m.atoms.add(atoms)
+        self.assertEqual([a.deleted for a in atoms], [False, False, False])
+        # All chains kept
+        src.io._prune_chains(m, frozenset('ABC'))
+        self.assertEqual([a.deleted for a in atoms], [False, False, False])
+        # Only some chains kept
+        src.io._prune_chains(m, frozenset('CDE'))
+        self.assertEqual([a.deleted for a in atoms], [True, True, False])
+
     def test_rmf_structure_provenance(self):
         """Test _RMFStructureProvenance class"""
         class MockStructureProvenance:
