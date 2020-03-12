@@ -130,6 +130,8 @@ class Tests(unittest.TestCase):
         f2.add_child(child1)
         child2 = make_feature("child2", 4)
         f2.add_child(child2)
+        grandchild = make_feature("child3", 5)
+        child2.add_child(grandchild)
         features = [f1, f2]
 
         m = src.tool._RMFFeaturesModel(features)
@@ -152,6 +154,9 @@ class Tests(unittest.TestCase):
         self.assertFalse(m.parent(top).isValid())
         self.assertFalse(m.parent(f2_ind).isValid())
         self.assertEqual(m.parent(child1_ind).internalPointer().name, 'f2')
+        grandchild_ind = m.createIndex(0,0,grandchild)
+        self.assertEqual(m.parent(grandchild_ind).internalPointer().name,
+                         'child2')
         self.assertEqual(m.data(f2_ind, Qt.DisplayRole), "f2")
         self.assertIsNone(m.data(f2_ind, Qt.SizeHintRole))
 
