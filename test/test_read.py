@@ -344,14 +344,17 @@ class Tests(unittest.TestCase):
             p.set_name('testsoftware')
             p.set_version('1.2.3')
 
+            n = rn.add_child("misc", RMF.PROVENANCE)
+
         with utils.temporary_file(suffix='.rmf') as fname:
             make_rmf_file(fname)
             mock_session = make_session()
             structures, status = src.io.open_rmf(mock_session, fname)
-            p1, p2 = structures[0].rmf_provenance
+            p1, p2, p3 = structures[0].rmf_provenance
             self.assertEqual(p1.name, 'Chain A from xyz')
             self.assertEqual(p2.name,
                 'Using software testsoftware version 1.2.3 from testurl')
+            self.assertEqual(p3.name, 'misc')
             self.assertIsNone(p2.previous)
             prev = p1.previous
             self.assertEqual(prev.name,
@@ -359,6 +362,7 @@ class Tests(unittest.TestCase):
             prev = prev.previous
             self.assertIn('Using script', prev.name)
             self.assertIsNone(prev.previous)
+            self.assertIsInstance(p3, src.io._RMFProvenance)
 
     def test_em_provenance(self):
         """Test open_rmf handling of RMF EM restraint provenance"""
