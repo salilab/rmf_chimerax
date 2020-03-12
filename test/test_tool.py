@@ -101,6 +101,27 @@ class Tests(unittest.TestCase):
         self.assertEqual(m.data(childind, Qt.DisplayRole), "child1")
         self.assertIsNone(m.data(childind, Qt.SizeHintRole))
 
+    def test_rmf_hierarchy_resolution(self):
+        """Test RMFHierarchyModel filtering by resolution"""
+        root = make_node("root", 0)
+        child1 = make_node("child1", 1, resolution=1)
+        child2 = make_node("child2", 2, resolution=10)
+        child3 = make_node("child3", 3)
+        root.add_children((child1, child2, child3))
+        resolutions = set((None, 1))
+
+        m = src.tool._RMFHierarchyModel(root, resolutions)
+        # Only child1 and child3 (resolution=1,None) should be selected
+        self.assertEqual(root._filtered_children, [child1, child3])
+        self.assertIs(m.index_for_node(child3).internalPointer(), child3)
+        self.assertFalse(m.index_for_node(child2).isValid())
+        # Add resolution 10, now all children selected
+        m.set_resolution_filter(10, shown=True)
+        self.assertEqual(root._filtered_children, [child1, child2, child3])
+        # Remove resolution 1
+        m.set_resolution_filter(1, shown=False)
+        self.assertEqual(root._filtered_children, [child2, child3])
+
     def test_rmf_features_model(self):
         """Test RMFFeaturesModel class"""
         f1 = make_feature("f1", 1)

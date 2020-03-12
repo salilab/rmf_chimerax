@@ -36,3 +36,9 @@ class QAbstractItemModel:
         ncol = self.columnCount(parent)
         nrow = self.rowCount(parent)
         return column < ncol and row < nrow
+
+    def beginResetModel(self):
+        pass
+
+    def endResetModel(self):
+        pass
