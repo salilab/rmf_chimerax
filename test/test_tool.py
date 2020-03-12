@@ -8,7 +8,7 @@ TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
 from PyQt5.QtCore import QModelIndex, Qt
-from PyQt5.QtWidgets import QTreeView, QPushButton
+from PyQt5.QtWidgets import QTreeView, QPushButton, QCheckBox
 
 import src
 import src.tool
@@ -274,6 +274,48 @@ class Tests(unittest.TestCase):
         r._view_button_clicked(tree1)
         # Call indirectly via clicking each button
         for b in buttons:
+            b.click()
+
+    @unittest.skipIf(utils.no_gui, "Cannot test without GUI")
+    def test_resolution_clicked(self):
+        """Test clicking on resolution checkboxes"""
+        def get_first_tree(stack):
+            for w in stack.widget(1).children():
+                if isinstance(w, QTreeView):
+                    self.assertIsInstance(w.model(),
+                            src.tool._RMFHierarchyModel)
+                    return w
+            raise ValueError("could not find tree")
+        def get_buttons(stack):
+            for w in stack.widget(1).children():
+                if isinstance(w, QCheckBox):
+                    yield w
+        class TestChimeraObj:
+            pass
+        root = make_node("root", 0)
+        child1 = make_node("child1", 1, resolution=1)
+        child2 = make_node("child2", 2, resolution=10)
+        root.add_children((child1, child2))
+
+        mock_session = make_session()
+        m1 = Model(mock_session, 'test')
+        m1.rmf_hierarchy = root
+
+        m1.rmf_features = [make_node("f1", 4), make_node("f2", 5)]
+        m1.rmf_provenance = []
+        m1._rmf_resolutions = set((1, 10))
+        m1._selected_rmf_resolutions = set((1, None))
+        mock_session.models.add((m1,))
+        r = src.tool.RMFViewer(mock_session, "RMF Viewer")
+        tree1 = get_first_tree(r.model_stack.widget(0))
+        res1b, res10b = list(get_buttons(r.model_stack.widget(0)))
+        # Call "clicked" methods directly
+        # Show/hide resolution 10
+        r._resolution_button_clicked(True, tree1, 10)
+        r._resolution_button_clicked(False, tree1, 10)
+        tree1.selectAll()
+        # Call indirectly via clicking each button
+        for b in res1b, res10b:
             b.click()
 
     @unittest.skipIf(utils.no_gui, "Cannot test without GUI")

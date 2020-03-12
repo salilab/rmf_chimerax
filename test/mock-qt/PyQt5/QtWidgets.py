@@ -90,18 +90,21 @@ class QStackedWidget:
         return self._widgets[i]
 
 class _SelectionModel:
-    def __init__(self):
+    def __init__(self, selinds):
+        self._selinds = selinds
         self.selectionChanged = _Signal()
     def setCurrentIndex(self, ind, mode):
         pass
+    def selectedIndexes(self):
+        return self._selinds
 
 class QTreeView:
     SingleSelection = 0
     ExtendedSelection = 1
 
     def __init__(self):
-        self._selection_model = _SelectionModel()
         self._selinds = []
+        self._selection_model = _SelectionModel(self._selinds)
         self._model = None
 
     def selectionModel(self):
@@ -137,13 +140,14 @@ class QTreeView:
                 ind = self._model.index(row, 0, parent)
                 self._selinds.append(ind)
                 add_selinds(ind)
-        self._selinds = []
+        # clear list without changing the object identity
+        self._selinds[:] = []
         if self._model:
             add_selinds(QModelIndex())
         self._selection_model.selectionChanged._call(self._selinds, [])
 
     def selectedIndexes(self):
-        return self._selinds
+        return self._selection_model.selectedIndexes()
 
 class QSplitter:
     def __init__(self, orientation, parent=None):
@@ -159,3 +163,6 @@ class QCheckBox:
         self.clicked = _Signal()
     def setChecked(self, chk):
         self._chk = chk
+    def click(self):
+        self._chk = not self._chk
+        self.clicked._call(self._chk)
