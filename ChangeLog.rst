@@ -1,3 +1,6 @@
+HEAD
+====
+
 0.6 - 2020-03-19
 ================
  - Allow filtering the hierarchy by resolution in the RMF Viewer tool.
