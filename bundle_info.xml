@@ -35,7 +35,6 @@ support for newer RMF features, such as provenance.
   <Dependencies>
     <Dependency name="ChimeraX-Atomic" version=">=1.0"/>
     <Dependency name="ChimeraX-Core" version=">=0.91"/>
-    <Dependency name="ChimeraX-Map" version=">=1.0"/>
     <Dependency name="ChimeraX-Std-Commands" version=">=1.0"/>
     <Dependency name="ChimeraX-UI" version=">=1.0"/>
   </Dependencies>
