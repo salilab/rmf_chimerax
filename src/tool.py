@@ -507,8 +507,9 @@ class RMFViewer(ToolInstance):
 
     def _load_button_clicked(self, tree, m):
         m._update_provenance_map()
-        for f in tree.selectedIndexes():
-            obj = f.internalPointer()
+        objs = [f.internalPointer() for f in tree.selectedIndexes()]
+        # If empty selection, load everything
+        for obj in objs or tree.model().rmf_provenance:
             obj.load(self.session, m)
 
     def _resolution_button_clicked(self, checked, tree, resolution):
