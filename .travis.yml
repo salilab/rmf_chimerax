@@ -15,7 +15,7 @@ matrix:
 cache:
   pip: true
 install:
-  - pip3 install coverage scipy
+  - pip3 install coverage scipy nose
 script:
   - python3 -m nose --with-coverage --cover-branches test
 after_success:
