@@ -6,9 +6,9 @@ will be displayed without the ChimeraX- prefix.
 -->
 
 <BundleInfo name="ChimeraX-RMF"
-	    version="0.7" package="chimerax.rmf"
+            version="0.7" package="chimerax.rmf"
             minSessionVersion="1" maxSessionVersion="1"
-	    purePython="false">
+            purePython="false">
 
   <!-- Additional information about bundle source -->
   <Author>Ben Webb, Sali Lab, University of California San Francisco</Author>
@@ -58,10 +58,15 @@ support for newer RMF features, such as provenance.
     <!-- Development Status should be compatible with bundle version number -->
     <PythonClassifier>Development Status :: 3 - Alpha</PythonClassifier>
     <PythonClassifier>License :: MIT</PythonClassifier>
-    <!-- ChimeraX classifiers describe supplied functionality -->
-    <!-- Register XYZ format as one of the supported input file formats -->
-    <ChimeraXClassifier>ChimeraX :: DataFormat :: RMF :: :: Molecular structure :: .rmf,.rmf3 :: :: https://integrativemodeling.org/rmf/ :: :: :: RMF format :: binary</ChimeraXClassifier>
-    <ChimeraXClassifier>ChimeraX :: Open :: RMF :: RMF ::</ChimeraXClassifier>
+
+    <Providers manager="data formats">
+      <Provider name="RMF" suffixes=".rmf,.rmf3" nicknames="rmf"
+                reference_url="https://integrativemodeling.org/rmf/"
+                category="Molecular structure" synopsis="RMF" />
+    </Providers>
+    <Providers manager="open command">
+      <Provider name="RMF" want_path="true" />
+    </Providers>
     <ChimeraXClassifier>ChimeraX :: Command :: rmf hierarchy :: General ::
       Given a model read from an RMF file, print its hierarchy</ChimeraXClassifier>
     <ChimeraXClassifier>ChimeraX :: Command :: rmf chains :: General ::
@@ -70,6 +75,10 @@ support for newer RMF features, such as provenance.
       Read trajectory frames</ChimeraXClassifier>
     <ChimeraXClassifier>ChimeraX :: Tool :: RMF Viewer ::
       General :: Display information extracted from RMF files</ChimeraXClassifier>
+
+    <!-- For compatibility with older ChimeraX -->
+    <ChimeraXClassifier>ChimeraX :: DataFormat :: RMF :: :: Molecular structure :: .rmf,.rmf3 :: :: https://integrativemodeling.org/rmf/ :: :: :: RMF format :: binary</ChimeraXClassifier>
+    <ChimeraXClassifier>ChimeraX :: Open :: RMF :: RMF ::</ChimeraXClassifier>
   </Classifiers>
 
 </BundleInfo>

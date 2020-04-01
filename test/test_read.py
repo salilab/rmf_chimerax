@@ -93,12 +93,23 @@ class Tests(unittest.TestCase):
         self.assertTrue(state._atomic)
         state.apply_auto_styling()
 
-    def test_bundle_api_open(self):
-        """Test open file via BundleAPI"""
+    def test_bundle_api_open_old(self):
+        """Test open file via BundleAPI (old mechanism)"""
         bundle_api = src.bundle_api
         path = os.path.join(INDIR, 'simple.rmf3')
         mock_session = make_session()
         structures, status = bundle_api.open_file(mock_session, path, 'RMF')
+
+    def test_bundle_api_open_new(self):
+        """Test open file via BundleAPI (new mechanism)"""
+        class MockOpenManager:
+            pass
+        mock_mgr = MockOpenManager()
+        bundle_api = src.bundle_api
+        path = os.path.join(INDIR, 'simple.rmf3')
+        mock_session = make_session()
+        oinfo = bundle_api.run_provider(mock_session, "RMF", mock_mgr)
+        structures, status = oinfo.open(mock_session, path, path)
 
     def test_read_features(self):
         """Test open_rmf handling of RMF features"""

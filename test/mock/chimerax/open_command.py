@@ -1,0 +1,2 @@
+class OpenerInfo:
+    pass
