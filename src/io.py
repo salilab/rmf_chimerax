@@ -7,7 +7,6 @@ import weakref
 import copy
 
 from chimerax.atomic import Atom, Atoms, Bond, Pseudobond
-import chimerax.open_command
 
 
 class _MockRMFNode:
@@ -18,9 +17,13 @@ class _MockRMFNode:
     def get_index(self): return self.rmf_index
 
 
-class RMFOpenerInfo(chimerax.open_command.OpenerInfo):
-    def open(self, session, data, file_name, **kw):
-        return open_rmf(session, data)
+try:
+    import chimerax.open_command
+    class RMFOpenerInfo(chimerax.open_command.OpenerInfo):
+        def open(self, session, data, file_name, **kw):
+            return open_rmf(session, data)
+except ImportError:
+    pass
 
 
 def open_rmf(session, path):
