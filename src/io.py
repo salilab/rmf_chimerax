@@ -710,6 +710,26 @@ class _RMFXLMSRestraintProvenance(_RMFProvenance):
     name = property(_get_name)
 
 
+class _RMFSAXSRestraintProvenance(_RMFProvenance):
+    """Information about a SAXS restraint"""
+
+    _snapshot_keys = ['filename']
+
+    def __init__(self, rmf_node, filename):
+        super().__init__(rmf_node)
+        self.filename = filename
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFSAXSRestraintProvenance(_MockRMFNode(data), data['filename'])
+        s.set_state_from_snapshot(data)
+        return s
+
+    def _get_name(self):
+        return "SAXS profile from %s" % os.path.basename(self.filename)
+    name = property(_get_name)
+
+
 class _RMFHierarchyInfo(object):
     """Track structural information encountered through the RMF hierarchy"""
     def __init__(self, top_level):
@@ -862,6 +882,13 @@ class _RMFHierarchyInfo(object):
 class _RMFLoader(object):
     """Load information from an RMF file"""
 
+    _feature_provenance_class = {
+        'IMP.isd.GaussianEMRestraint': _RMFEMRestraintGMMProvenance,
+        'IMP.pmi.CrossLinkingMassSpectrometryRestraint':
+                _RMFXLMSRestraintProvenance,
+        'IMP.saxs.Restraint': _RMFSAXSRestraintProvenance,
+        }
+
     def __init__(self):
         pass
 
@@ -974,14 +1001,11 @@ class _RMFLoader(object):
         if self.rsr_typek is None or self.rsr_filenamek is None:
             return
         rsrtype = node.get_value(self.rsr_typek)
-        if rsrtype == 'IMP.isd.GaussianEMRestraint':
+        cls = self._feature_provenance_class.get(rsrtype)
+        if cls:
             fname = get_node_filename(node)
             if fname:
-                return _RMFEMRestraintGMMProvenance(node, fname)
-        elif rsrtype == 'IMP.pmi.CrossLinkingMassSpectrometryRestraint':
-            fname = get_node_filename(node)
-            if fname:
-                return _RMFXLMSRestraintProvenance(node, fname)
+                return cls(node, fname)
 
     def _handle_feature(self, node, parent_rhi, rmf_dir, provenance):
         feature = _RMFFeature(node)
