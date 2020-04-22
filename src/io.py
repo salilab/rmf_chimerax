@@ -732,19 +732,35 @@ class _RMFSAXSRestraintProvenance(_RMFProvenance):
 
 class _RMFEM2DRestraintProvenance(_RMFProvenance):
     """Information about a 2D EM restraint"""
-    # todo: load and display the image
 
-    _snapshot_keys = ['filename']
+    _snapshot_keys = ['filename', 'pixel_size']
 
-    def __init__(self, rmf_node, filename):
+    def __init__(self, rmf_node, filename, pixel_size):
         super().__init__(rmf_node)
         self.filename = filename
+        self.pixel_size = pixel_size
 
     @staticmethod
     def restore_snapshot(session, data):
-        s = _RMFEM2DRestraintProvenance(_MockRMFNode(data), data['filename'])
+        s = _RMFEM2DRestraintProvenance(_MockRMFNode(data), data['filename'],
+                data['pixel_size'])
         s.set_state_from_snapshot(data)
         return s
+
+    def load(self, session, model):
+        if not model._has_provenance(self.filename):
+            from chimerax.map.volume import open_map
+            from chimerax.map.data import UnknownFileType
+            try:
+                maps, msg = open_map(session, self.filename)
+            except UnknownFileType:
+                return
+            v = maps[0]
+            v.data.set_step((self.pixel_size, self.pixel_size, v.data.step[2]))
+            # todo: set orientation
+            v.set_display_style('image')
+            v.show()
+            model._add_provenance(self.filename, v)
 
     def _get_name(self):
         return "EM class average from %s" % os.path.basename(self.filename)
@@ -952,6 +968,7 @@ class _RMFLoader(object):
         keys = dict((r.get_name(k), k)
                     for k in r.get_keys(imp_restraint_cat))
         self.rsr_typek = keys.get('type')
+        self.rsr_pixelsizek = keys.get('pixel size')
 
         imp_restraint_fn_cat = r.get_category("IMP restraint files")
         keys = dict((r.get_name(k), k)
@@ -1029,11 +1046,18 @@ class _RMFLoader(object):
                 fname = get_node_filename(node)
                 if fname:
                     return cls(node, fname)
-        if rsrtype == 'IMP.em2d.PCAFitRestraint' and self.rsr_imagefilesk:
-            images = node.get_value(self.rsr_imagefilesk)
-            if images:
-                return [_RMFEM2DRestraintProvenance(
-                    node, os.path.join(rmf_dir, fname)) for fname in images]
+        if rsrtype == 'IMP.em2d.PCAFitRestraint':
+            return self._make_em2d_provenance(node, rmf_dir)
+
+    def _make_em2d_provenance(self, node, rmf_dir):
+        if not self.rsr_imagefilesk or not self.rsr_pixelsizek:
+            return
+        pixel_size = node.get_value(self.rsr_pixelsizek)
+        images = node.get_value(self.rsr_imagefilesk)
+        if images and pixel_size:
+            return [_RMFEM2DRestraintProvenance(
+                node, os.path.join(rmf_dir, fname), pixel_size)
+                for fname in images]
 
     def _handle_feature(self, node, parent_rhi, rmf_dir, provenance):
         feature = _RMFFeature(node)

@@ -513,6 +513,8 @@ class Tests(unittest.TestCase):
             r = RMF.create_rmf_file(fname)
             imp_restraint_cat = r.get_category("IMP restraint")
             rsr_typek = r.get_key(imp_restraint_cat, "type", RMF.StringTag())
+            rsr_pixelsizek = r.get_key(imp_restraint_cat, "pixel size",
+                                        RMF.FloatTag())
 
             imp_restraint_fn_cat = r.get_category("IMP restraint files")
             rsr_imagefilesk = r.get_key(imp_restraint_fn_cat, "image files",
@@ -539,6 +541,7 @@ class Tests(unittest.TestCase):
             p = represf.get(n)
             p.set_representation([pn])
             n.set_value(rsr_typek, "IMP.em2d.PCAFitRestraint")
+            n.set_value(rsr_pixelsizek, 1.0)
             n.set_value(rsr_imagefilesk, ["abc", "def"])
 
         with utils.temporary_file(suffix='.rmf') as fname:
@@ -548,8 +551,10 @@ class Tests(unittest.TestCase):
             p1, p2 = structures[0].rmf_provenance
             self.assertIsInstance(p1, src.io._RMFEM2DRestraintProvenance)
             self.assertEqual(p1.name, 'EM class average from abc')
+            self.assertAlmostEqual(p1.pixel_size, 1.0, delta=1e-6)
             self.assertIsInstance(p2, src.io._RMFEM2DRestraintProvenance)
             self.assertEqual(p2.name, 'EM class average from def')
+            self.assertAlmostEqual(p2.pixel_size, 1.0, delta=1e-6)
 
     def test_rmf_provenance_class(self):
         """Test _RMFProvenance class"""
@@ -726,6 +731,23 @@ END
             model = src.io._RMFModel(mock_session, 'fname')
             # Should be a noop since mrc2 isn't a known map format
             prev.load(mock_session, model)
+
+    def test_rmf_em2d_restraint_provenance(self):
+        """Test _RMFEM2DRestraintProvenance class"""
+        rmf_node = MockRMFNode("r1", 1)
+
+        with utils.temporary_directory() as tmpdir:
+            pgm = os.path.join(tmpdir, 'test.pgm2')
+            with open(pgm, 'w') as fh:
+                pass
+            p = src.io._RMFEM2DRestraintProvenance(rmf_node, pgm, 4.0)
+            self.assertEqual(p.name,
+                'EM class average from test.pgm2')
+            mock_session = make_session()
+            mock_session.logger = MockLogger()
+            model = src.io._RMFModel(mock_session, 'fname')
+            # Should be a noop since pgm2 isn't a known map format
+            p.load(mock_session, model)
 
     def test_hierarchy_node_snapshot(self):
         """Test take/restore snapshot of RMFHierarchyNode"""
