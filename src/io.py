@@ -730,6 +730,27 @@ class _RMFSAXSRestraintProvenance(_RMFProvenance):
     name = property(_get_name)
 
 
+class _RMFEM2DRestraintProvenance(_RMFProvenance):
+    """Information about a 2D EM restraint"""
+    # todo: load and display the image
+
+    _snapshot_keys = ['filename']
+
+    def __init__(self, rmf_node, filename):
+        super().__init__(rmf_node)
+        self.filename = filename
+
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFEM2DRestraintProvenance(_MockRMFNode(data), data['filename'])
+        s.set_state_from_snapshot(data)
+        return s
+
+    def _get_name(self):
+        return "EM class average from %s" % os.path.basename(self.filename)
+    name = property(_get_name)
+
+
 class _RMFHierarchyInfo(object):
     """Track structural information encountered through the RMF hierarchy"""
     def __init__(self, top_level):
@@ -936,6 +957,7 @@ class _RMFLoader(object):
         keys = dict((r.get_name(k), k)
                     for k in r.get_keys(imp_restraint_fn_cat))
         self.rsr_filenamek = keys.get('filename')
+        self.rsr_imagefilesk = keys.get('image files')
 
         r.set_current_frame(RMF.FrameID(0))
 
@@ -998,14 +1020,20 @@ class _RMFLoader(object):
                 # path is relative to that of the RMF file
                 return os.path.join(rmf_dir, fname)
         # noop if these keys aren't in the file at all
-        if self.rsr_typek is None or self.rsr_filenamek is None:
+        if self.rsr_typek is None:
             return
         rsrtype = node.get_value(self.rsr_typek)
-        cls = self._feature_provenance_class.get(rsrtype)
-        if cls:
-            fname = get_node_filename(node)
-            if fname:
-                return cls(node, fname)
+        if self.rsr_filenamek:
+            cls = self._feature_provenance_class.get(rsrtype)
+            if cls:
+                fname = get_node_filename(node)
+                if fname:
+                    return cls(node, fname)
+        if rsrtype == 'IMP.em2d.PCAFitRestraint' and self.rsr_imagefilesk:
+            images = node.get_value(self.rsr_imagefilesk)
+            if images:
+                return [_RMFEM2DRestraintProvenance(
+                    node, os.path.join(rmf_dir, fname)) for fname in images]
 
     def _handle_feature(self, node, parent_rhi, rmf_dir, provenance):
         feature = _RMFFeature(node)
@@ -1014,7 +1042,10 @@ class _RMFLoader(object):
         # Extract provenance from restraint if present
         p = self._handle_feature_provenance(node, rmf_dir)
         if p:
-            provenance.append(p)
+            if isinstance(p, list):
+                provenance.extend(p)
+            else:
+                provenance.append(p)
         for child in node.get_children():
             if self.represf.get_is(child):
                 feature.add_child(self._handle_feature(child, parent_rhi,

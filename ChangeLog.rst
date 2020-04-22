@@ -1,5 +1,6 @@
 HEAD
 ====
+ - Show any SAXS profiles or EM class averages referenced by the RMF file.
 
 0.6 - 2020-03-19
 ================
