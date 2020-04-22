@@ -59,7 +59,9 @@ class _MyAPI(BundleAPI):
                                '_RMFStructureProvenance',
                                '_RMFXLMSRestraintProvenance',
                                '_RMFEMRestraintGMMProvenance',
-                               '_RMFEMRestraintMRCProvenance'))
+                               '_RMFEMRestraintMRCProvenance',
+                               '_RMFSAXSRestraintProvenance',
+                               '_RMFEM2DRestraintProvenance'))
         if class_name in io_classes:
             from . import io
             return getattr(io, class_name)
