@@ -1,3 +1,6 @@
+HEAD
+====
+
 0.7 - 2020-04-23
 ================
  - Show any SAXS profiles or EM class averages referenced by the RMF file.
