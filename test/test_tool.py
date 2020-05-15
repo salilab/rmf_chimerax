@@ -242,14 +242,17 @@ class Tests(unittest.TestCase):
                 if isinstance(w, QPushButton):
                     yield w
         class TestChimeraObj:
-            pass
+            def __init__(self, deleted=False):
+                self.deleted = deleted
         root = make_node("root", 0, resolution=10)
         child1 = make_node("child1", 1)
         child1.chimera_obj = TestChimeraObj()
         child2 = make_node("child2", 2)
         grandchild = make_node("grandchild", 3)
         child2.add_children([grandchild])
-        root.add_children((child1, child2))
+        delchild = make_node("child3", 3)
+        delchild.chimera_obj = TestChimeraObj(deleted=True)
+        root.add_children((child1, child2, delchild))
 
         mock_session = make_session()
         m1 = Model(mock_session, 'test')

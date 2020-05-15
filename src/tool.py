@@ -408,7 +408,7 @@ class RMFViewer(ToolInstance):
     def _get_selected_chimera_objects(self, tree):
         def _get_node_objects(node, objs):
             o = node.chimera_obj
-            if o:
+            if o and not o.deleted:
                 objs.append(o)
             for child in node._filtered_children:
                 _get_node_objects(child, objs)
