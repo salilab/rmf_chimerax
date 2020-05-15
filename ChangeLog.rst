@@ -1,3 +1,6 @@
+HEAD
+====
+
 0.8 - 2020-05-15
 ================
  - Fix installation with ChimeraX 1.0 RC.
