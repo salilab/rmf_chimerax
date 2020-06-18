@@ -49,7 +49,7 @@ def open_rmf(session, path):
                    "frames, use the 'rmf readtraj' command.")
     if session.ui.is_gui:
         from chimerax.core.commands import run
-        run(session, 'toolshed show "RMF Viewer"', log=False)
+        run(session, 'tool show "RMF Viewer"', log=False)
     return structures, status
 
 
