@@ -1,3 +1,6 @@
+HEAD
+====
+
 0.9 - 2020-06-18
 ================
  - Fix loading of RMF files with ChimeraX 1.0 final.
