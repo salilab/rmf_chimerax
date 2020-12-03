@@ -4,7 +4,7 @@ matrix:
   include:
     - name: "Python 3.8.2 on MacOS"
       os: osx
-      osx_image: xcode12.2  # Python 3.8.2 running on macOS 10.15.7
+      osx_image: xcode12  # Python 3.8.2 running on macOS 10.15.7
       language: shell     # 'language: python' is an error on Travis CI macOS
       before_install: python3 --version ; pip3 --version ; sw_vers; pip3 install --user PySide2 nose
       env: RMF_DISABLE_QT_MOCK=1
