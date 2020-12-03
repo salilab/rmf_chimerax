@@ -450,10 +450,10 @@ class _RMFProvenance(State):
 def _atomic_model_reader(filename):
     """Get a ChimeraX function to read the given atomic model (PDB, mmCIF)"""
     if filename.endswith('.cif'):
-        from chimerax.atomic.mmcif import open_mmcif
+        from chimerax.mmcif import open_mmcif
         return open_mmcif
     elif filename.endswith('.pdb'):
-        from chimerax.atomic.pdb import open_pdb
+        from chimerax.pdb import open_pdb
         return open_pdb
 
 
@@ -675,7 +675,7 @@ class _RMFEMRestraintMRCProvenance(_RMFProvenance):
     def load(self, session, model):
         if not model._has_provenance(self.filename):
             from chimerax.map.volume import open_map
-            from chimerax.map.data import UnknownFileType
+            from chimerax.map_data import UnknownFileType
             try:
                 maps, msg = open_map(session, self.filename)
             except UnknownFileType:
@@ -750,7 +750,7 @@ class _RMFEM2DRestraintProvenance(_RMFProvenance):
     def load(self, session, model):
         if not model._has_provenance(self.filename):
             from chimerax.map.volume import open_map
-            from chimerax.map.data import UnknownFileType
+            from chimerax.map_data import UnknownFileType
             try:
                 maps, msg = open_map(session, self.filename)
             except UnknownFileType:

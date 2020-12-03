@@ -15,8 +15,8 @@ RMF = utils.import_rmf_module()
 
 from chimerax.atomic import Pseudobond
 from chimerax.atomic import Atoms
-import chimerax.atomic.mmcif
-import chimerax.atomic.pdb
+import chimerax.mmcif
+import chimerax.pdb
 
 def get_all_nodes(structure):
     """Yield all RMF nodes in a given structure, by flattening the hierarchy"""
@@ -574,9 +574,9 @@ class Tests(unittest.TestCase):
     def test_atomic_model_reader(self):
         """Test _atomic_model_reader"""
         f = src.io._atomic_model_reader("test.cif")
-        self.assertIs(f, chimerax.atomic.mmcif.open_mmcif)
+        self.assertIs(f, chimerax.mmcif.open_mmcif)
         f = src.io._atomic_model_reader("test.pdb")
-        self.assertIs(f, chimerax.atomic.pdb.open_pdb)
+        self.assertIs(f, chimerax.pdb.open_pdb)
         f = src.io._atomic_model_reader("test.dcd")
         self.assertIsNone(f)
 
