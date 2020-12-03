@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QWidget
+from PySide2.QtWidgets import QApplication, QWidget
 
 app = QApplication([])
 

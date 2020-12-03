@@ -57,11 +57,11 @@ This plugin has a full test suite which is designed to run in one of two
 environments:
 
  - mock environment; this exercises all of the code with the major dependencies
-   (PyQt5, ChimeraX itself) mocked out. This is faster, does not require a
-   display, and does not require PyQt5 or ChimeraX to be available, but can
+   (PySide2, ChimeraX itself) mocked out. This is faster, does not require a
+   display, and does not require PySide2 or ChimeraX to be available, but can
    potentially miss problems if the mock and ChimeraX APIs diverge. It can
-   be run with `make test`. The tests can also be run against the real PyQt5
-   (this requires PyQt5 to be installed, plus a display) with `make test-qt`.
+   be run with `make test`. The tests can also be run against the real PySide2
+   (this requires PySide2 to be installed, plus a display) with `make test-qt`.
  - ChimeraX; this runs the tests instead ChimeraX itself, so requires ChimeraX
    to be installed. Currently this does not test any GUI components such as
    the RMF Viewer tool. It can be run with `make test-chimerax`.

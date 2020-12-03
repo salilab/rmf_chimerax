@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QModelIndex
+from PySide2.QtCore import QModelIndex
 
 class QApplication:
     def __init__(self, args):
@@ -61,7 +61,7 @@ class QPushButton:
     def __init__(self, txt):
         self.clicked = _Signal()
     def click(self):
-        self.clicked._call(False)
+        self.clicked._call()
 
 class QComboBox:
     def __init__(self):
@@ -163,6 +163,8 @@ class QCheckBox:
         self.clicked = _Signal()
     def setChecked(self, chk):
         self._chk = chk
+    def isChecked(self):
+        return self._chk
     def click(self):
         self._chk = not self._chk
-        self.clicked._call(self._chk)
+        self.clicked._call()
