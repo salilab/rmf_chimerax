@@ -320,8 +320,8 @@ class RMFViewer(ToolInstance):
         for res in sorted(m._rmf_resolutions):
             cb = QtWidgets.QCheckBox("%.1f" % res)
             cb.setChecked(res in m._selected_rmf_resolutions)
-            cb.clicked.connect(lambda chk, tree=tree, resolution=res:
-                self._resolution_button_clicked(chk, tree, resolution))
+            cb.clicked.connect(lambda cb=cb, tree=tree, resolution=res:
+                self._resolution_button_clicked(cb, tree, resolution))
             label_and_res.addWidget(cb)
 
         layout.addLayout(label_and_res)
@@ -344,23 +344,25 @@ class RMFViewer(ToolInstance):
         buttons.setContentsMargins(0,0,0,0)
         buttons.setSpacing(0)
         select_button = QtWidgets.QPushButton("Select")
-        select_button.clicked.connect(lambda chk, tree=tree:
+        # In PySide2 one-argument callbacks get called with a bool argument;
+        # throw this away
+        select_button.clicked.connect(lambda tree=tree, chk=None:
                                       self._select_button_clicked(tree))
         buttons.addWidget(select_button)
         hide_button = QtWidgets.QPushButton("Hide")
-        hide_button.clicked.connect(lambda chk, tree=tree:
+        hide_button.clicked.connect(lambda tree=tree, chk=None:
                                     self._hide_button_clicked(tree))
         buttons.addWidget(hide_button)
         show_button = QtWidgets.QPushButton("Show")
-        show_button.clicked.connect(lambda chk, tree=tree:
+        show_button.clicked.connect(lambda tree=tree, chk=None:
                                     self._show_button_clicked(tree))
         buttons.addWidget(show_button)
         show_only_button = QtWidgets.QPushButton("Only")
-        show_only_button.clicked.connect(lambda chk, tree=tree:
+        show_only_button.clicked.connect(lambda tree=tree, chk=None:
                                         self._show_only_button_clicked(tree))
         buttons.addWidget(show_only_button)
         view_button = QtWidgets.QPushButton("View")
-        view_button.clicked.connect(lambda chk, tree=tree:
+        view_button.clicked.connect(lambda tree=tree, chk=None:
                                     self._view_button_clicked(tree))
         buttons.addWidget(view_button)
         tree_and_buttons.addLayout(buttons)
@@ -398,7 +400,7 @@ class RMFViewer(ToolInstance):
         buttons.setContentsMargins(0,0,0,0)
         buttons.setSpacing(0)
         load_button = QtWidgets.QPushButton("Load")
-        load_button.clicked.connect(lambda chk, tree=tree, m=m:
+        load_button.clicked.connect(lambda tree=tree, m=m:
                                     self._load_button_clicked(tree, m))
         buttons.addWidget(load_button)
         tree_and_buttons.addLayout(buttons)
@@ -512,12 +514,12 @@ class RMFViewer(ToolInstance):
         for obj in objs or tree.model().rmf_provenance:
             obj.load(self.session, m)
 
-    def _resolution_button_clicked(self, checked, tree, resolution):
+    def _resolution_button_clicked(self, checkbox, tree, resolution):
         model = tree.model()
         selmodel = tree.selectionModel()
         selected = [ind.internalPointer()
                     for ind in selmodel.selectedIndexes()]
-        model.set_resolution_filter(resolution, checked)
+        model.set_resolution_filter(resolution, checkbox.isChecked())
         mode = QItemSelectionModel.ClearAndSelect
         for s in selected:
             ind = model.index_for_node(s)
