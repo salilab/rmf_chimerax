@@ -3,9 +3,9 @@
 from chimerax.core.tools import ToolInstance
 from chimerax.core.objects import Objects
 from chimerax.atomic import Atoms, Bonds, Pseudobonds, Atom, Bond, Pseudobond
-from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
-from PyQt5.QtCore import QItemSelectionModel
-from PyQt5 import QtWidgets
+from PySide2.QtCore import QAbstractItemModel, QModelIndex, Qt
+from PySide2.QtCore import QItemSelectionModel
+from PySide2 import QtWidgets
 
 
 class _RMFHierarchyModel(QAbstractItemModel):
