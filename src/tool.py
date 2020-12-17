@@ -98,7 +98,8 @@ class _RMFHierarchyModel(QAbstractItemModel):
             else:
                 # otherwise, look up the parent in the grandparent's list of
                 # children to determine its row
-                row = parent_item.parent()._filtered_children.index(parent_item)
+                row = parent_item.parent()._filtered_children.index(
+                    parent_item)
             return self.createIndex(row, 0, parent_item)
 
     def data(self, index, role):
@@ -189,7 +190,7 @@ class _RMFProvenanceModel(QAbstractItemModel):
         child_item = index.internalPointer()
         parent_item = child_item.next
         if not parent_item:
-             # hidden top level node doesn't have an index
+            # hidden top level node doesn't have an index
             return QModelIndex()
         else:
             # provenance only has a single "previous", so row is always 0
@@ -203,8 +204,8 @@ class _RMFProvenanceModel(QAbstractItemModel):
 
 
 class RMFViewer(ToolInstance):
-    SESSION_ENDURING = False    # Does this instance persist when session closes
-    SESSION_SAVE = True         # We do save/restore in sessions
+    SESSION_ENDURING = False   # Does this instance persist when session closes
+    SESSION_SAVE = True        # We do save/restore in sessions
     help = "help:user/tools/rmf.html"
 
     def __init__(self, session, tool_name):
@@ -275,7 +276,7 @@ class RMFViewer(ToolInstance):
         layout = QtWidgets.QVBoxLayout()
         pane.setLayout(layout)
 
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         label = QtWidgets.QLabel("Features")
         layout.addWidget(label)
@@ -305,11 +306,11 @@ class RMFViewer(ToolInstance):
         layout = QtWidgets.QVBoxLayout()
         pane.setLayout(layout)
 
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         label_and_res = QtWidgets.QHBoxLayout()
-        label_and_res.setContentsMargins(0,0,0,0)
+        label_and_res.setContentsMargins(0, 0, 0, 0)
         label_and_res.setSpacing(0)
 
         label = QtWidgets.QLabel("Hierarchy @")
@@ -320,7 +321,8 @@ class RMFViewer(ToolInstance):
         for res in sorted(m._rmf_resolutions):
             cb = QtWidgets.QCheckBox("%.1f" % res)
             cb.setChecked(res in m._selected_rmf_resolutions)
-            cb.clicked.connect(lambda cb=cb, tree=tree, resolution=res:
+            cb.clicked.connect(
+                lambda cb=cb, tree=tree, resolution=res:
                 self._resolution_button_clicked(cb, tree, resolution))
             label_and_res.addWidget(cb)
 
@@ -331,17 +333,17 @@ class RMFViewer(ToolInstance):
         tree.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
         tree.setSortingEnabled(False)
         tree.setHeaderHidden(True)
-        tree.setModel(_RMFHierarchyModel(m.rmf_hierarchy,
-            m._selected_rmf_resolutions))
+        tree.setModel(
+            _RMFHierarchyModel(m.rmf_hierarchy, m._selected_rmf_resolutions))
 
         tree_and_buttons = QtWidgets.QHBoxLayout()
-        tree_and_buttons.setContentsMargins(0,0,0,0)
+        tree_and_buttons.setContentsMargins(0, 0, 0, 0)
         tree_and_buttons.setSpacing(0)
 
         tree_and_buttons.addWidget(tree, stretch=1)
 
         buttons = QtWidgets.QVBoxLayout()
-        buttons.setContentsMargins(0,0,0,0)
+        buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(0)
         select_button = QtWidgets.QPushButton("Select")
         # In PySide2 one-argument callbacks get called with a bool argument;
@@ -359,7 +361,7 @@ class RMFViewer(ToolInstance):
         buttons.addWidget(show_button)
         show_only_button = QtWidgets.QPushButton("Only")
         show_only_button.clicked.connect(lambda tree=tree, chk=None:
-                                        self._show_only_button_clicked(tree))
+                                         self._show_only_button_clicked(tree))
         buttons.addWidget(show_only_button)
         view_button = QtWidgets.QPushButton("View")
         view_button.clicked.connect(lambda tree=tree, chk=None:
@@ -374,7 +376,7 @@ class RMFViewer(ToolInstance):
         layout = QtWidgets.QVBoxLayout()
         pane.setLayout(layout)
 
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         label = QtWidgets.QLabel("Provenance")
         layout.addWidget(label)
@@ -391,13 +393,13 @@ class RMFViewer(ToolInstance):
                 self._select_provenance(tree, hierarchy_tree))
 
         tree_and_buttons = QtWidgets.QHBoxLayout()
-        tree_and_buttons.setContentsMargins(0,0,0,0)
+        tree_and_buttons.setContentsMargins(0, 0, 0, 0)
         tree_and_buttons.setSpacing(0)
 
         tree_and_buttons.addWidget(tree, stretch=1)
 
         buttons = QtWidgets.QVBoxLayout()
-        buttons.setContentsMargins(0,0,0,0)
+        buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(0)
         load_button = QtWidgets.QPushButton("Load")
         load_button.clicked.connect(lambda tree=tree, m=m:
@@ -434,13 +436,14 @@ class RMFViewer(ToolInstance):
                     yield o
                 for obj in get_child_chimera_obj(child):
                     yield obj
+
         def get_selection():
             for f in tree.selectedIndexes():
                 feat = f.internalPointer()
                 obj = feat.chimera_obj
                 # Prefer to select pseudobonds (even from children)
                 if (obj is not None
-                    and (not isinstance(obj, Atoms) or not feat.children)):
+                        and (not isinstance(obj, Atoms) or not feat.children)):
                     yield obj
                 else:
                     for obj in get_child_chimera_obj(feat):

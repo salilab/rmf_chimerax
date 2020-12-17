@@ -30,4 +30,5 @@ class MyTestProgram(unittest.TestProgram):
         self.test = unittest.TestSuite(
             unittest.defaultTestLoader.loadTestsFromModule(o) for o in modobjs)
 
+
 MyTestProgram(argv=[sys.argv[0]], verbosity=2)

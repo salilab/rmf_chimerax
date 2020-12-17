@@ -1,5 +1,4 @@
 import weakref
-import sys
 import os
 import utils
 import unittest
@@ -29,8 +28,13 @@ class MockToolInfo:
 class MockRMFNode:
     def __init__(self, name, index):
         self.name, self.index = name, index
-    def get_name(self): return self.name
-    def get_index(self): return self.index
+
+    def get_name(self):
+        return self.name
+
+    def get_index(self):
+        return self.index
+
 
 def make_node(name, index, resolution=None):
     n = MockRMFNode(name, index)
@@ -38,9 +42,11 @@ def make_node(name, index, resolution=None):
     h.resolution = resolution
     return h
 
+
 def make_feature(name, index):
     n = MockRMFNode(name, index)
     return src.io._RMFFeature(n)
+
 
 def make_provenance(name, index):
     n = MockRMFNode(name, index)
@@ -56,7 +62,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(m.columnCount(None), 1)
 
         self.assertEqual(m.rowCount(QModelIndex()), 0)
-        self.assertFalse(m.index(0,0,QModelIndex()).isValid())
+        self.assertFalse(m.index(0, 0, QModelIndex()).isValid())
         self.assertFalse(m.parent(QModelIndex()).isValid())
         self.assertIsNone(m.data(QModelIndex(), Qt.DisplayRole))
 
@@ -75,14 +81,14 @@ class Tests(unittest.TestCase):
         # Top level has one child (RMF root)
         self.assertEqual(m.rowCount(QModelIndex()), 1)
         # RMF root has two children
-        ind = m.createIndex(0,0,root)
+        ind = m.createIndex(0, 0, root)
         self.assertEqual(m.rowCount(ind), 2)
         # Test indices under RMF root
-        self.assertEqual(m.index(0,0,ind).internalPointer().name, 'child1')
-        self.assertEqual(m.index(1,0,ind).internalPointer().name, 'child2')
-        self.assertFalse(m.index(2,0,ind).isValid())
+        self.assertEqual(m.index(0, 0, ind).internalPointer().name, 'child1')
+        self.assertEqual(m.index(1, 0, ind).internalPointer().name, 'child2')
+        self.assertFalse(m.index(2, 0, ind).isValid())
         # Test top level index
-        self.assertEqual(m.index(0,0,QModelIndex()).internalPointer().name,
+        self.assertEqual(m.index(0, 0, QModelIndex()).internalPointer().name,
                          'root')
         i = m.index_for_node(child2)
         self.assertEqual(i.row(), 1)
@@ -92,9 +98,9 @@ class Tests(unittest.TestCase):
         # Top level doesn't have a parent
         self.assertFalse(m.parent(ind).isValid())
         self.assertFalse(m.parent(QModelIndex()).isValid())
-        childind = m.createIndex(0,0,child1)
+        childind = m.createIndex(0, 0, child1)
         self.assertEqual(m.parent(childind).internalPointer().name, 'root')
-        grandchildind = m.createIndex(0,0,grandchild)
+        grandchildind = m.createIndex(0, 0, grandchild)
         parentind = m.parent(grandchildind)
         self.assertEqual(parentind.internalPointer().name, 'child2')
         self.assertEqual(parentind.row(), 1)
@@ -136,25 +142,27 @@ class Tests(unittest.TestCase):
 
         m = src.tool._RMFFeaturesModel(features)
         top = QModelIndex()
-        f2_ind = m.createIndex(1,0,features[1])
-        child1_ind = m.createIndex(0,0,child1)
+        f2_ind = m.createIndex(1, 0, features[1])
+        child1_ind = m.createIndex(0, 0, child1)
         self.assertEqual(m.columnCount(None), 1)
         self.assertEqual(m.rowCount(top), 2)
         self.assertEqual(m.rowCount(f2_ind), 2)
         self.assertEqual(m.rowCount(child1_ind), 0)
 
         # Test indices
-        self.assertEqual(m.index(0,0,top).internalPointer().name, 'f1')
-        self.assertEqual(m.index(1,0,top).internalPointer().name, 'f2')
-        self.assertFalse(m.index(2,0,top).isValid())
-        self.assertEqual(m.index(0,0,f2_ind).internalPointer().name, 'child1')
-        self.assertEqual(m.index(1,0,f2_ind).internalPointer().name, 'child2')
-        self.assertFalse(m.index(2,0,f2_ind).isValid())
+        self.assertEqual(m.index(0, 0, top).internalPointer().name, 'f1')
+        self.assertEqual(m.index(1, 0, top).internalPointer().name, 'f2')
+        self.assertFalse(m.index(2, 0, top).isValid())
+        self.assertEqual(m.index(0, 0, f2_ind).internalPointer().name,
+                         'child1')
+        self.assertEqual(m.index(1, 0, f2_ind).internalPointer().name,
+                         'child2')
+        self.assertFalse(m.index(2, 0, f2_ind).isValid())
         # No parents
         self.assertFalse(m.parent(top).isValid())
         self.assertFalse(m.parent(f2_ind).isValid())
         self.assertEqual(m.parent(child1_ind).internalPointer().name, 'f2')
-        grandchild_ind = m.createIndex(0,0,grandchild)
+        grandchild_ind = m.createIndex(0, 0, grandchild)
         self.assertEqual(m.parent(grandchild_ind).internalPointer().name,
                          'child2')
         self.assertEqual(m.data(f2_ind, Qt.DisplayRole), "f2")
@@ -174,15 +182,15 @@ class Tests(unittest.TestCase):
         self.assertEqual(m.columnCount(None), 1)
 
         self.assertEqual(m.rowCount(top), 2)
-        f1_ind = m.createIndex(0,0,f1)
-        child_ind = m.createIndex(0,0,child)
+        f1_ind = m.createIndex(0, 0, f1)
+        child_ind = m.createIndex(0, 0, child)
         self.assertEqual(m.columnCount(f1_ind), 1)
 
         # Test indices
-        self.assertEqual(m.index(0,0,top).internalPointer().name, 'f1')
-        self.assertEqual(m.index(1,0,top).internalPointer().name, 'f2')
-        self.assertFalse(m.index(2,0,top).isValid())
-        self.assertEqual(m.index(0,0,f1_ind).internalPointer().name, 'child')
+        self.assertEqual(m.index(0, 0, top).internalPointer().name, 'f1')
+        self.assertEqual(m.index(1, 0, top).internalPointer().name, 'f2')
+        self.assertFalse(m.index(2, 0, top).isValid())
+        self.assertEqual(m.index(0, 0, f1_ind).internalPointer().name, 'child')
         # No parents for top level
         self.assertFalse(m.parent(top).isValid())
         self.assertFalse(m.parent(f1_ind).isValid())
@@ -202,7 +210,7 @@ class Tests(unittest.TestCase):
         m1._selected_rmf_resolutions = set((1.0, 10.0, None))
         m2 = Model(mock_session, 'test')
         mock_session.models.add((m1, m2))
-        r = src.tool.RMFViewer(mock_session, "RMF Viewer")
+        _ = src.tool.RMFViewer(mock_session, "RMF Viewer")
         # Test update on model creation
         m3 = Model(mock_session, 'test')
         m3.rmf_hierarchy = None
@@ -233,14 +241,16 @@ class Tests(unittest.TestCase):
         def get_first_tree(stack):
             for w in stack.widget(1).children():
                 if isinstance(w, QTreeView):
-                    self.assertIsInstance(w.model(),
-                            src.tool._RMFHierarchyModel)
+                    self.assertIsInstance(
+                        w.model(), src.tool._RMFHierarchyModel)
                     return w
             raise ValueError("could not find tree")
+
         def get_buttons(stack):
             for w in stack.widget(1).children():
                 if isinstance(w, QPushButton):
                     yield w
+
         class TestChimeraObj:
             def __init__(self, deleted=False):
                 self.deleted = deleted
@@ -285,14 +295,16 @@ class Tests(unittest.TestCase):
         def get_first_tree(stack):
             for w in stack.widget(1).children():
                 if isinstance(w, QTreeView):
-                    self.assertIsInstance(w.model(),
-                            src.tool._RMFHierarchyModel)
+                    self.assertIsInstance(
+                        w.model(), src.tool._RMFHierarchyModel)
                     return w
             raise ValueError("could not find tree")
+
         def get_buttons(stack):
             for w in stack.widget(1).children():
                 if isinstance(w, QCheckBox):
                     yield w
+
         class TestChimeraObj:
             pass
         root = make_node("root", 0)
@@ -331,8 +343,8 @@ class Tests(unittest.TestCase):
         def get_first_tree(stack):
             for w in stack.widget(0).children():
                 if isinstance(w, QTreeView):
-                    self.assertIsInstance(w.model(),
-                            src.tool._RMFFeaturesModel)
+                    self.assertIsInstance(
+                        w.model(), src.tool._RMFFeaturesModel)
                     return w
             raise ValueError("could not find tree")
         root = make_node("root", 0)
@@ -356,10 +368,11 @@ class Tests(unittest.TestCase):
         def get_first_tree(stack):
             for w in stack.widget(2).children():
                 if isinstance(w, QTreeView):
-                    self.assertIsInstance(w.model(),
-                            src.tool._RMFProvenanceModel)
+                    self.assertIsInstance(
+                        w.model(), src.tool._RMFProvenanceModel)
                     return w
             raise ValueError("could not find tree")
+
         def get_buttons(stack):
             for w in stack.widget(2).children():
                 if isinstance(w, QPushButton):

@@ -11,14 +11,20 @@ from chimerax.atomic import Atom, Atoms, Bond, Pseudobond
 
 class _MockRMFNode:
     __slots__ = ['name', 'rmf_index']
+
     def __init__(self, data):
         self.name, self.rmf_index = data['name'], data['rmf_index']
-    def get_name(self): return self.name
-    def get_index(self): return self.rmf_index
+
+    def get_name(self):
+        return self.name
+
+    def get_index(self):
+        return self.rmf_index
 
 
 try:
     import chimerax.open_command
+
     class RMFOpenerInfo(chimerax.open_command.OpenerInfo):
         def open(self, session, data, file_name, **kw):
             return open_rmf(session, data)
@@ -57,6 +63,7 @@ from chimerax.core.state import State
 from chimerax.core.models import Model
 from chimerax.atomic import Structure, AtomicStructure, AtomicShapeDrawing
 
+
 class _RMFState(AtomicStructure):
     """Representation of structure corresponding to a single RMF state"""
     def __init__(self, *args, **kwargs):
@@ -79,8 +86,8 @@ class _RMFState(AtomicStructure):
         return s
 
     def set_state_from_snapshot(self, session, data):
-        self._as_set_state_from_snapshot(session,
-            data['atomic structure state'])
+        self._as_set_state_from_snapshot(
+            session, data['atomic structure state'])
 
     def _as_set_state_from_snapshot(self, session, data):
         # AtomicStructure doesn't provide a set_state_from_snapshot method,
@@ -89,8 +96,8 @@ class _RMFState(AtomicStructure):
             Structure.set_state_from_snapshot(self, session, data)
         else:
             from chimerax.atomic.molobject import set_custom_attrs
-            Structure.set_state_from_snapshot(self, session,
-                    data['structure state'])
+            Structure.set_state_from_snapshot(
+                self, session, data['structure state'])
             set_custom_attrs(self, data)
 
     def _add_pseudobond(self, atoms):
@@ -175,7 +182,8 @@ class _RMFModel(Model):
         # Map session data back to ChimeraX objects only after all models have
         # been loaded (and not later, since they refer to model IDs and atom
         # indices which could be changed by the user after session-load)
-        session.triggers.add_handler('end restore session',
+        session.triggers.add_handler(
+            'end restore session',
             lambda trigger, session, model=s:
             _restore_chimera_obj(session, model))
         return s
@@ -243,7 +251,7 @@ class _RMFModel(Model):
     def add_shape(self, vertices, normals, triangles, name):
         drawing = self.get_drawing()
         drawing._drawing.add_shape(vertices, normals, triangles,
-                                   numpy.array([255,255,255,255]),
+                                   numpy.array([255, 255, 255, 255]),
                                    description=name)
 
 
@@ -285,6 +293,7 @@ class _RMFHierarchyNode(State):
             self.children.append(child)
             # avoid circular reference
             child.parent = weakref.ref(self)
+
 
 def _save_snapshot_chimera_obj(obj):
     """Snapshot a Chimera object. We can't store these directly in the session
@@ -360,7 +369,8 @@ def _restore_chimera_obj(session, model):
        RMF model"""
     model_by_id = {m.id: m for m in session.models.list()}
 
-    model._provenance_map = {filename: model_by_id[mid]
+    model._provenance_map = {
+        filename: model_by_id[mid]
         for filename, mid in model._provenance_map.items()}
     _restore_nodes_chimera_obj(session, model.rmf_features, model_by_id)
     _restore_nodes_chimera_obj(session, [model.rmf_hierarchy], model_by_id)
@@ -487,10 +497,17 @@ class _RMFStructureProvenance(_RMFProvenance):
     @staticmethod
     def restore_snapshot(session, data):
         class MockStructureProvenance:
-            def __init__(self, data): self.data = data
-            def get_chain(self): return self.data['chain']
-            def get_residue_offset(self): return self.data['residue_offset']
-            def get_filename(self): return self.data['filename']
+            def __init__(self, data):
+                self.data = data
+
+            def get_chain(self):
+                return self.data['chain']
+
+            def get_residue_offset(self):
+                return self.data['residue_offset']
+
+            def get_filename(self):
+                return self.data['filename']
         s = _RMFStructureProvenance(_MockRMFNode(data),
                                     MockStructureProvenance(data), {})
         s.set_state_from_snapshot(data)
@@ -546,12 +563,22 @@ class _RMFSampleProvenance(_RMFProvenance):
     @staticmethod
     def restore_snapshot(session, data):
         class MockSampleProvenance:
-            def __init__(self, data): self.data = data
-            def get_frames(self): return self.data['frames']
-            def get_iterations(self): return self.data['iterations']
-            def get_method(self): return self.data['method']
-            def get_replicas(self): return self.data['replicas']
-        s = _RMFSampleProvenance(_MockRMFNode(data), MockSampleProvenance(data))
+            def __init__(self, data):
+                self.data = data
+
+            def get_frames(self):
+                return self.data['frames']
+
+            def get_iterations(self):
+                return self.data['iterations']
+
+            def get_method(self):
+                return self.data['method']
+
+            def get_replicas(self):
+                return self.data['replicas']
+        s = _RMFSampleProvenance(
+            _MockRMFNode(data), MockSampleProvenance(data))
         s.set_state_from_snapshot(data)
         return s
 
@@ -574,9 +601,13 @@ class _RMFScriptProvenance(_RMFProvenance):
     @staticmethod
     def restore_snapshot(session, data):
         class MockScriptProvenance:
-            def __init__(self, data): self.data = data
-            def get_filename(self): return self.data['filename']
-        s = _RMFScriptProvenance(_MockRMFNode(data), MockScriptProvenance(data))
+            def __init__(self, data):
+                self.data = data
+
+            def get_filename(self):
+                return self.data['filename']
+        s = _RMFScriptProvenance(
+            _MockRMFNode(data), MockScriptProvenance(data))
         s.set_state_from_snapshot(data)
         return s
 
@@ -602,10 +633,17 @@ class _RMFSoftwareProvenance(_RMFProvenance):
     @staticmethod
     def restore_snapshot(session, data):
         class MockSoftwareProvenance:
-            def __init__(self, data): self.data = data
-            def get_location(self): return self.data['location']
-            def get_name(self): return self.data['software_name']
-            def get_version(self): return self.data['version']
+            def __init__(self, data):
+                self.data = data
+
+            def get_location(self):
+                return self.data['location']
+
+            def get_name(self):
+                return self.data['software_name']
+
+            def get_version(self):
+                return self.data['version']
         s = _RMFSoftwareProvenance(_MockRMFNode(data),
                                    MockSoftwareProvenance(data))
         s.set_state_from_snapshot(data)
@@ -615,6 +653,7 @@ class _RMFSoftwareProvenance(_RMFProvenance):
         return ("Using software %s version %s from %s" %
                 (self.software_name, self.version, self.location))
     name = property(_get_name)
+
 
 class _RMFEMRestraintGMMProvenance(_RMFProvenance):
     """Information about an electron microscopy restraint read from GMMs"""
@@ -653,7 +692,7 @@ class _RMFEMRestraintGMMProvenance(_RMFProvenance):
 
     def _get_name(self):
         return ("Gaussian Mixture Model from %s"
-                 % os.path.basename(self.filename))
+                % os.path.basename(self.filename))
     name = property(_get_name)
 
 
@@ -742,8 +781,8 @@ class _RMFEM2DRestraintProvenance(_RMFProvenance):
 
     @staticmethod
     def restore_snapshot(session, data):
-        s = _RMFEM2DRestraintProvenance(_MockRMFNode(data), data['filename'],
-                data['pixel_size'])
+        s = _RMFEM2DRestraintProvenance(
+            _MockRMFNode(data), data['filename'], data['pixel_size'])
         s.set_state_from_snapshot(data)
         return s
 
@@ -906,7 +945,7 @@ class _RMFHierarchyInfo(object):
         a = numpy.array(coords[0])
         b = numpy.array(coords[1])
         # Skip zero-length lines
-        if numpy.linalg.norm(a-b) < 1e-6:
+        if numpy.linalg.norm(a - b) < 1e-6:
             return
         vertices, normals, triangles = get_cylinder(1.0, a, b)
         self.top_level.add_shape(vertices, normals, triangles, name)
@@ -922,9 +961,9 @@ class _RMFLoader(object):
     _feature_provenance_class = {
         'IMP.isd.GaussianEMRestraint': _RMFEMRestraintGMMProvenance,
         'IMP.pmi.CrossLinkingMassSpectrometryRestraint':
-                _RMFXLMSRestraintProvenance,
+            _RMFXLMSRestraintProvenance,
         'IMP.saxs.Restraint': _RMFSAXSRestraintProvenance,
-        }
+    }
 
     def __init__(self):
         pass
@@ -1062,7 +1101,7 @@ class _RMFLoader(object):
     def _handle_feature(self, node, parent_rhi, rmf_dir, provenance):
         feature = _RMFFeature(node)
         feature.chimera_obj = self._add_feature(
-                                self.represf.get(node), parent_rhi)
+            self.represf.get(node), parent_rhi)
         # Extract provenance from restraint if present
         p = self._handle_feature_provenance(node, rmf_dir)
         if p:
@@ -1112,8 +1151,9 @@ class _RMFLoader(object):
         if self.segmentf.get_is(node):
             self._add_segment(self.segmentf.get(node), node.get_name(), rhi)
         for child in node.get_children():
-            rmf_nodes[0].add_children(self._handle_node(child, rhi, features,
-                provenance, rmf_dir, provenance_chains, rmf_nodes[0]))
+            rmf_nodes[0].add_children(self._handle_node(
+                child, rhi, features, provenance, rmf_dir, provenance_chains,
+                rmf_nodes[0]))
         # Handle any alternatives (usually different resolutions)
         # Alternatives replace the current node - they are not children of
         # it - so use parent_rhi, not rhi.
@@ -1121,10 +1161,12 @@ class _RMFLoader(object):
             alt = self.altf.get(node)
             # The node itself should be the first alternative, so ignore that
             for p in alt.get_alternatives(self.PARTICLE)[1:]:
-                rmf_nodes.extend(self._handle_node(p, parent_rhi, features,
+                rmf_nodes.extend(self._handle_node(
+                    p, parent_rhi, features,
                     provenance, rmf_dir, provenance_chains, rmf_nodes[0]))
             for gauss in alt.get_alternatives(self.GAUSSIAN_PARTICLE):
-                rmf_nodes.extend(self._handle_node(gauss, parent_rhi, features,
+                rmf_nodes.extend(self._handle_node(
+                    gauss, parent_rhi, features,
                     provenance, rmf_dir, provenance_chains, rmf_nodes[0]))
         return rmf_nodes
 

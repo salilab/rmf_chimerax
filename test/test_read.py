@@ -18,6 +18,7 @@ from chimerax.atomic import Atoms
 import chimerax.mmcif
 import chimerax.pdb
 
+
 def get_all_nodes(structure):
     """Yield all RMF nodes in a given structure, by flattening the hierarchy"""
     def get_node(node):
@@ -43,8 +44,12 @@ class MockLogger(object):
 class MockRMFNode:
     def __init__(self, name, index):
         self.name, self.index = name, index
-    def get_name(self): return self.name
-    def get_index(self): return self.index
+
+    def get_name(self):
+        return self.name
+
+    def get_index(self):
+        return self.index
 
 
 class Tests(unittest.TestCase):
@@ -60,7 +65,8 @@ class Tests(unittest.TestCase):
         state.apply_auto_styling()
         # Check hierarchy
         nodes = list(get_all_nodes(structures[0]))
-        self.assertEqual([n.name for n in nodes],
+        self.assertEqual(
+            [n.name for n in nodes],
             ['root', 'System', 'State_0', 'Rpb1', 'Frag_1-20',
              'Frag_1-20: Res 10', '1-10_bead', '11-20_bead', 'bonds', 'bond'])
         # Check features
@@ -71,10 +77,12 @@ class Tests(unittest.TestCase):
                          ["Sampling using Monte Carlo making 50 frames"])
         s = structures[0].rmf_provenance[0]
         self.assertIn('Using script ', s.previous.name)
-        self.assertEqual(s.previous.previous.name,
+        self.assertEqual(
+            s.previous.previous.name,
             'Using software IMP PMI module version develop-d9b88ed5a1 from '
             'https://integrativemodeling.org')
-        self.assertEqual(s.previous.previous.previous.name,
+        self.assertEqual(
+            s.previous.previous.previous.name,
             'Using software Integrative Modeling Platform (IMP) version '
             'develop-d9b88ed5a1 from https://integrativemodeling.org')
         self.assertIsNone(s.previous.previous.previous.previous)
@@ -123,17 +131,17 @@ class Tests(unittest.TestCase):
             n1 = rn.add_child("ball1", RMF.GEOMETRY)
             b1 = bf.get(n1)
             b1.set_radius(6)
-            b1.set_coordinates(RMF.Vector3(1.,2.,3.))
+            b1.set_coordinates(RMF.Vector3(1., 2., 3.))
 
             n2 = rn.add_child("ball2", RMF.GEOMETRY)
             b2 = bf.get(n2)
             b2.set_radius(6)
-            b2.set_coordinates(RMF.Vector3(4.,5.,6.))
+            b2.set_coordinates(RMF.Vector3(4., 5., 6.))
 
             n3 = rn.add_child("ball3", RMF.GEOMETRY)
             b3 = bf.get(n3)
             b3.set_radius(6)
-            b3.set_coordinates(RMF.Vector3(7.,8.,9.))
+            b3.set_coordinates(RMF.Vector3(7., 8., 9.))
 
             n = rn.add_child("feat 1", RMF.FEATURE)
             f = rf.get(n)
@@ -171,10 +179,12 @@ class Tests(unittest.TestCase):
             sf = RMF.SegmentFactory(r)
 
             s = sf.get(rn.add_child("test segment", RMF.GEOMETRY))
-            s.set_coordinates_list([RMF.Vector3(0, 0, 0), RMF.Vector3(5, 5, 5)])
+            s.set_coordinates_list([RMF.Vector3(0, 0, 0),
+                                    RMF.Vector3(5, 5, 5)])
 
             s = sf.get(rn.add_child("test segment2", RMF.GEOMETRY))
-            s.set_coordinates_list([RMF.Vector3(0, 0, 0), RMF.Vector3(5, 5, 5)])
+            s.set_coordinates_list([RMF.Vector3(0, 0, 0),
+                                    RMF.Vector3(5, 5, 5)])
 
             # Segments are ignored unless they contain two points
             s = sf.get(rn.add_child("test segment2", RMF.GEOMETRY))
@@ -183,7 +193,8 @@ class Tests(unittest.TestCase):
 
             # Lines with zero length are ignored
             s = sf.get(rn.add_child("null segment", RMF.GEOMETRY))
-            s.set_coordinates_list([RMF.Vector3(0, 0, 0), RMF.Vector3(0, 0, 0)])
+            s.set_coordinates_list([RMF.Vector3(0, 0, 0),
+                                    RMF.Vector3(0, 0, 0)])
 
         with utils.temporary_file(suffix='.rmf') as fname:
             make_rmf_file(fname)
@@ -205,15 +216,14 @@ class Tests(unittest.TestCase):
             n = rn.add_child("ball", RMF.GEOMETRY)
             b1 = bf.get(n)
             b1.set_radius(6)
-            b1.set_coordinates(RMF.Vector3(1.,2.,3.))
+            b1.set_coordinates(RMF.Vector3(1., 2., 3.))
             c1 = cf.get(n)
-            c1.set_rgb_color(RMF.Vector3(1,0,0))
+            c1.set_rgb_color(RMF.Vector3(1, 0, 0))
 
             b2 = bf.get(rn.add_child("ball", RMF.GEOMETRY))
             b2.set_radius(4)
-            b2.set_coordinates(RMF.Vector3(4.,5.,6.))
+            b2.set_coordinates(RMF.Vector3(4., 5., 6.))
             # no color
-
 
         with utils.temporary_file(suffix='.rmf') as fname:
             make_rmf_file(fname)
@@ -229,8 +239,8 @@ class Tests(unittest.TestCase):
             # Default element
             self.assertEqual(a1.element.name, 'C')
             self.assertEqual(a2.element.name, 'C')
-            self.assertEqual([int(c) for c in a1.coord], [1,2,3])
-            self.assertEqual([int(c) for c in a2.coord], [4,5,6])
+            self.assertEqual([int(c) for c in a1.coord], [1, 2, 3])
+            self.assertEqual([int(c) for c in a2.coord], [4, 5, 6])
 
     def test_read_atoms_het(self):
         """Test open_rmf handling of RMF atoms with HET prefix"""
@@ -257,7 +267,7 @@ class Tests(unittest.TestCase):
                 p = particlef.get(n)
                 p.set_mass(12.)
                 p.set_radius(1.)
-                p.set_coordinates(RMF.Vector3(1,2,3))
+                p.set_coordinates(RMF.Vector3(1, 2, 3))
             add_residue(n, 'HET: N  ', 1, 'PCA')
             add_residue(n, 'C', 2, 'GLY')
 
@@ -290,24 +300,24 @@ class Tests(unittest.TestCase):
             b = pf.get(p)
             b.set_mass(1)
             b.set_radius(4)
-            b.set_coordinates(RMF.Vector3(4.,5.,6.))
+            b.set_coordinates(RMF.Vector3(4., 5., 6.))
             a = af.get(n)
 
             root = r.add_node("topp2", RMF.REPRESENTATION)
             p = root.add_child("p2", RMF.REPRESENTATION)
             b = pf.get(p)
             b.set_radius(4)
-            b.set_coordinates(RMF.Vector3(4.,5.,6.))
+            b.set_coordinates(RMF.Vector3(4., 5., 6.))
             a.add_alternative(root, RMF.PARTICLE)
 
             root = r.add_node("topg1", RMF.REPRESENTATION)
             g = root.add_child("g1", RMF.REPRESENTATION)
             b = gf.get(g)
-            b.set_variances(RMF.Vector3(1.,1.,1.))
+            b.set_variances(RMF.Vector3(1., 1., 1.))
             b.set_mass(1.)
             b = pf.get(g)
             b.set_radius(4)
-            b.set_coordinates(RMF.Vector3(4.,5.,6.))
+            b.set_coordinates(RMF.Vector3(4., 5., 6.))
             a.add_alternative(root, RMF.GAUSSIAN_PARTICLE)
 
         with utils.temporary_file(suffix='.rmf') as fname:
@@ -363,13 +373,14 @@ class Tests(unittest.TestCase):
             structures, status = src.io.open_rmf(mock_session, fname)
             p1, p2, p3 = structures[0].rmf_provenance
             self.assertEqual(p1.name, 'Chain A from xyz')
-            self.assertEqual(p2.name,
+            self.assertEqual(
+                p2.name,
                 'Using software testsoftware version 1.2.3 from testurl')
             self.assertEqual(p3.name, 'misc')
             self.assertIsNone(p2.previous)
             prev = p1.previous
-            self.assertEqual(prev.name,
-                'Sampling using Monte Carlo making 100 frames')
+            self.assertEqual(
+                prev.name, 'Sampling using Monte Carlo making 100 frames')
             prev = prev.previous
             self.assertIn('Using script', prev.name)
             self.assertIsNone(prev.previous)
@@ -396,7 +407,7 @@ class Tests(unittest.TestCase):
             p = particlef.get(pn)
             p.set_mass(12.)
             p.set_radius(1.)
-            p.set_coordinates(RMF.Vector3(1,2,3))
+            p.set_coordinates(RMF.Vector3(1, 2, 3))
 
             n = rn.add_child("r1", RMF.FEATURE)
             p = represf.get(n)
@@ -442,19 +453,19 @@ class Tests(unittest.TestCase):
             p = particlef.get(pn)
             p.set_mass(12.)
             p.set_radius(1.)
-            p.set_coordinates(RMF.Vector3(1,2,3))
+            p.set_coordinates(RMF.Vector3(1, 2, 3))
 
             n = rn.add_child("nofname", RMF.FEATURE)
             p = represf.get(n)
             p.set_representation([pn])
             n.set_value(rsr_typek,
-                    "IMP.pmi.CrossLinkingMassSpectrometryRestraint")
+                        "IMP.pmi.CrossLinkingMassSpectrometryRestraint")
 
             n = rn.add_child("emr", RMF.FEATURE)
             p = represf.get(n)
             p.set_representation([pn])
             n.set_value(rsr_typek,
-                    "IMP.pmi.CrossLinkingMassSpectrometryRestraint")
+                        "IMP.pmi.CrossLinkingMassSpectrometryRestraint")
             n.set_value(rsr_filenamek, "abc")
 
         with utils.temporary_file(suffix='.rmf') as fname:
@@ -486,7 +497,7 @@ class Tests(unittest.TestCase):
             p = particlef.get(pn)
             p.set_mass(12.)
             p.set_radius(1.)
-            p.set_coordinates(RMF.Vector3(1,2,3))
+            p.set_coordinates(RMF.Vector3(1, 2, 3))
 
             n = rn.add_child("nofname", RMF.FEATURE)
             p = represf.get(n)
@@ -514,7 +525,7 @@ class Tests(unittest.TestCase):
             imp_restraint_cat = r.get_category("IMP restraint")
             rsr_typek = r.get_key(imp_restraint_cat, "type", RMF.StringTag())
             rsr_pixelsizek = r.get_key(imp_restraint_cat, "pixel size",
-                                        RMF.FloatTag())
+                                       RMF.FloatTag())
 
             imp_restraint_fn_cat = r.get_category("IMP restraint files")
             rsr_imagefilesk = r.get_key(imp_restraint_fn_cat, "image files",
@@ -530,7 +541,7 @@ class Tests(unittest.TestCase):
             p = particlef.get(pn)
             p.set_mass(12.)
             p.set_radius(1.)
-            p.set_coordinates(RMF.Vector3(1,2,3))
+            p.set_coordinates(RMF.Vector3(1, 2, 3))
 
             n = rn.add_child("nofname", RMF.FEATURE)
             p = represf.get(n)
@@ -586,24 +597,31 @@ class Tests(unittest.TestCase):
             def __init__(self, cid, structure):
                 self.structure, self.cid = structure, cid
                 self.deleted = False
+
             def delete(self):
                 self.deleted = True
+
         class AtomList:
             def __init__(self, atom):
                 self.atoms = [atom]
+
             def delete(self):
                 for a in self.atoms:
                     a.delete()
+
         class MockAtoms:
             def __init__(self):
                 self._atoms = []
+
             def add(self, atoms):
                 self._atoms.extend(atoms)
+
             @property
             def by_chain(self):
                 # simple implementation, assumes only one atom in each chain
                 return [(atom.structure, atom.cid, AtomList(atom))
                         for atom in self._atoms]
+
         class MockModel:
             def __init__(self):
                 self.atoms = MockAtoms()
@@ -624,9 +642,14 @@ class Tests(unittest.TestCase):
     def test_rmf_structure_provenance(self):
         """Test _RMFStructureProvenance class"""
         class MockStructureProvenance:
-            get_chain = lambda self: self.chain
-            get_residue_offset = lambda self: self.residue_offset
-            get_filename = lambda self: self.filename
+            def get_chain(self):
+                return self.chain
+
+            def get_residue_offset(self):
+                return self.residue_offset
+
+            def get_filename(self):
+                return self.filename
         prov = MockStructureProvenance()
         prov.chain = 'A'
         prov.residue_offset = 0
@@ -648,7 +671,8 @@ class Tests(unittest.TestCase):
         prov2.residue_offset = 0
         prov2.filename = '/does/notexist'
         rmf_node2 = MockRMFNode("r2", 2)
-        p2 = src.io._RMFStructureProvenance(rmf_node2, prov2, provenance_chains)
+        p2 = src.io._RMFStructureProvenance(
+            rmf_node2, prov2, provenance_chains)
         self.assertEqual(p2.chain, 'B')
         self.assertEqual(p2.allchains, set('AB'))
         # allchains should have been updated for p too
@@ -722,10 +746,8 @@ END
             p = src.io._RMFEMRestraintGMMProvenance(rmf_node, gmm)
             prev = p.previous
             self.assertEqual(prev.filename, mrc)
-            self.assertEqual(p.name,
-                'Gaussian Mixture Model from test.gmm')
-            self.assertEqual(prev.name,
-                'EM map from test.mrc2')
+            self.assertEqual(p.name, 'Gaussian Mixture Model from test.gmm')
+            self.assertEqual(prev.name, 'EM map from test.mrc2')
             mock_session = make_session()
             mock_session.logger = MockLogger()
             model = src.io._RMFModel(mock_session, 'fname')
@@ -738,11 +760,11 @@ END
 
         with utils.temporary_directory() as tmpdir:
             pgm = os.path.join(tmpdir, 'test.pgm2')
-            with open(pgm, 'w') as fh:
+            with open(pgm, 'w'):
                 pass
             p = src.io._RMFEM2DRestraintProvenance(rmf_node, pgm, 4.0)
-            self.assertEqual(p.name,
-                'EM class average from test.pgm2')
+            self.assertEqual(
+                p.name, 'EM class average from test.pgm2')
             mock_session = make_session()
             mock_session.logger = MockLogger()
             model = src.io._RMFModel(mock_session, 'fname')
@@ -781,10 +803,17 @@ END
     def test_rmf_sample_provenance(self):
         """Test _RMFSampleProvenance class"""
         class MockSampleProvenance:
-            get_frames = lambda self: self.frames
-            get_iterations = lambda self: self.iterations
-            get_method = lambda self: self.method
-            get_replicas = lambda self: self.replicas
+            def get_frames(self):
+                return self.frames
+
+            def get_iterations(self):
+                return self.iterations
+
+            def get_method(self):
+                return self.method
+
+            def get_replicas(self):
+                return self.replicas
         prov = MockSampleProvenance()
         prov.frames = 10
         prov.iterations = 10
@@ -813,7 +842,8 @@ END
     def test_rmf_script_provenance(self):
         """Test _RMFScriptProvenance class"""
         class MockScriptProvenance:
-            get_filename = lambda self: self.filename
+            def get_filename(self):
+                return self.filename
         prov = MockScriptProvenance()
         prov.filename = 'foo'
         rmf_node = MockRMFNode("r1", 1)
@@ -828,9 +858,14 @@ END
     def test_rmf_software_provenance(self):
         """Test _RMFSoftwareProvenance class"""
         class MockSoftwareProvenance:
-            get_location = lambda self: self.location
-            get_name = lambda self: self.software_name
-            get_version = lambda self: self.version
+            def get_location(self):
+                return self.location
+
+            def get_name(self):
+                return self.software_name
+
+            def get_version(self):
+                return self.version
         prov = MockSoftwareProvenance()
         prov.location = 'foo'
         prov.software_name = 'bar'
@@ -854,7 +889,7 @@ END
         mock_session = make_session()
         s = p.take_snapshot(mock_session, None)
         newp = src.io._RMFEMRestraintGMMProvenance.restore_snapshot(
-                            mock_session, s)
+            mock_session, s)
         self.assertIsInstance(newp, src.io._RMFEMRestraintGMMProvenance)
         self.assertEqual(newp.filename, 'foo')
 
@@ -866,7 +901,7 @@ END
         mock_session = make_session()
         s = p.take_snapshot(mock_session, None)
         newp = src.io._RMFEMRestraintMRCProvenance.restore_snapshot(
-                            mock_session, s)
+            mock_session, s)
         self.assertIsInstance(newp, src.io._RMFEMRestraintMRCProvenance)
         self.assertEqual(newp.filename, 'foo')
 
@@ -878,7 +913,7 @@ END
         mock_session = make_session()
         s = p.take_snapshot(mock_session, None)
         newp = src.io._RMFXLMSRestraintProvenance.restore_snapshot(
-                            mock_session, s)
+            mock_session, s)
         self.assertIsInstance(newp, src.io._RMFXLMSRestraintProvenance)
         self.assertEqual(newp.filename, 'foo')
 
@@ -992,33 +1027,33 @@ END
         d = src.io._save_snapshot_chimera_obj(pbond)
         self.assertEqual(d['type'], 'Pseudobond')
 
-        model_by_id = {(1,1): state, (2,1): state2}
+        model_by_id = {(1, 1): state, (2, 1): state2}
         data = {'type': 'Atoms',
-                'single_structure': (1,1),
+                'single_structure': (1, 1),
                 'indices': [0, 1]}
         obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
         self.assertIsInstance(obj, Atoms)
 
         data = {'type': 'Atoms',
-                'structures': [(1,1), (2,1)],
+                'structures': [(1, 1), (2, 1)],
                 'indices': [0, 0]}
         obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
         self.assertIsInstance(obj, Atoms)
 
         data = {'type': 'Atom',
-                'structure': (1,1),
+                'structure': (1, 1),
                 'index': 0}
         obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
         self.assertIs(obj, atom1)
 
         data = {'type': 'Bond',
-                'structure': (1,1),
+                'structure': (1, 1),
                 'index': 0}
         obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
         self.assertIs(obj, bond)
 
         data = {'type': 'Pseudobond',
-                'structure': (1,1),
+                'structure': (1, 1),
                 'index': 0}
         obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
         self.assertIs(obj, pbond)

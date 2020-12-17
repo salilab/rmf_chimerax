@@ -9,11 +9,13 @@ import src
 import src.io
 import src.tool
 
+
 class Tests(unittest.TestCase):
     def test_get_class(self):
         """Test bundle get_class function"""
         self.assertIs(src.bundle_api.get_class("_RMFModel"), src.io._RMFModel)
-        self.assertIs(src.bundle_api.get_class("RMFViewer"), src.tool.RMFViewer)
+        self.assertIs(src.bundle_api.get_class("RMFViewer"),
+                      src.tool.RMFViewer)
         self.assertRaises(ValueError, src.bundle_api.get_class, "garbage")
 
 

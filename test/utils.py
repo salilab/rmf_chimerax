@@ -9,6 +9,7 @@ import os
 # if we're using mocks, a mock GUI is available so we can run these tests.
 no_gui = 'RMF_DISABLE_CHIMERAX_MOCK' in os.environ
 
+
 def set_search_paths(topdir):
     """Set search paths so that we can import Python modules and use mocks"""
     paths = [topdir]
@@ -16,8 +17,8 @@ def set_search_paths(topdir):
         paths.append(os.path.join(topdir, 'test', 'mock'))
     if 'RMF_DISABLE_QT_MOCK' not in os.environ:
         paths.append(os.path.join(topdir, 'test', 'mock-qt'))
-    os.environ['PYTHONPATH'] = os.pathsep.join(paths
-                                         + [os.environ.get('PYTHONPATH', '')])
+    os.environ['PYTHONPATH'] = os.pathsep.join(
+        paths + [os.environ.get('PYTHONPATH', '')])
     for p in reversed(paths):
         sys.path.insert(0, p)
 
@@ -30,11 +31,13 @@ def temporary_file(suffix):
     yield fname
     os.unlink(fname)
 
+
 @contextlib.contextmanager
 def temporary_directory(dir=None):
     _tmpdir = tempfile.mkdtemp(dir=dir)
     yield _tmpdir
     shutil.rmtree(_tmpdir, ignore_errors=True)
+
 
 def import_rmf_module():
     """Import and return the copy of RMF included in the bundle"""
@@ -46,8 +49,10 @@ def import_rmf_module():
         from src.windows import RMF
     return RMF
 
+
 class _MockUi:
     pass
+
 
 def make_session():
     import chimerax.core.session

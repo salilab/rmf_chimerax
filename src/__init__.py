@@ -23,7 +23,8 @@ class _MyAPI(BundleAPI):
             func = cmd.readtraj
             desc = cmd.readtraj_desc
         else:
-            raise ValueError("trying to register unknown command: %s" % ci.name)
+            raise ValueError(
+                "trying to register unknown command: %s" % ci.name)
         if desc.synopsis is None:
             desc.synopsis = ci.synopsis
         from chimerax.core.commands import register
@@ -52,16 +53,14 @@ class _MyAPI(BundleAPI):
 
     @staticmethod
     def get_class(class_name):
-        io_classes = frozenset(('_RMFModel', '_RMFState', '_RMFHierarchyNode',
-                               '_RMFFeature', '_RMFSampleProvenance',
-                               '_RMFDrawing', '_RMFScriptProvenance',
-                               '_RMFSoftwareProvenance',
-                               '_RMFStructureProvenance',
-                               '_RMFXLMSRestraintProvenance',
-                               '_RMFEMRestraintGMMProvenance',
-                               '_RMFEMRestraintMRCProvenance',
-                               '_RMFSAXSRestraintProvenance',
-                               '_RMFEM2DRestraintProvenance'))
+        io_classes = frozenset(
+            ('_RMFModel', '_RMFState', '_RMFHierarchyNode',
+             '_RMFFeature', '_RMFSampleProvenance',
+             '_RMFDrawing', '_RMFScriptProvenance',
+             '_RMFSoftwareProvenance', '_RMFStructureProvenance',
+             '_RMFXLMSRestraintProvenance', '_RMFEMRestraintGMMProvenance',
+             '_RMFEMRestraintMRCProvenance', '_RMFSAXSRestraintProvenance',
+             '_RMFEM2DRestraintProvenance'))
         if class_name in io_classes:
             from . import io
             return getattr(io, class_name)

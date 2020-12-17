@@ -14,6 +14,7 @@ INDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'input'))
 
 RMF = utils.import_rmf_module()
 
+
 class MockLogger(object):
     def __init__(self):
         self.info_log = []
@@ -23,23 +24,33 @@ class MockLogger(object):
 
 
 from chimerax.core.session import Session
+
+
 class MockSession(Session):
     def __init__(self, app_name):
         super().__init__(app_name)
         self.logger = MockLogger()
 
+
 class MockModel:
     id_string = '1'
+
 
 class MockRMFNode:
     def __init__(self, name, index):
         self.name, self.index = name, index
-    def get_name(self): return self.name
-    def get_index(self): return self.index
+
+    def get_name(self):
+        return self.name
+
+    def get_index(self):
+        return self.index
+
 
 def make_node(name, index):
     n = MockRMFNode(name, index)
     return src.io._RMFHierarchyNode(n)
+
 
 def make_test_rmf_hierarchy():
     root = make_node("root", 0)
@@ -86,8 +97,9 @@ class Tests(unittest.TestCase):
         mock_session = MockSession('test')
         src.cmd.hierarchy(mock_session, test_model)
         (log, is_html), = mock_session.logger.info_log
-        def get_li_lines(l):
-            return [line[4:] for line in l.split("\n")
+
+        def get_li_lines(li):
+            return [line[4:] for line in li.split("\n")
                     if line.startswith('<li>')]
         self.assertTrue(is_html)
         # Default depth shows everything
@@ -143,13 +155,13 @@ class Tests(unittest.TestCase):
             n = rn.add_child("ball", RMF.GEOMETRY)
             b1 = bf.get(n)
             b1.set_radius(6)
-            b1.set_coordinates(RMF.Vector3(1.,2.,3.))
+            b1.set_coordinates(RMF.Vector3(1., 2., 3.))
             c1 = cf.get(n)
-            c1.set_rgb_color(RMF.Vector3(1,0,0))
+            c1.set_rgb_color(RMF.Vector3(1, 0, 0))
 
             b2 = bf.get(rn.add_child("ball", RMF.GEOMETRY))
             b2.set_radius(4)
-            b2.set_coordinates(RMF.Vector3(4.,5.,6.))
+            b2.set_coordinates(RMF.Vector3(4., 5., 6.))
             # no color
 
             r.add_frame("f1", RMF.FRAME)
@@ -185,7 +197,7 @@ class Tests(unittest.TestCase):
             b = pf.get(p)
             b.set_mass(1)
             b.set_radius(4)
-            b.set_coordinates(RMF.Vector3(4.,5.,6.))
+            b.set_coordinates(RMF.Vector3(4., 5., 6.))
             a = af.get(n)
 
             root = r.add_node("topp2", RMF.REPRESENTATION)
@@ -193,17 +205,17 @@ class Tests(unittest.TestCase):
             b = pf.get(p)
             b.set_mass(1)
             b.set_radius(4)
-            b.set_coordinates(RMF.Vector3(4.,5.,6.))
+            b.set_coordinates(RMF.Vector3(4., 5., 6.))
             a.add_alternative(root, RMF.PARTICLE)
 
             root = r.add_node("topg1", RMF.REPRESENTATION)
             g = root.add_child("g1", RMF.REPRESENTATION)
             b = gf.get(g)
-            b.set_variances(RMF.Vector3(1.,1.,1.))
+            b.set_variances(RMF.Vector3(1., 1., 1.))
             b.set_mass(1.)
             b = pf.get(g)
             b.set_radius(4)
-            b.set_coordinates(RMF.Vector3(4.,5.,6.))
+            b.set_coordinates(RMF.Vector3(4., 5., 6.))
             a.add_alternative(root, RMF.GAUSSIAN_PARTICLE)
             r.add_frame("f1", RMF.FRAME)
             r.add_frame("f2", RMF.FRAME)
@@ -234,17 +246,17 @@ class Tests(unittest.TestCase):
 
             n = rn.add_child("toprf", RMF.REPRESENTATION)
             rf = rff.get(n)
-            rf.set_rotation(RMF.Vector4(1,0,0,0))
-            rf.set_translation(RMF.Vector3(1,2,3))
+            rf.set_rotation(RMF.Vector4(1, 0, 0, 0))
+            rf.set_translation(RMF.Vector3(1, 2, 3))
             n = n.add_child("botrf", RMF.REPRESENTATION)
             rf = rff.get(n)
-            rf.set_rotation(RMF.Vector4(1,0,0,0))
-            rf.set_translation(RMF.Vector3(9,8,7))
+            rf.set_rotation(RMF.Vector4(1, 0, 0, 0))
+            rf.set_translation(RMF.Vector3(9, 8, 7))
 
             n = n.add_child("ball", RMF.GEOMETRY)
             b1 = bf.get(n)
             b1.set_radius(6)
-            b1.set_coordinates(RMF.Vector3(4.,5.,6.))
+            b1.set_coordinates(RMF.Vector3(4., 5., 6.))
 
             r.add_frame("f1", RMF.FRAME)
             r.add_frame("f2", RMF.FRAME)
@@ -258,7 +270,7 @@ class Tests(unittest.TestCase):
             # One atom should have been read, and transformed twice
             atom, = state.atoms
             # Truncate so comparison is exact
-            self.assertEqual([int(x) for x in atom.coord], [14,15,16])
+            self.assertEqual([int(x) for x in atom.coord], [14, 15, 16])
             src.cmd.readtraj(mock_session, state)
 
 
