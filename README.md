@@ -1,5 +1,5 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3675794.svg)](https://doi.org/10.5281/zenodo.3675794)
-[![Linux Build Status](https://travis-ci.com/salilab/rmf_chimerax.svg?branch=chimerax_1.2)](https://travis-ci.com/salilab/rmf_chimerax)
+[![Linux Build Status](https://github.com/salilab/rmf_chimerax/workflows/build/badge.svg?branch=chimerax_1.2)](https://github.com/salilab/rmf_chimerax/actions?query=workflow%3Abuild)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/mq3gpl2t8jd8s8yb?svg=true)](https://ci.appveyor.com/project/benmwebb/rmf-chimerax)
 [![codecov](https://codecov.io/gh/salilab/rmf_chimerax/branch/master/graph/badge.svg)](https://codecov.io/gh/salilab/rmf_chimerax)
 
