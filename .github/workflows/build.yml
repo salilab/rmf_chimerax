@@ -25,10 +25,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pip install coverage scipy pytest-cov
+        pip install coverage scipy pytest-cov pytest-flake8
         if [ "${{ matrix.with_qt }}" = "true" ]; then pip install PyQt5; fi;
     - name: Test
       run: |
         if [ "${{ matrix.with_qt }}" = "true" ]; then export RMF_DISABLE_QT_MOCK=1; fi;
-        py.test --cov=. --cov-branch --cov-report=xml -v test
+        py.test --cov=. --cov-branch --cov-report=xml --flake8 -v .
     - uses: codecov/codecov-action@v1
