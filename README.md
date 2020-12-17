@@ -62,6 +62,6 @@ environments:
    potentially miss problems if the mock and ChimeraX APIs diverge. It can
    be run with `make test`. The tests can also be run against the real PySide2
    (this requires PySide2 to be installed, plus a display) with `make test-qt`.
- - ChimeraX; this runs the tests instead ChimeraX itself, so requires ChimeraX
+ - ChimeraX; this runs the tests against ChimeraX itself, so requires ChimeraX
    to be installed. Currently this does not test any GUI components such as
    the RMF Viewer tool. It can be run with `make test-chimerax`.
