@@ -1,12 +1,14 @@
 import weakref
-from chimerax.core.models import ADD_MODELS, REMOVE_MODELS
+from chimerax.core.models import ADD_MODELS
 from . import triggerset
+
 
 class _Models:
     def __init__(self, session):
         self._models = []
         self._next_id = 1
         self._session = weakref.ref(session)
+
     def add(self, models):
         def models_and_children(ms):
             for m in ms:
@@ -20,8 +22,10 @@ class _Models:
             self._next_id += 1
         s = self._session()
         s.triggers.activate_trigger(ADD_MODELS, models)
+
     def list(self):
         return [m for m in self._models if not m.was_deleted]
+
 
 class Session:
     def __init__(self, app_name, *, debug=False, silent=False, minimal=False):

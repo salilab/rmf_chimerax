@@ -50,8 +50,10 @@ class Residue(object):
     def add_atom(self, atom):
         atom.structure.atoms.append(atom)
 
+
 class _AtomList(list):
     by_chain = property(lambda self: [])
+
 
 class Structure(object):
     def __init__(self, session, *, name='structure', auto_style=True,
@@ -63,7 +65,7 @@ class Structure(object):
         self.bonds = []
         self.residues = []
         self.parent = None
-        self.id = (1,1)
+        self.id = (1, 1)
         self.id_string = '1.1'
         self.coordset_ids = [1]
 
@@ -83,7 +85,7 @@ class Structure(object):
         if id not in self.coordset_ids:
             self.coordset_ids.append(id)
 
-    def apply_auto_styling(self, set_lighting = False, style=None):
+    def apply_auto_styling(self, set_lighting=False, style=None):
         pass
 
     def new_atom(self, atom_name, element):
@@ -108,6 +110,7 @@ class Structure(object):
     def add_drawing(self, drawing):
         self._drawings.append(drawing)
 
+
 class AtomicStructure(Structure):
     pass
 
@@ -119,6 +122,7 @@ class AtomicShapeDrawing(object):
 
     def add_shape(self, vertices, normals, triangles, color, description=None):
         self._shapes.append((vertices, normals, triangles, color, description))
+
 
 class Atoms:
     def __init__(self, atom_pointers=None):
@@ -137,9 +141,11 @@ class Atoms:
         seen_structures = frozenset(a.structure for a in self._atom_pointers)
         return len(seen_structures) <= 1
 
+
 class Bonds:
     def __init__(self, bond_pointers=None):
         self._bond_pointers = list(bond_pointers)
+
 
 class Pseudobonds:
     def __init__(self, pseudobond_pointers=None):

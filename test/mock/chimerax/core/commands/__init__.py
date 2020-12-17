@@ -4,8 +4,10 @@ class CmdDesc(object):
                  non_keyword=(), hidden=(), url=None, synopsis=None):
         self.synopsis = synopsis
 
+
 class IntArg:
     pass
+
 
 class ModelArg:
     pass

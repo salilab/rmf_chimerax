@@ -3,6 +3,7 @@ class ToolInstance:
         self.session = session
         self.tool_name = tool_name
 
+
 class Tools:
     def __init__(self, session, first=False):
         pass

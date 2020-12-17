@@ -6,24 +6,28 @@ from scipy.spatial.transform import Rotation
 from chimerax.core.commands import CmdDesc
 from chimerax.core.commands import IntArg, ModelArg
 
+
 class _StateSelector:
     def __init__(self, istate):
         self.istate = istate
         self.seen_states = 0
+
     def is_selected(self):
         if self.seen_states == self.istate:
             return True
         self.seen_states += 1
+
 
 def _print_hierarchy(node, depth, level=0):
     yield "<li>%s" % node.name
     if node.children and (depth < 0 or depth > level):
         yield "<ul>"
         for child in node.children:
-            for h in _print_hierarchy(child, depth, level+1):
+            for h in _print_hierarchy(child, depth, level + 1):
                 yield h
         yield "</ul>"
     yield "</li>"
+
 
 def _hierarchy_html(model, depth):
     yield "<p>RMF hierarchy of model %s</p>" % model
@@ -47,6 +51,7 @@ hierarchy_desc = CmdDesc(required=[("model", ModelArg)],
 
 def _chains_html(model):
     from chimerax.core.logger import html_table_params
+
     def link_chain_id(cid):
         return('<a title="Select chain" href="cxcmd:select #%s/%s">%s</a>'
                % (model.id_string, cid, cid))
@@ -76,21 +81,24 @@ def _chains_html(model):
 </table>
 """ % (html_table_params, model, body)
 
+
 def chains(session, model):
     if not hasattr(model, '_rmf_chains'):
         print("%s does not look like an RMF model" % model)
     else:
         session.logger.info(_chains_html(model), is_html=True)
 
+
 chains_desc = CmdDesc(required=[("model", ModelArg)])
 
 
 class _RMFNode:
-    __slots__ =  ['refframe', 'coords', 'children']
+    __slots__ = ['refframe', 'coords', 'children']
 
     def __init__(self, refframe, coords):
         self.refframe, self.coords = refframe, coords
         self.children = []
+
     def add_child(self, child):
         self.children.append(child)
 
@@ -99,10 +107,11 @@ class _Coords:
     def __init__(self, coords):
         self.coords = coords
         self.natom = 0
+
     def add(self, xyz, refframe):
         if refframe:
             rot, trans = refframe
-            xyz= rot.apply(xyz) + trans
+            xyz = rot.apply(xyz) + trans
         self.coords[self.natom] = xyz
         self.natom += 1
 
@@ -140,7 +149,8 @@ class _RMFTrajectoryLoader:
 
         r.set_current_frame(RMF.FrameID(frames_to_read[0]))
         top_node = _RMFNode(None, None)
-        numatoms = self.get_rmf_nodes(self._get_state_node(r, istate), top_node)
+        numatoms = self.get_rmf_nodes(self._get_state_node(r, istate),
+                                      top_node)
         if numatoms != len(state.atoms):
             raise ValueError("atom number mismatch, %d vs %s"
                              % (numatoms, len(state.atoms)))
@@ -192,7 +202,7 @@ class _RMFTrajectoryLoader:
                         return found
         statesel = _StateSelector(istate)
         root = r.get_root_node()
-        c =_check_node(root, root, statesel)
+        c = _check_node(root, root, statesel)
         if c is None:
             raise ValueError("Couldn't find state #%d" % istate)
         return c
@@ -227,7 +237,7 @@ class _RMFTrajectoryLoader:
 
 def readtraj(session, model, first=0, last=None, step=1):
     if (not hasattr(model, 'atoms') or model.parent is None
-        or not hasattr(model.parent, 'rmf_filename')):
+            or not hasattr(model.parent, 'rmf_filename')):
         print("%s does not look like an RMF state" % model)
         return
     t = _RMFTrajectoryLoader()

@@ -14,6 +14,7 @@ class QModelIndex:
     def internalPointer(self):
         return self._pointer
 
+
 class Qt:
     Horizontal = 0
     DisplayRole = 1
@@ -24,6 +25,7 @@ class Qt:
 class QItemSelectionModel:
     Select = 2
     ClearAndSelect = 3
+
 
 class QAbstractItemModel:
     def createIndex(self, row, column, pointer):

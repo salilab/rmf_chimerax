@@ -1,5 +1,6 @@
 DEREGISTER = "deregister"
 
+
 class TriggerSet:
     def __init__(self):
         self._tm = {}

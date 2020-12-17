@@ -1,5 +1,6 @@
 import weakref
 
+
 class Model(object):
     def __init__(self, name, session):
         self.was_deleted = False
@@ -30,6 +31,7 @@ class Model(object):
 
     def set_state_from_snapshot(self, session, data):
         pass
+
 
 ADD_MODELS = "add models"
 REMOVE_MODELS = "remove models"
