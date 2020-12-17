@@ -12,7 +12,7 @@ jobs:
         - os: ubuntu-latest
           python-version: 3.7  # Need to match that used by ChimeraX
           with_qt:
-        - os: macox-latest
+        - os: macos-latest
           python-version: 3.7  # Need to match that used by ChimeraX
           with_qt: true
     runs-on: ${{ matrix.os }}
