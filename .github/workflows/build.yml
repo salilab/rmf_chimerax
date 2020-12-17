@@ -1,0 +1,34 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: ubuntu-latest
+          python-version: [3.7]  # Need to match that used by ChimeraX
+          with_qt:
+        - os: macox-latest
+          python-version: [3.7]  # Need to match that used by ChimeraX
+          with_qt: true
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        pip install coverage scipy pytest-cov
+        if [ "${{ matrix.with_qt }}" = "true" ]; then pip install PyQt5; fi;
+    - name: Test
+      run: |
+        if [ "${{ matrix.with_qt }}" = "true" ]; then export RMF_DISABLE_QT_MOCK=1; fi;
+        py.test --cov=. --cov-branch --cov-report=xml -v test
+    - uses: codecov/codecov-action@v1
