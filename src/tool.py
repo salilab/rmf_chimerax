@@ -3,9 +3,9 @@
 from chimerax.core.tools import ToolInstance
 from chimerax.core.objects import Objects
 from chimerax.atomic import Atoms, Bonds, Pseudobonds, Atom, Bond, Pseudobond
-from PySide2.QtCore import QAbstractItemModel, QModelIndex, Qt
-from PySide2.QtCore import QItemSelectionModel
-from PySide2 import QtWidgets
+from Qt.QtCore import QItemSelectionModel
+from Qt import QtWidgets
+from Qt.QtCore import QAbstractItemModel, QModelIndex, Qt
 
 
 class _RMFHierarchyModel(QAbstractItemModel):
@@ -322,7 +322,7 @@ class RMFViewer(ToolInstance):
             cb = QtWidgets.QCheckBox("%.1f" % res)
             cb.setChecked(res in m._selected_rmf_resolutions)
             cb.clicked.connect(
-                lambda cb=cb, tree=tree, resolution=res:
+                lambda *, cb=cb, tree=tree, resolution=res:
                 self._resolution_button_clicked(cb, tree, resolution))
             label_and_res.addWidget(cb)
 
@@ -346,25 +346,25 @@ class RMFViewer(ToolInstance):
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(0)
         select_button = QtWidgets.QPushButton("Select")
-        # In PySide2 one-argument callbacks get called with a bool argument;
+        # In Qt one-argument callbacks get called with a bool argument;
         # throw this away
-        select_button.clicked.connect(lambda tree=tree, chk=None:
+        select_button.clicked.connect(lambda *, tree=tree:
                                       self._select_button_clicked(tree))
         buttons.addWidget(select_button)
         hide_button = QtWidgets.QPushButton("Hide")
-        hide_button.clicked.connect(lambda tree=tree, chk=None:
+        hide_button.clicked.connect(lambda *, tree=tree:
                                     self._hide_button_clicked(tree))
         buttons.addWidget(hide_button)
         show_button = QtWidgets.QPushButton("Show")
-        show_button.clicked.connect(lambda tree=tree, chk=None:
+        show_button.clicked.connect(lambda *, tree=tree:
                                     self._show_button_clicked(tree))
         buttons.addWidget(show_button)
         show_only_button = QtWidgets.QPushButton("Only")
-        show_only_button.clicked.connect(lambda tree=tree, chk=None:
+        show_only_button.clicked.connect(lambda *, tree=tree:
                                          self._show_only_button_clicked(tree))
         buttons.addWidget(show_only_button)
         view_button = QtWidgets.QPushButton("View")
-        view_button.clicked.connect(lambda tree=tree, chk=None:
+        view_button.clicked.connect(lambda *, tree=tree:
                                     self._view_button_clicked(tree))
         buttons.addWidget(view_button)
         tree_and_buttons.addLayout(buttons)
@@ -402,7 +402,7 @@ class RMFViewer(ToolInstance):
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(0)
         load_button = QtWidgets.QPushButton("Load")
-        load_button.clicked.connect(lambda tree=tree, m=m:
+        load_button.clicked.connect(lambda *, tree=tree, m=m:
                                     self._load_button_clicked(tree, m))
         buttons.addWidget(load_button)
         tree_and_buttons.addLayout(buttons)

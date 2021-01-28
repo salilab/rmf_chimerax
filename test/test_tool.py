@@ -6,8 +6,8 @@ import unittest
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
-from PySide2.QtCore import QModelIndex, Qt
-from PySide2.QtWidgets import QTreeView, QPushButton, QCheckBox
+from Qt.QtWidgets import QTreeView, QPushButton, QCheckBox
+from Qt.QtCore import QModelIndex, Qt
 
 import src
 import src.tool

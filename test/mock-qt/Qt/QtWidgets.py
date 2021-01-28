@@ -1,4 +1,4 @@
-from PySide2.QtCore import QModelIndex
+from Qt.QtCore import QModelIndex
 
 
 class QApplication:
