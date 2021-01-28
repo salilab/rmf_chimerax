@@ -1,4 +1,4 @@
-from Qt.QtCore import QModelIndex
+from PyQt5.QtCore import QModelIndex
 
 
 class QApplication:
