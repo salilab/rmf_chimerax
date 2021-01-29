@@ -61,7 +61,6 @@ def make_session():
     from chimerax.atomic.molobject import ChangeTracker
     s = chimerax.core.session.Session('test')
     s.change_tracker = ChangeTracker()
-    chimerax.core.core_triggers.register_core_triggers(s.triggers)
     s.ui = _MockUi()
     s.ui.is_gui = not no_gui
     s.tools = chimerax.core.tools.Tools(s, first=True)
