@@ -125,7 +125,7 @@ class AtomicShapeDrawing(object):
 
 
 class Atoms:
-    def __init__(self, atom_pointers=None):
+    def __init__(self, atom_pointers=[]):
         self._atom_pointers = list(atom_pointers)
 
     @property

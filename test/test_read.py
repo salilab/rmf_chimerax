@@ -987,6 +987,12 @@ END
         self.assertEqual(d['type'], 'Atoms')
         self.assertIn('single_structure', d)
 
+        # list of zero atoms
+        atoms = Atoms()
+        d = src.io._save_snapshot_chimera_obj(atoms)
+        self.assertEqual(d['type'], 'Atoms')
+        self.assertIn('single_structure', d)
+
         # multiple structures
         atoms = Atoms((atom1, st2_atom1))
         d = src.io._save_snapshot_chimera_obj(atoms)
@@ -1031,6 +1037,12 @@ END
         data = {'type': 'Atoms',
                 'single_structure': (1, 1),
                 'indices': [0, 1]}
+        obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
+        self.assertIsInstance(obj, Atoms)
+
+        data = {'type': 'Atoms',
+                'single_structure': None,
+                'indices': []}
         obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
         self.assertIsInstance(obj, Atoms)
 

@@ -306,7 +306,8 @@ def _save_snapshot_chimera_obj(obj):
         data = {'type': 'Atoms',
                 'indices': obj.coord_indices}
         if obj.single_structure:
-            data['single_structure'] = obj.structures[0].id
+            data['single_structure'] = (obj.structures[0].id
+                if len(obj.structures) > 0 else None)
         else:
             data['structures'] = [s.id for s in obj.structures]
         return data
@@ -336,6 +337,8 @@ def _load_snapshot_chimera_obj(session, data, model_by_id):
         return None
     elif data['type'] == 'Atoms':
         if 'single_structure' in data:
+            if data['single_structure'] is None:
+                return Atoms()
             m = model_by_id[data['single_structure']]
             atoms = [m.atoms[x] for x in data['indices']]
         else:
