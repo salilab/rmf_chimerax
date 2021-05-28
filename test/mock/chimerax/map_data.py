@@ -1,0 +1,2 @@
+class UnknownFileType(Exception):
+    pass

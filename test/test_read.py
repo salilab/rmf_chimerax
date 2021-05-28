@@ -15,8 +15,8 @@ RMF = utils.import_rmf_module()
 
 from chimerax.atomic import Pseudobond
 from chimerax.atomic import Atoms
-import chimerax.atomic.mmcif
-import chimerax.atomic.pdb
+import chimerax.mmcif
+import chimerax.pdb
 
 
 def get_all_nodes(structure):
@@ -585,9 +585,9 @@ class Tests(unittest.TestCase):
     def test_atomic_model_reader(self):
         """Test _atomic_model_reader"""
         f = src.io._atomic_model_reader("test.cif")
-        self.assertIs(f, chimerax.atomic.mmcif.open_mmcif)
+        self.assertIs(f, chimerax.mmcif.open_mmcif)
         f = src.io._atomic_model_reader("test.pdb")
-        self.assertIs(f, chimerax.atomic.pdb.open_pdb)
+        self.assertIs(f, chimerax.pdb.open_pdb)
         f = src.io._atomic_model_reader("test.dcd")
         self.assertIsNone(f)
 
@@ -987,6 +987,12 @@ END
         self.assertEqual(d['type'], 'Atoms')
         self.assertIn('single_structure', d)
 
+        # list of zero atoms
+        atoms = Atoms()
+        d = src.io._save_snapshot_chimera_obj(atoms)
+        self.assertEqual(d['type'], 'Atoms')
+        self.assertIn('single_structure', d)
+
         # multiple structures
         atoms = Atoms((atom1, st2_atom1))
         d = src.io._save_snapshot_chimera_obj(atoms)
@@ -1031,6 +1037,12 @@ END
         data = {'type': 'Atoms',
                 'single_structure': (1, 1),
                 'indices': [0, 1]}
+        obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
+        self.assertIsInstance(obj, Atoms)
+
+        data = {'type': 'Atoms',
+                'single_structure': None,
+                'indices': []}
         obj = src.io._load_snapshot_chimera_obj(session, data, model_by_id)
         self.assertIsInstance(obj, Atoms)
 

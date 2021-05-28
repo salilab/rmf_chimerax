@@ -81,7 +81,7 @@ class QPushButton:
         self.clicked = _Signal()
 
     def click(self):
-        self.clicked._call(False)
+        self.clicked._call()
 
 
 class QComboBox:
@@ -204,6 +204,9 @@ class QCheckBox:
     def setChecked(self, chk):
         self._chk = chk
 
+    def isChecked(self):
+        return self._chk
+
     def click(self):
         self._chk = not self._chk
-        self.clicked._call(self._chk)
+        self.clicked._call()

@@ -6,8 +6,8 @@ import unittest
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
-from PyQt5.QtCore import QModelIndex, Qt
-from PyQt5.QtWidgets import QTreeView, QPushButton, QCheckBox
+from Qt.QtWidgets import QTreeView, QPushButton, QCheckBox
+from Qt.QtCore import QModelIndex, Qt
 
 import src
 import src.tool
@@ -326,8 +326,12 @@ class Tests(unittest.TestCase):
         res1b, res10b = list(get_buttons(r.model_stack.widget(0)))
         # Call "clicked" methods directly
         # Show/hide resolution 10
-        r._resolution_button_clicked(True, tree1, 10)
-        r._resolution_button_clicked(False, tree1, 10)
+        cb = QCheckBox('foo')
+        cb.setChecked(True)
+        r._resolution_button_clicked(cb, tree1, 10)
+        cb = QCheckBox('bar')
+        cb.setChecked(False)
+        r._resolution_button_clicked(cb, tree1, 10)
         tree1.selectAll()
         # Call indirectly via clicking each button
         for b in res1b, res10b:

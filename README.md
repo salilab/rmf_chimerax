@@ -1,7 +1,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3675794.svg)](https://doi.org/10.5281/zenodo.3675794)
-[![Linux Build Status](https://github.com/salilab/rmf_chimerax/workflows/build/badge.svg?branch=master)](https://github.com/salilab/rmf_chimerax/actions?query=workflow%3Abuild)
+[![Linux Build Status](https://github.com/salilab/rmf_chimerax/workflows/build/badge.svg?branch=main)](https://github.com/salilab/rmf_chimerax/actions?query=workflow%3Abuild)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/mq3gpl2t8jd8s8yb?svg=true)](https://ci.appveyor.com/project/benmwebb/rmf-chimerax)
-[![codecov](https://codecov.io/gh/salilab/rmf_chimerax/branch/master/graph/badge.svg)](https://codecov.io/gh/salilab/rmf_chimerax)
+[![codecov](https://codecov.io/gh/salilab/rmf_chimerax/branch/main/graph/badge.svg)](https://codecov.io/gh/salilab/rmf_chimerax)
 
 This is an experimental ChimeraX plugin to read and visualize
 [RMF](https://integrativemodeling.org/rmf/) files, used primarily by the
@@ -62,6 +62,6 @@ environments:
    potentially miss problems if the mock and ChimeraX APIs diverge. It can
    be run with `make test`. The tests can also be run against the real PyQt5
    (this requires PyQt5 to be installed, plus a display) with `make test-qt`.
- - ChimeraX; this runs the tests instead ChimeraX itself, so requires ChimeraX
+ - ChimeraX; this runs the tests against ChimeraX itself, so requires ChimeraX
    to be installed. Currently this does not test any GUI components such as
    the RMF Viewer tool. It can be run with `make test-chimerax`.
