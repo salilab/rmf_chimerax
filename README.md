@@ -51,6 +51,18 @@ your copy of ChimeraX is installed, which you can do by setting the
 Windows or Mac) or `CHIMERAX_EXE` to the full path to the `chimerax` binary
 (on Linux).
 
+## Releases
+
+We build releases by simply running `make wheel` on Linux and Mac.
+In each case we try to build on the oldest system ChimeraX itself supports
+to maximize binary compatibility (Ubuntu 16.04 and macOS 10.13 respectively).
+
+On Windows 10, from the `rmf_chimerax` working directory we run
+
+    "C:\Program Files\ChimeraX 1.2.5\bin\ChimeraX-console.exe" --nogui
+
+and then run `devel build . exit true` from the ChimeraX prompt.
+
 ## Testing
 
 This plugin has a full test suite which is designed to run in one of two
