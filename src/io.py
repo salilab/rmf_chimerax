@@ -86,19 +86,8 @@ class _RMFState(AtomicStructure):
         return s
 
     def set_state_from_snapshot(self, session, data):
-        self._as_set_state_from_snapshot(
-            session, data['atomic structure state'])
-
-    def _as_set_state_from_snapshot(self, session, data):
-        # AtomicStructure doesn't provide a set_state_from_snapshot method,
-        # so duplicate its restore_snapshot functionality
-        if data.get('AtomicStructure version', 1) == 1:
-            Structure.set_state_from_snapshot(self, session, data)
-        else:
-            from chimerax.atomic.molobject import set_custom_attrs
-            Structure.set_state_from_snapshot(
-                self, session, data['structure state'])
-            set_custom_attrs(self, data)
+        AtomicStructure.set_state_from_snapshot(
+            self, session, data['atomic structure state'])
 
     def _add_pseudobond(self, atoms):
         f = self._get_features()
