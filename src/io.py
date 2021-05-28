@@ -7,6 +7,9 @@ import weakref
 import copy
 
 from chimerax.atomic import Atom, Atoms, Bond, Pseudobond
+from chimerax.core.state import State
+from chimerax.core.models import Model
+from chimerax.atomic import Structure, AtomicStructure, AtomicShapeDrawing
 
 
 class _MockRMFNode:
@@ -57,11 +60,6 @@ def open_rmf(session, path):
         from chimerax.core.commands import run
         run(session, 'tool show "RMF Viewer"', log=False)
     return structures, status
-
-
-from chimerax.core.state import State
-from chimerax.core.models import Model
-from chimerax.atomic import Structure, AtomicStructure, AtomicShapeDrawing
 
 
 class _RMFState(AtomicStructure):

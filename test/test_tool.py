@@ -6,14 +6,14 @@ import unittest
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
-from Qt.QtWidgets import QTreeView, QPushButton, QCheckBox
-from Qt.QtCore import QModelIndex, Qt
+from Qt.QtWidgets import QTreeView, QPushButton, QCheckBox  # noqa: E402
+from Qt.QtCore import QModelIndex, Qt  # noqa: E402
 
-import src
-import src.tool
-import src.io
-from utils import make_session
-from chimerax.core.models import Model
+import src  # noqa: E402
+import src.tool  # noqa: E402
+import src.io  # noqa: E402
+from utils import make_session  # noqa: E402
+from chimerax.core.models import Model  # noqa: E402
 
 
 class MockBundleInfo:

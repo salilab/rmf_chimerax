@@ -5,18 +5,18 @@ import unittest
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
-import src
-import src.io
-from utils import make_session
+import src  # noqa: E402
+import src.io  # noqa: E402
+from utils import make_session  # noqa: E402
 
 INDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'input'))
 
 RMF = utils.import_rmf_module()
 
-from chimerax.atomic import Pseudobond
-from chimerax.atomic import Atoms
-import chimerax.mmcif
-import chimerax.pdb
+from chimerax.atomic import Pseudobond  # noqa: E402
+from chimerax.atomic import Atoms  # noqa: E402
+import chimerax.mmcif  # noqa: E402
+import chimerax.pdb  # noqa: E402
 
 
 def get_all_nodes(structure):

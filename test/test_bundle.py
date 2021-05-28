@@ -5,9 +5,9 @@ import unittest
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
-import src
-import src.io
-import src.tool
+import src  # noqa: E402
+import src.io  # noqa: E402
+import src.tool  # noqa: E402
 
 
 class Tests(unittest.TestCase):

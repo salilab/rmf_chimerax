@@ -5,10 +5,10 @@ import unittest
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 utils.set_search_paths(TOPDIR)
 
-import src
-import src.cmd
-import src.io
-from utils import make_session
+import src  # noqa: E402
+import src.cmd  # noqa: E402
+import src.io  # noqa: E402
+from utils import make_session  # noqa: E402
 
 INDIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'input'))
 
@@ -23,7 +23,7 @@ class MockLogger(object):
         self.info_log.append((msg, is_html))
 
 
-from chimerax.core.session import Session
+from chimerax.core.session import Session  # noqa: E402
 
 
 class MockSession(Session):
