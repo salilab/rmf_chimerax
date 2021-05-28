@@ -75,9 +75,6 @@ support for newer RMF features, such as provenance.
     <ChimeraXClassifier>ChimeraX :: Tool :: RMF Viewer ::
       General :: Display information extracted from RMF files</ChimeraXClassifier>
 
-    <!-- For compatibility with older ChimeraX -->
-    <ChimeraXClassifier>ChimeraX :: DataFormat :: RMF :: :: Molecular structure :: .rmf,.rmf3 :: :: https://integrativemodeling.org/rmf/ :: :: :: RMF format :: binary</ChimeraXClassifier>
-    <ChimeraXClassifier>ChimeraX :: Open :: RMF :: RMF ::</ChimeraXClassifier>
   </Classifiers>
 
 </BundleInfo>
