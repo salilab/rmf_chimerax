@@ -10,10 +10,10 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          python-version: 3.8  # Need to match that used by ChimeraX
+          python-version: 3.9  # Need to match that used by ChimeraX
           with_qt:
         - os: macos-latest
-          python-version: 3.8  # Need to match that used by ChimeraX
+          python-version: 3.9  # Need to match that used by ChimeraX
           with_qt: true
     runs-on: ${{ matrix.os }}
 

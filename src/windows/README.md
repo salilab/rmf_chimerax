@@ -7,7 +7,7 @@ To build on Windows:
  - Get https://github.com/salilab/conda-recipes and modify `rmf/meta.yaml` so
    that `url` points to `rmf-1.0.zip`
  - Start a VS2015 command prompt
- - Build a conda package with `conda build --python=3.8 rmf`
+ - Build a conda package with `conda build --python=3.9 rmf`
  - Extract from the resulting `tar.bz2` the files
    `Library/lib/RMF.dll Lib/site-packages/_RMF*pyd Lib/site-packages/RMF*py`
  - Add any needed DLLs from conda (usually in `Library/bin`)
