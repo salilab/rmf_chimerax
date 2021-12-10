@@ -1,6 +1,6 @@
 To build on Windows:
 
- - Use a Windows 7 VM with Anaconda and Visual Studio 2015 installed
+ - Use a Windows 10 VM with Anaconda and Visual Studio 2015 installed
  - Download rmf-develop.zip from https://github.com/salilab/rmf/, and
    make rmf-1.0.zip containing everything in rmf-develop.zip except for the
    symlinks `doc/PymolPlugin.md`, `doc/VMDPlugin.md` and `tools/dev_tools/git`.
