@@ -1,5 +1,5 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3675794.svg)](https://doi.org/10.5281/zenodo.3675794)
-[![ChimeraX toolshed](https://img.shields.io/badge/ChimeraX_toolshed-1.2-brightgreen)](https://cxtoolshed.rbvi.ucsf.edu/apps/chimeraxrmf)
+[![ChimeraX toolshed](https://img.shields.io/badge/ChimeraX_toolshed-1.3-brightgreen)](https://cxtoolshed.rbvi.ucsf.edu/apps/chimeraxrmf)
 [![Linux Build Status](https://github.com/salilab/rmf_chimerax/workflows/build/badge.svg?branch=main)](https://github.com/salilab/rmf_chimerax/actions?query=workflow%3Abuild)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/mq3gpl2t8jd8s8yb?svg=true)](https://ci.appveyor.com/project/benmwebb/rmf-chimerax)
 [![codecov](https://codecov.io/gh/salilab/rmf_chimerax/branch/main/graph/badge.svg)](https://codecov.io/gh/salilab/rmf_chimerax)
@@ -60,7 +60,7 @@ to maximize binary compatibility (Ubuntu 16.04 and macOS 10.13 respectively).
 
 On Windows 10, from the `rmf_chimerax` working directory we run
 
-    "C:\Program Files\ChimeraX 1.2.5\bin\ChimeraX-console.exe" --nogui
+    "C:\Program Files\ChimeraX 1.3\bin\ChimeraX-console.exe" --nogui
 
 and then run `devel build . exit true` from the ChimeraX prompt.
 
