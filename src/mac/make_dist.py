@@ -44,6 +44,15 @@ def copy_lib(lib, dest):
         copy_lib(dep, dest)
 
 
+def codesign(dest):
+    for lib in os.listdir(dest):
+        if lib.endswith('.so') or lib.endswith('.dylib'):
+            cmd = ['codesign', '-f', '-s', '-',
+                   os.path.join(dest, lib)]
+            print(" ".join(cmd))
+            subprocess.check_call(cmd)
+
+
 def main():
     if os.path.exists(dist):
         shutil.rmtree(dist)
@@ -55,6 +64,9 @@ def main():
 
     for lib in wanted_libs:
         copy_lib(lib, dist)
+
+    if os.uname().machine == 'arm64':
+        codesign(dist)
 
 
 if __name__ == '__main__':
