@@ -8,12 +8,13 @@ dist = 'dist'
 
 
 def get_deps(lib):
+    libdir = os.path.dirname(lib)
     out = subprocess.check_output(['otool', '-L', lib], text=True).split('\n')
     for line in out:
         if 'compatibility version' in line:
             lib = line.split()[0]
             if not lib.startswith('/usr/lib/'):
-                yield lib
+                yield lib.replace('@loader_path', libdir)
 
 
 def set_dep_loader_path(lib, dep):
@@ -38,7 +39,7 @@ def copy_lib(lib, dest):
     os.chmod(destlib, 0o755)
     set_loader_path(destlib)
     
-    for dep in get_deps(destlib):
+    for dep in get_deps(lib):
         set_dep_loader_path(destlib, dep)
         copy_lib(dep, dest)
 
