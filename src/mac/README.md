@@ -1,4 +1,5 @@
-To build on Mac (use a 10.12 machine to match ChimeraX's build environment):
+To build on Mac (use both a 10.15 Intel machine, and a 12.1 M1 machine,
+to match ChimeraX's build environments):
 
 ```
 git clone https://github.com/salilab/rmf.git
@@ -8,4 +9,7 @@ cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DLog4CXX_LIBRARY=Log4CXX_LIBRARY-NO
 ```
 
 Use `python3 make_dist.py` to collect all needed files (RMF itself plus
-the dynamic libraries it uses) in the `dist` directory.
+the dynamic libraries it uses) in the `x86_64` and `arm64` directories.
+
+Finally, run `python3 make_universal.py` to make the final `dist` directory
+containing universal binaries.

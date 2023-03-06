@@ -4,7 +4,11 @@ import os
 
 wanted_libs = ['lib/_RMF_HDF5.so', 'lib/_RMF.so']
 wanted_py = ['lib/RMF_HDF5.py', 'lib/RMF.py']
-dist = 'dist'
+
+if os.uname().machine == 'arm64':
+    dist = 'arm64'
+else:
+    dist = 'x86_64'
 
 
 def get_deps(lib):
