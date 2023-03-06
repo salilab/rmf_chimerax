@@ -53,8 +53,8 @@ def _chains_html(model):
     from chimerax.core.logger import html_table_params
 
     def link_chain_id(cid):
-        return('<a title="Select chain" href="cxcmd:select #%s/%s">%s</a>'
-               % (model.id_string, cid, cid))
+        return ('<a title="Select chain" href="cxcmd:select #%s/%s">%s</a>'
+                % (model.id_string, cid, cid))
     body_template = """
     <tr>
       <td>%s</td>
