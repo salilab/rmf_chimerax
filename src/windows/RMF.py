@@ -147,15 +147,11 @@ RMF_VERSION_MAJOR = _RMF.RMF_VERSION_MAJOR
 
 RMF_VERSION_MINOR = _RMF.RMF_VERSION_MINOR
 
+RMF_VERSION_MICRO = _RMF.RMF_VERSION_MICRO
+
 RMF_HAS_LOG4CXX = _RMF.RMF_HAS_LOG4CXX
 
 RMF_HAS_DEPRECATED_BACKENDS = _RMF.RMF_HAS_DEPRECATED_BACKENDS
-
-RMF_COMPILER_HAS_OVERRIDE = _RMF.RMF_COMPILER_HAS_OVERRIDE
-
-RMF_COMPILER_HAS_FINAL = _RMF.RMF_COMPILER_HAS_FINAL
-
-RMF_HAS_NOEXCEPT = _RMF.RMF_HAS_NOEXCEPT
 
 class FrameTag(object):
     r"""Proxy of C++ RMF::FrameTag class."""
@@ -1015,7 +1011,7 @@ def Vector4_get_dimension():
     return _RMF.Vector4_get_dimension()
 
 class IntRange(object):
-    r"""Proxy of C++ boost::array< int,2 > class."""
+    r"""Proxy of C++ std::array< int,2 > class."""
 
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
@@ -6131,7 +6127,7 @@ class BufferConstHandle(object):
         r"""
         __init__(BufferConstHandle self, std::vector< char,std::allocator< char > > const & r) -> BufferConstHandle
         __init__(BufferConstHandle self, std::vector< uint8_t,std::allocator< uint8_t > > const & r) -> BufferConstHandle
-        __init__(BufferConstHandle self, boost::shared_ptr< std::vector< char,std::allocator< char > > > r) -> BufferConstHandle
+        __init__(BufferConstHandle self, std::shared_ptr< std::vector< char,std::allocator< char > > > r) -> BufferConstHandle
         """
         _RMF.BufferConstHandle_swiginit(self, _RMF.new_BufferConstHandle(*args))
 
@@ -6261,6 +6257,14 @@ class FileConstHandle(object):
         r"""get_root_node(FileConstHandle self) -> NodeConstHandle"""
         return _RMF.FileConstHandle_get_root_node(self)
 
+    def get_is_closed(self):
+        r"""get_is_closed(FileConstHandle self) -> bool"""
+        return _RMF.FileConstHandle_get_is_closed(self)
+
+    def close(self):
+        r"""close(FileConstHandle self)"""
+        return _RMF.FileConstHandle_close(self)
+
     def get_path(self):
         r"""get_path(FileConstHandle self) -> std::string"""
         return _RMF.FileConstHandle_get_path(self)
@@ -6388,6 +6392,13 @@ class FileConstHandle(object):
     def reload(self):
         r"""reload(FileConstHandle self)"""
         return _RMF.FileConstHandle_reload(self)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return False
 
     def get_frames(self):
         class MyRange:
@@ -12622,7 +12633,7 @@ def test_throw_exception():
     return _RMF.test_throw_exception()
 
 def get_bounding_box(root):
-    r"""get_bounding_box(NodeConstHandle root) -> boost::array< RMF::Vector3,2 >"""
+    r"""get_bounding_box(NodeConstHandle root) -> std::array< RMF::Vector3,2 >"""
     return _RMF.get_bounding_box(root)
 
 def get_diameter(root):
