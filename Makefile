@@ -59,10 +59,10 @@ wheel:	bundle_info.xml $(SRCS) generated_files
 	$(RUN) "devel build . exit true"
 
 test::
-	python3 -m nose test
+	pytest test
 
 test-qt::
-	env RMF_DISABLE_QT_MOCK=1 python3 -m nose test
+	env RMF_DISABLE_QT_MOCK=1 pytest test
 
 test-chimerax::
 	$(CHIMERAX_EXE) --exit --nogui test/run-with-chimerax.py test/test_*.py
