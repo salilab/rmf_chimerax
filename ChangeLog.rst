@@ -1,5 +1,7 @@
-HEAD
-====
+0.12 - 2023-03-07
+=================
+ - Update bundled copy of RMF to latest version, 1.4.1.
+ - Support Apple Silicon (arm64/M1) by adding a universal Mac bundle.
 
 0.11 - 2021-12-09
 =================
