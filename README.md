@@ -65,6 +65,11 @@ On Windows 10, from the `rmf_chimerax` working directory we run
 
 and then run `devel build . exit true` from the ChimeraX prompt.
 
+Note that ChimeraX's bundle builder on Mac currently only supports single
+architectures and so the resulting `.whl` file must be renamed (also change
+the tag in the `WHEEL` file inside the archive) to replace the single
+architecture (`x86_64` or `arm64`) with `universal2`.
+
 ## Testing
 
 This plugin has a full test suite which is designed to run in one of two
