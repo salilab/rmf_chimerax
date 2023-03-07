@@ -56,7 +56,7 @@ Windows or Mac) or `CHIMERAX_EXE` to the full path to the `chimerax` binary
 
 We build releases by simply running `make wheel` on Linux and Mac.
 In each case we try to build on the oldest system ChimeraX itself supports
-to maximize binary compatibility (Ubuntu 16.04 and macOS 10.13 respectively).
+to maximize binary compatibility (RHEL 7 and macOS 10.13 respectively).
 
 On Windows 10, from the `rmf_chimerax` working directory we run
 
