@@ -798,26 +798,18 @@ class _RMFEM2DRestraintProvenance(_RMFProvenance):
 
 class _RMFHierarchyInfo(object):
     """Track structural information encountered through the RMF hierarchy"""
-    def __init__(self, top_level):
+    def __init__(self, top_level, CoordinateTransformer):
         self.top_level = top_level
         self._refframe = self._state = self._chain = self._copy = None
         self._resolution = self._resnum = self._restype = None
         self._residue = None
         self._resnum_for_chain = {}
+        self.CoordinateTransformer = CoordinateTransformer
 
     def _set_reference_frame(self, rf):
         """Set the current reference frame from an RMF ReferenceFrame node"""
-        from scipy.spatial.transform import Rotation
-        rot = rf.get_rotation()
-        # RMF quaternions are scalar-first; scipy uses scalar-last
-        rot = Rotation.from_quat((rot[1], rot[2], rot[3], rot[0]))
-        tran = numpy.array(rf.get_translation())
-        if self._refframe:
-            # Compose with existing transformation
-            oldrot, oldtran = self._refframe
-            tran = oldrot.apply(tran) + oldtran
-            rot = oldrot * rot
-        self._refframe = (rot, tran)
+        self._refframe = self.CoordinateTransformer(
+            self._refframe or self.CoordinateTransformer(), rf)
 
     def handle_node(self, node, hierarchy, loader):
         """Extract structural information from the given RMF node.
@@ -905,10 +897,11 @@ class _RMFHierarchyInfo(object):
             name = 'C'
             state._atomic = False
         atom = state.new_atom(name, element)
-        atom.coord = p.get_coordinates()
         if self._refframe:
-            rot, trans = self._refframe
-            atom.coord = rot.apply(atom.coord) + trans
+            atom.coord = self._refframe.get_global_coordinates(
+                p.get_coordinates())
+        else:
+            atom.coord = p.get_coordinates()
         atom.mass = mass
         atom.radius = p.get_radius()
         atom.draw_mode = atom.SPHERE_STYLE
@@ -1008,7 +1001,7 @@ class _RMFLoader(object):
         r.set_current_frame(RMF.FrameID(0))
 
         top_level = _RMFModel(session, path)
-        rhi = _RMFHierarchyInfo(top_level)
+        rhi = _RMFHierarchyInfo(top_level, RMF.CoordinateTransformer)
         top_level.rmf_filename = os.path.abspath(path)
         top_level.rmf_features = []
         top_level.rmf_provenance = []

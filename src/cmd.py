@@ -2,7 +2,6 @@
 
 import sys
 import numpy
-from scipy.spatial.transform import Rotation
 from chimerax.core.commands import CmdDesc
 from chimerax.core.commands import IntArg, ModelArg
 
@@ -110,8 +109,7 @@ class _Coords:
 
     def add(self, xyz, refframe):
         if refframe:
-            rot, trans = refframe
-            xyz = rot.apply(xyz) + trans
+            xyz = refframe.get_global_coordinates(xyz)
         self.coords[self.natom] = xyz
         self.natom += 1
 
@@ -129,6 +127,7 @@ class _RMFTrajectoryLoader:
             from .windows import RMF
         self.GAUSSIAN_PARTICLE = RMF.GAUSSIAN_PARTICLE
         self.PARTICLE = RMF.PARTICLE
+        self.CoordinateTransformer = RMF.CoordinateTransformer
 
         model = state.parent
         istate = model.child_models().index(state)
@@ -164,16 +163,8 @@ class _RMFTrajectoryLoader:
         return len(frames_to_read)
 
     def _get_ref_frame(self, rf, parent):
-        rot = rf.get_rotation()
-        # RMF quaternions are scalar-first; scipy uses scalar-last
-        rot = Rotation.from_quat((rot[1], rot[2], rot[3], rot[0]))
-        tran = numpy.array(rf.get_translation())
-        if parent:
-            # Compose with existing transformation
-            oldrot, oldtran = parent
-            tran = oldrot.apply(tran) + oldtran
-            rot = oldrot * rot
-        return rot, tran
+        return self.CoordinateTransformer(
+            parent or self.CoordinateTransformer(), rf)
 
     def add_rmf_coordinates(self, parent, parent_refframe, coords):
         for node in parent.children:
