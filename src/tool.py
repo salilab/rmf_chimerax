@@ -236,7 +236,11 @@ class RMFViewer(ToolInstance):
         self.rmf_models = [m for m in self.session.models.list()
                            if hasattr(m, 'rmf_hierarchy')]
 
-        self.model_list.clear()
+        try:
+            self.model_list.clear()
+        except RuntimeError:
+            # The underlying C++ Qt object was deleted
+            return
         self.model_list.addItems("%s; #%s" % (m.name, m.id_string)
                                  for m in self.rmf_models)
 
