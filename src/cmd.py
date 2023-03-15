@@ -91,29 +91,6 @@ def chains(session, model):
 chains_desc = CmdDesc(required=[("model", ModelArg)])
 
 
-class _RMFNode:
-    __slots__ = ['refframe', 'coords', 'children']
-
-    def __init__(self, refframe, coords):
-        self.refframe, self.coords = refframe, coords
-        self.children = []
-
-    def add_child(self, child):
-        self.children.append(child)
-
-
-class _Coords:
-    def __init__(self, coords):
-        self.coords = coords
-        self.natom = 0
-
-    def add(self, xyz, refframe):
-        if refframe:
-            xyz = refframe.get_global_coordinates(xyz)
-        self.coords[self.natom] = xyz
-        self.natom += 1
-
-
 class _RMFTrajectoryLoader:
     def __init__(self):
         pass
@@ -125,19 +102,13 @@ class _RMFTrajectoryLoader:
             from .linux import RMF
         else:
             from .windows import RMF
-        self.GAUSSIAN_PARTICLE = RMF.GAUSSIAN_PARTICLE
-        self.PARTICLE = RMF.PARTICLE
-        self.CoordinateTransformer = RMF.CoordinateTransformer
 
         model = state.parent
         istate = model.child_models().index(state)
         r = RMF.open_rmf_file_read_only(model.rmf_filename)
         self.statef = RMF.StateConstFactory(r)
-        self.refframef = RMF.ReferenceFrameConstFactory(r)
-        self.gparticlef = RMF.GaussianParticleConstFactory(r)
         self.particlef = RMF.ParticleConstFactory(r)
         self.ballf = RMF.BallConstFactory(r)
-        self.altf = RMF.AlternativesConstFactory(r)
 
         numframes = r.get_number_of_frames()
         if last is None or last >= numframes:
@@ -146,35 +117,13 @@ class _RMFTrajectoryLoader:
         if len(frames_to_read) == 0:
             return 0
 
-        r.set_current_frame(RMF.FrameID(frames_to_read[0]))
-        top_node = _RMFNode(None, None)
-        numatoms = self.get_rmf_nodes(self._get_state_node(r, istate),
-                                      top_node)
-        if numatoms != len(state.atoms):
-            raise ValueError("atom number mismatch, %d vs %s"
-                             % (numatoms, len(state.atoms)))
-        coords = numpy.empty((numatoms, 3))
-        self.add_rmf_coordinates(top_node, None, _Coords(coords))
-        state.add_coordset(frames_to_read[0] + 1, coords)
-        for nframe in frames_to_read[1:]:
+        state_node = self._get_state_node(r, istate)
+        coords = numpy.empty((len(state.atoms), 3))
+        for nframe in frames_to_read:
             r.set_current_frame(RMF.FrameID(nframe))
-            self.add_rmf_coordinates(top_node, None, _Coords(coords))
+            RMF.get_all_global_coordinates(r, state_node, coords)
             state.add_coordset(nframe + 1, coords)
         return len(frames_to_read)
-
-    def _get_ref_frame(self, rf, parent):
-        return self.CoordinateTransformer(
-            parent or self.CoordinateTransformer(), rf)
-
-    def add_rmf_coordinates(self, parent, parent_refframe, coords):
-        for node in parent.children:
-            if node.refframe is not None:
-                refframe = self._get_ref_frame(node.refframe, parent_refframe)
-            else:
-                refframe = parent_refframe
-            if node.coords is not None:
-                coords.add(node.coords.get_coordinates(), refframe)
-            self.add_rmf_coordinates(node, refframe, coords)
 
     def _get_state_node(self, r, istate):
         """Return the RMF node corresponding to the istate'th state"""
@@ -197,33 +146,6 @@ class _RMFTrajectoryLoader:
         if c is None:
             raise ValueError("Couldn't find state #%d" % istate)
         return c
-
-    def get_rmf_nodes(self, node, parent):
-        """Traverse the RMF hierarchy, and collect handles for all nodes
-           pertaining to coordinate for the given states"""
-        numatoms = 0
-        refframe = coords = thisnode = None
-        if self.refframef.get_is(node):
-            refframe = self.refframef.get(node)
-        if self.ballf.get_is(node):
-            numatoms += 1
-            coords = self.ballf.get(node)
-        elif self.particlef.get_is(node):
-            numatoms += 1
-            coords = self.particlef.get(node)
-        if refframe is not None or coords is not None:
-            thisnode = _RMFNode(refframe, coords)
-            parent.add_child(thisnode)
-
-        for child in node.get_children():
-            numatoms += self.get_rmf_nodes(child, thisnode or parent)
-        if self.altf.get_is(node):
-            alt = self.altf.get(node)
-            for p in alt.get_alternatives(self.PARTICLE)[1:]:
-                numatoms += self.get_rmf_nodes(p, parent)
-            for gauss in alt.get_alternatives(self.GAUSSIAN_PARTICLE):
-                numatoms += self.get_rmf_nodes(gauss, parent)
-        return numatoms
 
 
 def readtraj(session, model, first=0, last=None, step=1):
