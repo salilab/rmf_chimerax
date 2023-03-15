@@ -1,3 +1,7 @@
+0.13 - 2023-03-15
+=================
+ - Trajectory reading (`rmf readtraj` command) is now much faster.
+
 0.12 - 2023-03-08
 =================
  - Update bundled copy of RMF to latest version, 1.4.1.
