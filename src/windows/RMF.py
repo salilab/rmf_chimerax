@@ -151,6 +151,8 @@ RMF_VERSION_MICRO = _RMF.RMF_VERSION_MICRO
 
 RMF_HAS_LOG4CXX = _RMF.RMF_HAS_LOG4CXX
 
+RMF_HAS_NUMPY = _RMF.RMF_HAS_NUMPY
+
 RMF_HAS_DEPRECATED_BACKENDS = _RMF.RMF_HAS_DEPRECATED_BACKENDS
 
 class FrameTag(object):
@@ -12705,6 +12707,10 @@ except:
 
 suffixes.extend(["rmf-avro", "rmf3", "rmf-hdf5", "_rmf_test_buffer"])
 
+
+def get_all_global_coordinates(fh, nh, coord):
+    r"""get_all_global_coordinates(FileConstHandle fh, NodeConstHandle nh, PyObject * coord)"""
+    return _RMF.get_all_global_coordinates(fh, nh, coord)
 
 ALL_FRAMES = cvar.ALL_FRAMES
 
