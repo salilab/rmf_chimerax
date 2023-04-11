@@ -1,6 +1,7 @@
 To build on Linux (use a RHEL7 machine to match ChimeraX's build environment):
 
 ```
+yum install git python39 python3-devel python3-numpy swig3 boost-devel hdf5-devel gcc-c++ ninja cmake chrpath
 git clone https://github.com/salilab/rmf.git
 cd rmf
 mkdir build && cd build
