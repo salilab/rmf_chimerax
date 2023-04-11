@@ -101,6 +101,19 @@ class Tests(unittest.TestCase):
         self.assertTrue(state._atomic)
         state.apply_auto_styling()
 
+    def test_open_rmf_npc(self):
+        """Test open_rmf with an NPC example"""
+        # This file contains custom geometry, plus at least one node
+        # ("Granules") that has mass but no coordinates
+        path = os.path.join(INDIR, 'pbc_interacting_patches.py.rmf')
+        mock_session = make_session()
+        structures, status = src.io.open_rmf(mock_session, path)
+        state, geometry = structures[0].child_models()
+        self.assertFalse(state._atomic)
+        state.apply_auto_styling()
+        shapes = geometry._drawing._shapes
+        self.assertEqual(len(shapes), 12)
+
     def test_bundle_api_open_old(self):
         """Test open file via BundleAPI (old mechanism)"""
         bundle_api = src.bundle_api
