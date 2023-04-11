@@ -965,6 +965,7 @@ class _RMFLoader(object):
 
         r = RMF.open_rmf_file_read_only(path)
         self.particlef = RMF.ParticleConstFactory(r)
+        self.iparticlef = RMF.IntermediateParticleConstFactory(r)
         self.gparticlef = RMF.GaussianParticleConstFactory(r)
         self.ballf = RMF.BallConstFactory(r)
         self.strucprovf = RMF.StructureProvenanceConstFactory(r)
@@ -1116,13 +1117,16 @@ class _RMFLoader(object):
         # Get hierarchy-related info from this node (e.g. chain, state)
         rhi = parent_rhi.handle_node(node, rmf_nodes[0], self)
         rmf_nodes[0].resolution = rhi._resolution
-        if self.particlef.get_is(node):
+        if self.iparticlef.get_is(node):
             # todo: special handling for Gaussians; right now we assume that
             # every Gaussian is also a Particle, as 1) this is the case for
             # IMP-generated structures and 2) particlef.get_is() returns True
             # for Gaussians anyway (since it appears to only check for mass)
-            p = self.particlef.get(node)
-            atom = self._add_atom(node, p, p.get_mass(), rhi)
+            ip = self.iparticlef.get(node)
+            mass = 0.
+            if self.particlef.get_is(node):
+                mass = self.particlef.get(node).get_mass()
+            atom = self._add_atom(node, ip, mass, rhi)
             rmf_nodes[0].chimera_obj = atom
         elif self.ballf.get_is(node):
             # balls have no mass
