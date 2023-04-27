@@ -1,3 +1,7 @@
+0.14 - 2023-04-26
+=================
+ - Handle reading RMF files that contain particles without coordinates.
+
 0.13 - 2023-03-15
 =================
  - Trajectory reading (`rmf readtraj` command) is now much faster.
