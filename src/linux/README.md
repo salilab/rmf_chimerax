@@ -1,12 +1,14 @@
-To build on Linux (use a RHEL7 machine to match ChimeraX's build environment):
+To build on Linux (use a RHEL8 machine to match ChimeraX's build environment):
 
 ```
-yum install git python39 python3-devel python3-numpy swig3 boost-devel hdf5-devel gcc-c++ ninja cmake chrpath
+dnf install epel-release
+crb enable
+dnf install git python3.11 python3.11-devel python3.11-numpy swig boost-devel hdf5-devel gcc-c++ ninja-build cmake chrpath
 git clone https://github.com/salilab/rmf.git
 cd rmf
 mkdir build && cd build
 cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release && ninja
-PYTHONPATH=lib python3.9 ../test/test_numpy.py
+PYTHONPATH=lib python3.11 ../test/test_numpy.py
 ```
 
 Use `python3 make_dist.py` to collect all needed files (RMF itself plus
