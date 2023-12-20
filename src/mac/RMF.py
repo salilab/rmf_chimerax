@@ -145,6 +145,8 @@ RMF_VERSION_MINOR = _RMF.RMF_VERSION_MINOR
 
 RMF_VERSION_MICRO = _RMF.RMF_VERSION_MICRO
 
+RMF_VERSION = _RMF.RMF_VERSION
+
 RMF_HAS_LOG4CXX = _RMF.RMF_HAS_LOG4CXX
 
 RMF_HAS_NUMPY = _RMF.RMF_HAS_NUMPY
@@ -7653,6 +7655,30 @@ class ChainConst(Decorator):
         r"""get_static_sequence(ChainConst self) -> RMF::String"""
         return _RMF.ChainConst_get_static_sequence(self)
 
+    def get_sequence_offset(self):
+        r"""get_sequence_offset(ChainConst self) -> RMF::Int"""
+        return _RMF.ChainConst_get_sequence_offset(self)
+
+    def get_frame_sequence_offset(self):
+        r"""get_frame_sequence_offset(ChainConst self) -> RMF::Int"""
+        return _RMF.ChainConst_get_frame_sequence_offset(self)
+
+    def get_static_sequence_offset(self):
+        r"""get_static_sequence_offset(ChainConst self) -> RMF::Int"""
+        return _RMF.ChainConst_get_static_sequence_offset(self)
+
+    def get_uniprot_accession(self):
+        r"""get_uniprot_accession(ChainConst self) -> RMF::String"""
+        return _RMF.ChainConst_get_uniprot_accession(self)
+
+    def get_frame_uniprot_accession(self):
+        r"""get_frame_uniprot_accession(ChainConst self) -> RMF::String"""
+        return _RMF.ChainConst_get_frame_uniprot_accession(self)
+
+    def get_static_uniprot_accession(self):
+        r"""get_static_uniprot_accession(ChainConst self) -> RMF::String"""
+        return _RMF.ChainConst_get_static_uniprot_accession(self)
+
     def get_chain_type(self):
         r"""get_chain_type(ChainConst self) -> RMF::String"""
         return _RMF.ChainConst_get_chain_type(self)
@@ -7713,6 +7739,30 @@ class Chain(ChainConst):
     def set_static_sequence(self, v):
         r"""set_static_sequence(Chain self, RMF::String v)"""
         return _RMF.Chain_set_static_sequence(self, v)
+
+    def set_sequence_offset(self, v):
+        r"""set_sequence_offset(Chain self, RMF::Int v)"""
+        return _RMF.Chain_set_sequence_offset(self, v)
+
+    def set_frame_sequence_offset(self, v):
+        r"""set_frame_sequence_offset(Chain self, RMF::Int v)"""
+        return _RMF.Chain_set_frame_sequence_offset(self, v)
+
+    def set_static_sequence_offset(self, v):
+        r"""set_static_sequence_offset(Chain self, RMF::Int v)"""
+        return _RMF.Chain_set_static_sequence_offset(self, v)
+
+    def set_uniprot_accession(self, v):
+        r"""set_uniprot_accession(Chain self, RMF::String v)"""
+        return _RMF.Chain_set_uniprot_accession(self, v)
+
+    def set_frame_uniprot_accession(self, v):
+        r"""set_frame_uniprot_accession(Chain self, RMF::String v)"""
+        return _RMF.Chain_set_frame_uniprot_accession(self, v)
+
+    def set_static_uniprot_accession(self, v):
+        r"""set_static_uniprot_accession(Chain self, RMF::String v)"""
+        return _RMF.Chain_set_static_uniprot_accession(self, v)
 
     def set_chain_type(self, v):
         r"""set_chain_type(Chain self, RMF::String v)"""
