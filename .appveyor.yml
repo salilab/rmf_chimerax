@@ -6,12 +6,12 @@ environment:
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - "python.exe -m pip install codecov coverage nose scipy"
+  - "python.exe -m pip install codecov coverage pytest-cov scipy"
 
 build: off
 
 test_script:
-  - "nosetests --with-coverage --cover-branches test"
+  - "py.test --cov=. --cov-branch --cov-report=xml -v ."
 
 on_success:
   - "codecov"
