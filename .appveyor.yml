@@ -14,4 +14,4 @@ test_script:
   - "py.test --cov=. --cov-branch --cov-report=xml -v ."
 
 on_success:
-  - "codecov"
+  - "codecov --file coverage.xml"
