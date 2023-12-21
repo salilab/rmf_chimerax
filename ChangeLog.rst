@@ -1,3 +1,7 @@
+0.15 - 2023-12-21
+=================
+ - Update to work with ChimeraX 1.7.
+
 0.14 - 2023-04-26
 =================
  - Handle reading RMF files that contain particles without coordinates.

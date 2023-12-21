@@ -6,7 +6,7 @@ will be displayed without the ChimeraX- prefix.
 -->
 
 <BundleInfo name="ChimeraX-RMF"
-            version="0.14" package="chimerax.rmf"
+            version="0.15" package="chimerax.rmf"
             minSessionVersion="1" maxSessionVersion="1"
             purePython="false">
 
@@ -34,7 +34,7 @@ support for newer RMF features, such as provenance.
   <!-- Dependencies on other ChimeraX/Python packages -->
   <Dependencies>
     <Dependency name="ChimeraX-Atomic" version=">=1.0"/>
-    <Dependency name="ChimeraX-Core" version=">=1.3"/>
+    <Dependency name="ChimeraX-Core" version=">=1.7"/>
     <Dependency name="ChimeraX-UI" version=">=1.0"/>
   </Dependencies>
 
