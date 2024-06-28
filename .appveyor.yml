@@ -6,7 +6,7 @@ environment:
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - "python.exe -m pip install codecov coverage pytest-cov numpy<2 scipy"
+  - "python.exe -m pip install codecov coverage pytest-cov numpy==1.26.2 scipy"
 
 build: off
 
