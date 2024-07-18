@@ -55,7 +55,7 @@ class _MyAPI(BundleAPI):
     def get_class(class_name):
         io_classes = frozenset(
             ('_RMFModel', '_RMFState', '_RMFHierarchyNode',
-             '_RMFFeature', '_RMFSampleProvenance',
+             '_RMFFeature', '_RMFProvenance', '_RMFSampleProvenance',
              '_RMFDrawing', '_RMFScriptProvenance',
              '_RMFSoftwareProvenance', '_RMFStructureProvenance',
              '_RMFXLMSRestraintProvenance', '_RMFEMRestraintGMMProvenance',

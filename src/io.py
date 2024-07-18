@@ -443,6 +443,12 @@ class _RMFProvenance(State):
         if data['previous']:
             self.set_previous(data['previous'])
 
+    @staticmethod
+    def restore_snapshot(session, data):
+        s = _RMFProvenance(_MockRMFNode(data))
+        s.set_state_from_snapshot(data)
+        return s
+
     # Displayed name of this provenance (defaults to the name of the RMF node)
     name = property(lambda self: self._name)
 

@@ -595,6 +595,12 @@ class Tests(unittest.TestCase):
         self.assertEqual(p.previous.name, "r2")
         self.assertEqual(p2.next.name, "r1")
 
+        mock_session = make_session()
+        s = p.take_snapshot(mock_session, None)
+        newp = src.io._RMFProvenance.restore_snapshot(mock_session, s)
+        self.assertIsInstance(newp, src.io._RMFProvenance)
+        self.assertEqual(newp.previous.name, "r2")
+
     def test_atomic_model_reader(self):
         """Test _atomic_model_reader"""
         f = src.io._atomic_model_reader("test.cif")
