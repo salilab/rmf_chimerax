@@ -1,3 +1,8 @@
+0.16 - 2024-07-19
+=================
+ - Fix session save/load of RMFs containing clustering or filtering
+   provenance nodes.
+
 0.15 - 2023-12-21
 =================
  - Update to work with ChimeraX 1.7.
