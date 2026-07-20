@@ -42,7 +42,7 @@ def copy_lib(lib, dest):
     shutil.copy(lib, dest)
     os.chmod(destlib, 0o755)
     set_loader_path(destlib)
-    
+
     for dep in get_deps(lib):
         set_dep_loader_path(destlib, dep)
         copy_lib(dep, dest)
@@ -61,7 +61,6 @@ def main():
     if os.path.exists(dist):
         shutil.rmtree(dist)
     os.mkdir(dist)
-
 
     for py in wanted_py:
         shutil.copy(py, dist)
