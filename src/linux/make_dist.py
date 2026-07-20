@@ -16,8 +16,8 @@ def get_deps(lib):
             if 'not found' in dep:
                 raise ValueError(line)
             if ((not dep.startswith('/lib64/') and not dep.startswith('('))
-                or 'boost' in dep or 'hdf5' in dep or 'libsz' in dep
-                or 'libaec' in dep):
+                    or 'boost' in dep or 'hdf5' in dep or 'libsz' in dep
+                    or 'libaec' in dep):
                 yield dep
 
 
@@ -42,7 +42,6 @@ def main():
     if os.path.exists(dist):
         shutil.rmtree(dist)
     os.mkdir(dist)
-
 
     for py in wanted_py:
         shutil.copy(py, dist)
