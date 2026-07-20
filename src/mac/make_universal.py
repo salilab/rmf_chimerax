@@ -6,9 +6,9 @@ import shutil
 dest = 'dist'
 srcs = ['arm64', 'x86_64']
 pythons = ['RMF_HDF5.py', 'RMF.py']
-libs = ['libboost_iostreams-mt.dylib', 'libboost_system-mt.dylib', '_RMF.so',
+libs = ['libboost_iostreams-mt.dylib', '_RMF.so',
         'libboost_thread-mt.dylib', '_RMF_HDF5.so', 'libhdf5.310.dylib',
-        'libRMF.1.6.dylib', 'liblzma.5.dylib', 'libboost_atomic-mt.dylib',
+        'libRMF.1.7.dylib', 'liblzma.5.dylib', 'libboost_atomic-mt.dylib',
         'libsz.2.dylib', 'libboost_filesystem-mt.dylib', 'libzstd.1.dylib']
 
 
