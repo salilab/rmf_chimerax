@@ -10069,6 +10069,21 @@ class ChainConst(Decorator):
         return _RMF.ChainConst_get_static_uniprot_accession(self)
 
 
+    def get_label_asym_id(self):
+        """get_label_asym_id(ChainConst self) -> RMF::String"""
+        return _RMF.ChainConst_get_label_asym_id(self)
+
+
+    def get_frame_label_asym_id(self):
+        """get_frame_label_asym_id(ChainConst self) -> RMF::String"""
+        return _RMF.ChainConst_get_frame_label_asym_id(self)
+
+
+    def get_static_label_asym_id(self):
+        """get_static_label_asym_id(ChainConst self) -> RMF::String"""
+        return _RMF.ChainConst_get_static_label_asym_id(self)
+
+
     def get_chain_type(self):
         """get_chain_type(ChainConst self) -> RMF::String"""
         return _RMF.ChainConst_get_chain_type(self)
@@ -10182,6 +10197,21 @@ class Chain(ChainConst):
     def set_static_uniprot_accession(self, v):
         """set_static_uniprot_accession(Chain self, RMF::String v)"""
         return _RMF.Chain_set_static_uniprot_accession(self, v)
+
+
+    def set_label_asym_id(self, v):
+        """set_label_asym_id(Chain self, RMF::String v)"""
+        return _RMF.Chain_set_label_asym_id(self, v)
+
+
+    def set_frame_label_asym_id(self, v):
+        """set_frame_label_asym_id(Chain self, RMF::String v)"""
+        return _RMF.Chain_set_frame_label_asym_id(self, v)
+
+
+    def set_static_label_asym_id(self, v):
+        """set_static_label_asym_id(Chain self, RMF::String v)"""
+        return _RMF.Chain_set_static_label_asym_id(self, v)
 
 
     def set_chain_type(self, v):

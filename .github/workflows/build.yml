@@ -10,7 +10,7 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          python-version: 3.11  # Need to match that used by ChimeraX
+          python-version: 3.14  # Need to match that used by ChimeraX
           with_qt:
         - os: macos-latest
           python-version: 3.14  # Need to match that used by ChimeraX
@@ -25,7 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pip install coverage scipy 'numpy<2' pytest-cov flake8 pep8-naming
+        pip install coverage scipy numpy pytest-cov flake8 pep8-naming
         if [ "${{ matrix.with_qt }}" = "true" ]; then pip install PyQt5; fi;
     - name: Test
       run: |
